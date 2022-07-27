@@ -1,6 +1,5 @@
-# # Main script (run aux_functions, MLE_functions, and Initializations prior)
+# # Main script
 
-## NOTE tidyr may cause errors in extract function
 library(tidyverse)
 library(pbapply) # For progress bar in bootstrap
 library(msm) # Delta method from Fewster
@@ -25,7 +24,6 @@ options(error = beep)
 gc() # take out the trash
 set.seed(1)
 
-setwd("/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models")
 source("MCMC_functions.R")
 source("MLE_functions.R")
 
@@ -992,13 +990,13 @@ for (cam.dist.set in cs.all){
   ####################################
   
   # # # Save .csv files
-  write.csv(D.all.Means.mat,paste("sim_data/",means_label,".csv", sep = ""))
-  write.csv(D.all.Sds.mat,paste("sim_data/",means_label,"_sds.csv", sep = ""))
-  write.csv(all.props.Means,paste("sim_data/",props_label,".csv", sep = ""))
-  write.csv(all.props.Sds,paste("sim_data/",props_label,"_sds.csv", sep = ""))
+  # write.csv(D.all.Means.mat,paste("sim_data/",means_label,".csv", sep = ""))
+  # write.csv(D.all.Sds.mat,paste("sim_data/",means_label,"_sds.csv", sep = ""))
+  # write.csv(all.props.Means,paste("sim_data/",props_label,".csv", sep = ""))
+  # write.csv(all.props.Sds,paste("sim_data/",props_label,"_sds.csv", sep = ""))
   
-  setEPS()
-  postscript(paste("figs/",means_label,".eps", sep = ""),width=8,height=5)
+  # setEPS()
+  # postscript(paste("figs/",means_label,".eps", sep = ""),width=8,height=5)
   if(cam.dist.set == 1){
     cam.props.label <- "Cam Placement: Random"
   } else{
@@ -1029,10 +1027,10 @@ for (cam.dist.set in cs.all){
   axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
   legend("topright", c("MLE (no covariates)","MLE (covariates)","MCMC (no covariates)","MCMC (covariates)"),
          pch=c(16,18,16,18), col=c("black","black","blue","blue"))
-  dev.off()
+  # dev.off()
   
-  setEPS()
-  postscript(paste("figs/",props_label,".eps", sep = ""),width=8,height=5)
+  # setEPS()
+  # postscript(paste("figs/",props_label,".eps", sep = ""),width=8,height=5)
   bar.p <- barplot(all.props.Means, names = c("Slow", "Medium", "Fast"), beside = T, legend.text=T,
           col = c("black",brewer.pal(4, "Set2"),brewer.pal(4, "Set2")), 
           # alpha = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5),
@@ -1045,7 +1043,7 @@ for (cam.dist.set in cs.all){
           cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
   arrows(bar.p,all.props.Means+all.props.Sds, bar.p, all.props.Means-all.props.Sds, 
          angle=90, code=3, length=0.05)
-  dev.off()
+  # dev.off()
   
   
   # # Compare proportional staying time distributions to abm distributions 
