@@ -24,9 +24,9 @@ options(error = beep)
 gc() # take out the trash
 set.seed(1)
 
-source("MCMC_functions.R")
-source("MLE_functions.R")
-
+# Define functions for MCMC and MLE samplers
+source("./Main/MCMC_functions.R")
+source("./Main/MLE_functions.R")
 
 ###########################
 # Initialize
