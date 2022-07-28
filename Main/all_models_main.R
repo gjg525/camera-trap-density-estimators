@@ -203,7 +203,7 @@ for (cam.dist.set in cs.all){
     # Random walks for nind animals
     #########################################
     # Run agent-based model
-    source("ABM_sims.R")
+    source("./Main/ABM_sims.R")
     
     if(cam.dist.set == 1){
       # # 1-cell sized cameras, randomly selected
@@ -300,7 +300,7 @@ for (cam.dist.set in cs.all){
     ################################
     # Collect data
     ################################
-    source("collect_data.R")
+    source("./Main/collect_data.R")
   
     # Initialize start values for covariate fits based on data
     Zcam <- Z[cam.samps,]
