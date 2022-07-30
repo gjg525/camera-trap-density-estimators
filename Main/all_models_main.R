@@ -1,25 +1,26 @@
 # # Main script
 
 library(tidyverse)
-library(pbapply) # For progress bar in bootstrap
-library(msm) # Delta method from Fewster
+# library(pbapply) 
+library(msm) 
 library(MASS)
 library(Directional)
 library(raster)
-library(fields)
+# library(fields)
 library(RColorBrewer)
-library(rasterVis)
+# library(rasterVis)
 library(truncnorm)
-library(mvtnorm)
-library(gridExtra)
+# library(mvtnorm)
+# library(gridExtra)
 library(fBasics)
 library(coda)
-library(Rlab)
-library(fitdistrplus)
-library(patchwork)
+# library(Rlab)
+# library(fitdistrplus)
+# library(patchwork)
 library(crayon)
-library(beepr)
-options(error = beep)
+# library(GMCM)
+# library(beepr)
+# options(error = beep)
 
 gc() # take out the trash
 set.seed(1)
@@ -35,6 +36,7 @@ source("./Main/MLE_functions.R")
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
 cs.all <- c(1)
 cam.dist.labels <- c("random","slow","med","fast")
+cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
@@ -45,7 +47,7 @@ lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast
 num.clumps <- 100
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
-num.runs <- 100 # number of repeated runs
+num.runs <- 2 # number of repeated runs
 
 # Correlated random walk parameter
 # 0 is uncorrelated random walk, inf is ideal gas model (5 is good correlation)
@@ -56,8 +58,8 @@ ncam <-  20
 
 # # Legend labels
 leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
-leg.props<-c("EEDE (MLE)", "REST (MLE)", "TTE (MLE)", "MCT (MLE)",
-       "EEDE (MCMC)", "REST (MCMC)", "TTE (MCMC)", "MCT (MCMC)")
+leg.props<-c("EEDE (MLE)", "EEDE (MCMC)","REST (MLE)", "REST (MCMC)", 
+             "TTE (MLE)", "TTE (MCMC)", "MCT (MLE)", "MCT (MCMC)")
 
 # Agent based model parms
 q <- 30^2   # number grid cells
@@ -974,15 +976,23 @@ for (cam.dist.set in cs.all){
   TTE.props.Sds <- colSds(TTE.props)
   MCT.props.Sds <- colSds(MCT.props)
   
-  all.props.Means <- rbind(abm.props.Means,EEDE.props.MLE.Means,REST.props.MLE.Means,
-                           TTE.props.MLE.Means,MCT.props.MLE.Means,EEDE.props.Means,
-                           REST.props.Means,TTE.props.Means,MCT.props.Means)
-  all.props.Sds <- rbind(abm.props.Sds,EEDE.props.MLE.Sds,REST.props.MLE.Sds,
-                         TTE.props.MLE.Sds,MCT.props.MLE.Sds,EEDE.props.Sds,
-                         REST.props.Sds,TTE.props.Sds,MCT.props.Sds)
-  rownames(all.props.Means) <- c("ABM",leg.props)
+  # all.props.Means <- rbind(abm.props.Means,EEDE.props.MLE.Means,REST.props.MLE.Means,
+  #                          TTE.props.MLE.Means,MCT.props.MLE.Means,EEDE.props.Means,
+  #                          REST.props.Means,TTE.props.Means,MCT.props.Means)
+  # all.props.Sds <- rbind(abm.props.Sds,EEDE.props.MLE.Sds,REST.props.MLE.Sds,
+  #                        TTE.props.MLE.Sds,MCT.props.MLE.Sds,EEDE.props.Sds,
+  #                        REST.props.Sds,TTE.props.Sds,MCT.props.Sds)
+  all.props.Means <- rbind(abm.props.Means,EEDE.props.MLE.Means,EEDE.props.Means,
+                           REST.props.MLE.Means,REST.props.Means,
+                           TTE.props.MLE.Means,TTE.props.Means,
+                           MCT.props.MLE.Means,MCT.props.Means)
+  all.props.Sds <- rbind(abm.props.Sds,EEDE.props.MLE.Sds,EEDE.props.Sds,
+                         REST.props.MLE.Sds,REST.props.Sds,
+                         TTE.props.MLE.Sds,TTE.props.Sds,
+                         MCT.props.MLE.Sds,MCT.props.Sds)
+  rownames(all.props.Means) <- c("ABM (Truth)",leg.props)
   colnames(all.props.Means) <- c("Slow","Medium","fast")
-  rownames(all.props.Sds) <- c("ABM",leg.props)
+  rownames(all.props.Sds) <- c("ABM (Truth)",leg.props)
   colnames(all.props.Sds) <- c("Slow","Medium","fast")
   
   ####################################
@@ -997,20 +1007,22 @@ for (cam.dist.set in cs.all){
   
   # setEPS()
   # postscript(paste("figs/",means_label,".eps", sep = ""),width=8,height=5)
-  if(cam.dist.set == 1){
-    cam.props.label <- "Cam Placement: Random"
-  } else{
-    cam.props.label <- paste("Cam Placement: ",cam.props.rounds[1]*100,"% slow, ",
-                    cam.props.rounds[2]*100,"% med, ",cam.props.rounds[3]*100,"% fast", sep = "")
-  }
+  op <- par(mar=c(5, 6, 4, 2) + 0.1)
+  cam.props.label <- paste("Camera Bias: ", cam.dist.labels.caps[cam.dist.set], sep = "")
+  # if(cam.dist.set == 1){
+  #  cam.props.label <- "Cam Placement: Random"
+  # } else{
+  #   cam.props.label <- paste("Cam Placement: ",cam.props.rounds[1]*100,"% slow, ",
+  #                            cam.props.rounds[2]*100,"% med, ",cam.props.rounds[3]*100,"% fast", sep = "")
+  # }
   plot(seq(0.7,4.7,by=1), 
        D.all.MLE.Means, ylim=c(min(nind,D.all.Means - D.all.Sds,na.rm=T),
        max(nind,D.all.Means + D.all.Sds,na.rm=T)), 
        xlim=c(0.5,5.5),xlab="Method", 
-       ylab=paste(cam.props.label,"\n Mean Estimates"), pch=16, cex=1.5, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
-  points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=18,cex=1.5)
-  points(seq(1.1,5.1,by=1),D.all.MCMC.Means, col="blue", pch=16,cex=1.5)
-  points(seq(1.3,5.3,by=1),D.all.MCMC.cov.Means, col="blue", pch=18,cex=1.5)
+       ylab=paste(cam.props.label,"\n Mean Estimates"), pch=16, cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
+  points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=1,cex=1.8)
+  points(seq(1.1,5.1,by=1),D.all.MCMC.Means, col="blue", pch=16,cex=1.8)
+  points(seq(1.3,5.3,by=1),D.all.MCMC.cov.Means, col="blue", pch=1,cex=1.8)
   arrows(x0=seq(0.7,4.7,by=1), y0=D.all.MLE.Means-D.all.MLE.Sds, 
          x1=seq(0.7,4.7,by=1), y1=D.all.MLE.Means+D.all.MLE.Sds, 
          code=3, angle=90, length=0.1, col="black", lwd=2)
@@ -1026,23 +1038,35 @@ for (cam.dist.set in cs.all){
   lines(c(0.2,6.8), c(nind,nind), type = "l", lty = 2, lwd = 3.5)
   axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
   legend("topright", c("MLE (no covariates)","MLE (covariates)","MCMC (no covariates)","MCMC (covariates)"),
-         pch=c(16,18,16,18), col=c("black","black","blue","blue"))
+         pch=c(16,1,16,1), col=c("black","black","blue","blue"))
+  par(op)
   # dev.off()
   
   # setEPS()
   # postscript(paste("figs/",props_label,".eps", sep = ""),width=8,height=5)
-  bar.p <- barplot(all.props.Means, names = c("Slow", "Medium", "Fast"), beside = T, legend.text=T,
-          col = c("black",brewer.pal(4, "Set2"),brewer.pal(4, "Set2")), 
-          # alpha = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5),
-          # col=c("black","blue","red","green","violet","blue","red","green","violet"),
-          density=c(300,300,300,300,300,30,30,30,30),
-          angle=c(0,0,0,0,0,45,45,45,45),
-          ylim=c(0,1) , ylab="Proportion Occupied",xlab = "Movement Speeds",
-          # args.legend = list(x = "topright",
-          #                    inset = c(0.38, 0)),
-          cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
-  arrows(bar.p,all.props.Means+all.props.Sds, bar.p, all.props.Means-all.props.Sds, 
-         angle=90, code=3, length=0.05)
+  bar.p <- barplot(all.props.Means, 
+                   names = c("Slow", "Medium", "Fast"), 
+                   beside = T, 
+                   legend.text=T,
+                   # col = c("black",brewer.pal(4, "Set2"),brewer.pal(4, "Set2")),
+                   col = c("black",brewer.pal(8, "Paired")),
+                   # border = c("black",brewer.pal(8, "Paired")),
+                   # alpha = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5),
+                   # col=c("black","blue","red","green","violet","blue","red","green","violet"),
+                   density=c(300,300,10,300,10,300,10,300,10),
+                   angle=c(0,0,45,0,45,0,45,0,45),
+                   ylim=c(0,1) , ylab="Proportion Occupied",xlab = "Movement Speeds",
+                   # args.legend = list(x = "topright",
+                   #                    inset = c(0.38, 0)),
+                   cex=1.3, 
+                   cex.lab = 1.5, 
+                   cex.axis = 1.3)
+  arrows(bar.p,all.props.Means+all.props.Sds, 
+         bar.p, 
+         all.props.Means-all.props.Sds, 
+         angle=90, 
+         code=3, 
+         length=0.05)
   # dev.off()
   
   
