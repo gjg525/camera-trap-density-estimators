@@ -19,11 +19,14 @@ library(coda)
 # library(patchwork)
 library(crayon)
 # library(GMCM)
-# library(beepr)
-# options(error = beep)
+library(beepr)
+options(error = beep)
 
 gc() # take out the trash
 set.seed(1)
+
+# save files for plotting
+fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
 
 # Define functions for MCMC and MLE samplers
 source("./Main/MCMC_functions.R")
@@ -40,14 +43,14 @@ cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- c(1:3)
+lv.all <- c(3)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
 num.clumps <- 100
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
-num.runs <- 2 # number of repeated runs
+num.runs <- 100 # number of repeated runs
 
 # Correlated random walk parameter
 # 0 is uncorrelated random walk, inf is ideal gas model (5 is good correlation)
@@ -999,28 +1002,23 @@ for (cam.dist.set in cs.all){
   # Plot Results
   ####################################
   
-  # # # Save .csv files
-  # write.csv(D.all.Means.mat,paste("sim_data/",means_label,".csv", sep = ""))
-  # write.csv(D.all.Sds.mat,paste("sim_data/",means_label,"_sds.csv", sep = ""))
-  # write.csv(all.props.Means,paste("sim_data/",props_label,".csv", sep = ""))
-  # write.csv(all.props.Sds,paste("sim_data/",props_label,"_sds.csv", sep = ""))
+  # # Save .csv files
+  write.csv(D.all.Means.mat,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
+  write.csv(D.all.Sds.mat,paste(fig_dir,"sim_data/",means_label,"_sds.csv", sep = ""))
+  write.csv(all.props.Means,paste(fig_dir,"sim_data/",props_label,".csv", sep = ""))
+  write.csv(all.props.Sds,paste(fig_dir,"sim_data/",props_label,"_sds.csv", sep = ""))
   
-  # setEPS()
-  # postscript(paste("figs/",means_label,".eps", sep = ""),width=8,height=5)
+  setEPS()
+  postscript(paste(fig_dir,"figs/",means_label,".eps", sep = ""),width=8,height=5)
   op <- par(mar=c(5, 6, 4, 2) + 0.1)
   cam.props.label <- paste("Camera Bias: ", cam.dist.labels.caps[cam.dist.set], sep = "")
-  # if(cam.dist.set == 1){
-  #  cam.props.label <- "Cam Placement: Random"
-  # } else{
-  #   cam.props.label <- paste("Cam Placement: ",cam.props.rounds[1]*100,"% slow, ",
-  #                            cam.props.rounds[2]*100,"% med, ",cam.props.rounds[3]*100,"% fast", sep = "")
-  # }
   plot(seq(0.7,4.7,by=1), 
        D.all.MLE.Means, ylim=c(min(nind,D.all.Means - D.all.Sds,na.rm=T),
        max(nind,D.all.Means + D.all.Sds,na.rm=T)), 
        xlim=c(0.5,5.5),xlab="Method", 
        ylab=paste(cam.props.label,"\n Mean Estimates"), pch=16, cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
-  points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=1,cex=1.8)
+  # ylab="Mean Estimates", pch=16, cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
+points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=1,cex=1.8)
   points(seq(1.1,5.1,by=1),D.all.MCMC.Means, col="blue", pch=16,cex=1.8)
   points(seq(1.3,5.3,by=1),D.all.MCMC.cov.Means, col="blue", pch=1,cex=1.8)
   arrows(x0=seq(0.7,4.7,by=1), y0=D.all.MLE.Means-D.all.MLE.Sds, 
@@ -1040,10 +1038,10 @@ for (cam.dist.set in cs.all){
   legend("topright", c("MLE (no covariates)","MLE (covariates)","MCMC (no covariates)","MCMC (covariates)"),
          pch=c(16,1,16,1), col=c("black","black","blue","blue"))
   par(op)
-  # dev.off()
+  dev.off()
   
-  # setEPS()
-  # postscript(paste("figs/",props_label,".eps", sep = ""),width=8,height=5)
+  setEPS()
+  postscript(paste(fig_dir,"figs/",props_label,".eps", sep = ""),width=8,height=5)
   bar.p <- barplot(all.props.Means, 
                    names = c("Slow", "Medium", "Fast"), 
                    beside = T, 
@@ -1067,7 +1065,7 @@ for (cam.dist.set in cs.all){
          angle=90, 
          code=3, 
          length=0.05)
-  # dev.off()
+  dev.off()
   
   
   # # Compare proportional staying time distributions to abm distributions 

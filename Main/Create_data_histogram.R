@@ -200,7 +200,7 @@ row_count_df <- data.frame(counts = c(c(row_counts[cam.slow]),
 ggplot(row_count_df, aes(x=counts, fill = speed)) +
   # geom_histogram(position = "identity", alpha = 0.4, bins = 4)
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
-  labs(x = "Count Data", y = "Density", fill="Landscape Type") +
+  labs(x = "Count", y = "Density", fill="Landscape Type") +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -219,7 +219,7 @@ enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
 ggplot(enc_df, aes(x=encounter, fill = speed)) +
   # geom_histogram(position = "identity", alpha = 0.2, bins = 5)
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
-  labs(x = "Encounter Data", y = "Density", fill="Landscape Type") +
+  labs(x = "Number of Encounters", y = "Density", fill="Landscape Type") +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -241,7 +241,7 @@ ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
   # geom_histogram(position = "identity", alpha = 0.4, bins = 20)
   geom_density(position = "identity", alpha = 0.4, adjust = 5) +
   xlim(c(0,20)) +
-  labs(x = "Staying Time Data", y = "Density", fill="Landscape Type") +
+  labs(x = "Staying Time", y = "Density", fill="Landscape Type") +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -261,7 +261,7 @@ TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
 ggplot(TTE_df, aes(x=TTE, fill = speed)) +
   # geom_histogram(position = "identity", alpha = 0.2, bins = 5)
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
-  labs(x = "TTE Data", y = "Density", fill="Landscape Type") +
+  labs(x = "Time to Encounter", y = "Density", fill="Landscape Type") +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
