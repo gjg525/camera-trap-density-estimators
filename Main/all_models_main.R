@@ -25,7 +25,7 @@ options(error = beep)
 gc() # take out the trash
 set.seed(1)
 
-# save files for plotting
+# file directory for saving
 fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
 
 # Define functions for MCMC and MLE samplers
@@ -37,17 +37,17 @@ source("./Main/MLE_functions.R")
 ###########################
 # Define camera sample variations
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- c(1)
+cs.all <- c(1:4)
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- c(3)
+lv.all <- c(4)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
-num.clumps <- 100
+num.clumps <- 1
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
 num.runs <- 100 # number of repeated runs
@@ -57,7 +57,7 @@ num.runs <- 100 # number of repeated runs
 corr.walk.kappa <- 5
 
 # # Number cameras
-ncam <-  20
+ncam <-  50
 
 # # Legend labels
 leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
@@ -1003,6 +1003,7 @@ for (cam.dist.set in cs.all){
   ####################################
   
   # # Save .csv files
+  write.csv(D.all,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
   write.csv(D.all.Means.mat,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
   write.csv(D.all.Sds.mat,paste(fig_dir,"sim_data/",means_label,"_sds.csv", sep = ""))
   write.csv(all.props.Means,paste(fig_dir,"sim_data/",props_label,".csv", sep = ""))
