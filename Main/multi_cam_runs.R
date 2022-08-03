@@ -55,7 +55,7 @@ corr.walk.kappa <- 5
 
 # # Number cameras
 ncam <-  20
-ncam_all <- c(5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+ncam_all <- c(5, 10, 20, 50, 100)
 
 # # Legend labels
 leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
@@ -65,7 +65,7 @@ leg.props<-c("EEDE (MLE)", "REST (MLE)", "TTE (MLE)", "MCT (MLE)",
 # Agent based model parms
 q <- 30^2   # number grid cells
 bounds <- c(0, q^0.5)
-t.steps <- 50
+t.steps <- 100
 dt <- 1 # time step size
 dx <- (bounds[2]-bounds[1])/q^0.5 # space step size in x
 dy <- (bounds[2]-bounds[1])/q^0.5 # space step size in y 
@@ -319,7 +319,7 @@ for (nca in 1:length(ncam_all)) {
       EEDE.cov.start <- c(gamma.EEDE.start,kappa.EEDE.start)
       opt.EEDE.cov <- optim(EEDE.cov.start,
                             EEDE.cov.fn,
-                            cam.counts = cam.counts,
+                            cam.counts = cam.counts.sum,
                             t.staying.dat = t.staying.dat,
                             censor = t.censor,
                             Z = Z,
@@ -331,7 +331,7 @@ for (nca in 1:length(ncam_all)) {
       beta.EEDE.cov <- exp(opt.EEDE.cov$par[1])
       phi.EEDE.cov <- exp(Z%*%opt.EEDE.cov$par[2:length(EEDE.cov.start)])
       u.EEDE.cov <- beta.EEDE.cov*phi.EEDE.cov/sum(phi.EEDE.cov)
-      D.EEDE.MLE.cov <- sum(u.EEDE.cov)
+      D.EEDE.MLE.cov <- sum(u.EEDE.cov)/t.steps
       
       # Variance with msm::deltamethod
       varB <- -ginv(opt.EEDE.cov$hessian)
@@ -550,7 +550,7 @@ for (nca in 1:length(ncam_all)) {
         kappa.prior.var = kappa.EEDE.prior.var,
         gamma.tune = gamma.EEDE.tune,
         kappa.tune = kappa.EEDE.tune,
-        cam.counts = cam.counts,
+        cam.counts = cam.counts.sum,
         t.staying.dat = t.staying.dat,
         spatial.covariates = spatial.covariates,
         covariates.index = covariates.index,
@@ -754,7 +754,7 @@ for (nca in 1:length(ncam_all)) {
         gamma.start = 0.11,
         gamma.prior.var = gamma.MCT.prior.var,
         gamma.tune = gamma.MCT.tune[1],
-        cam.counts = cam.counts,
+        cam.counts = cam.counts.sum,
         spatial.covariates = spatial.covariates,
         covariates.index = covariates.index)
       proc.time() - ptm
@@ -786,7 +786,7 @@ for (nca in 1:length(ncam_all)) {
         gamma.start = gamma.MCT.start,
         gamma.prior.var = gamma.MCT.prior.var,
         gamma.tune = gamma.MCT.tune,
-        cam.counts = cam.counts,
+        cam.counts = cam.counts.sum,
         spatial.covariates = spatial.covariates,
         covariates.index = covariates.index)
       proc.time() - ptm
