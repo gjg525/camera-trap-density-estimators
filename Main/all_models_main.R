@@ -37,17 +37,17 @@ source("./Main/MLE_functions.R")
 ###########################
 # Define camera sample variations
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- c(1:4)
+cs.all <- c(3:4)
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- c(4)
+lv.all <- c(5)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
-num.clumps <- 1
+num.clumps <- 100
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
 num.runs <- 100 # number of repeated runs
@@ -223,8 +223,8 @@ for (cam.dist.set in cs.all){
       
       cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
       # Make sure all landscape types are sampled
-      sample_check <- c(sum(cam.counts[cam.slow]), 
-                        sum(cam.counts[cam.med]), 
+      sample_check <- c(sum(cam.counts[cam.slow]),
+                        sum(cam.counts[cam.med]),
                         sum(cam.counts[cam.fast]))
       while(any(sample_check == 0)) {
         cam.samps <- sample(1:q,ncam, replace=FALSE)
@@ -234,10 +234,10 @@ for (cam.dist.set in cs.all){
         cam.fast <- which(cam.samps %in% fast.inds)
         cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
         cam.props.rounds <- round(cam.props*100)/100
-        
+
         cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-        sample_check <- c(sum(cam.counts[cam.slow]), 
-                          sum(cam.counts[cam.med]), 
+        sample_check <- c(sum(cam.counts[cam.slow]),
+                          sum(cam.counts[cam.med]),
                           sum(cam.counts[cam.fast]))
       }
       }else{
@@ -255,8 +255,8 @@ for (cam.dist.set in cs.all){
       
       cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
       # Make sure all landscape types are sampled
-      sample_check <- c(sum(cam.counts[cam.slow]), 
-                        sum(cam.counts[cam.med]), 
+      sample_check <- c(sum(cam.counts[cam.slow]),
+                        sum(cam.counts[cam.med]),
                         sum(cam.counts[cam.fast]))
       while(any(sample_check == 0)) {
         cam.samps <- c(sample(slow.inds,ps[1],replace=F),sample(med.inds,ps[2],replace=F),
@@ -267,10 +267,10 @@ for (cam.dist.set in cs.all){
         cam.fast <- which(cam.samps %in% fast.inds)
         cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
         cam.props.rounds <- round(cam.props*100)/100
-        
+
         cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-        sample_check <- c(sum(cam.counts[cam.slow]), 
-                          sum(cam.counts[cam.med]), 
+        sample_check <- c(sum(cam.counts[cam.slow]),
+                          sum(cam.counts[cam.med]),
                           sum(cam.counts[cam.fast]))
       }
       }
@@ -1003,7 +1003,7 @@ for (cam.dist.set in cs.all){
   ####################################
   
   # # Save .csv files
-  write.csv(D.all,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
+  write.csv(D.all,paste(fig_dir,"sim_data/",means_label,"_all.csv", sep = ""))
   write.csv(D.all.Means.mat,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
   write.csv(D.all.Sds.mat,paste(fig_dir,"sim_data/",means_label,"_sds.csv", sep = ""))
   write.csv(all.props.Means,paste(fig_dir,"sim_data/",props_label,".csv", sep = ""))
