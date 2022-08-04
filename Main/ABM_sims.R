@@ -2,7 +2,16 @@
 # Random walks for nind animals
 #########################################
 # Correlated random walk with grouping behavior
-clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, corr.walk.kappa,clump.size, clump.rad) {
+clump.corr.walk <- function(bounds, 
+                            t.steps, 
+                            steplen, 
+                            dx, 
+                            dy, 
+                            v.abm,
+                            t.stay.cdf, 
+                            corr.walk.kappa,
+                            clump.size, 
+                            clump.rad) {
   
   X <- matrix(NA, clump.size, t.steps)
   Y <- matrix(NA, clump.size, t.steps)
@@ -27,6 +36,10 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
   # corner locations of each grid cell
   grid.ints <- seq(min(bounds), max(bounds),by=max(bounds)/q^0.5)
   
+  X.all <- matrix(X[,1], nrow = clump.size, ncol = 1)
+  Y.all <- matrix(Y[,1], nrow = clump.size, ncol = 1)
+  
+  foo <- 5
   for(i in 2:(t.steps)) {
     # Correlated random walk for group
     theta <- rvonmises(1, theta, corr.walk.kappa)
@@ -37,9 +50,8 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
       # time step
       t.step <- dt
       
-      # track how often individual hits borders (for troubleshooting)
-      X.track <- 0
-      Y.track <- 0
+      X.all.temp <- c()
+      Y.all.temp <- c()
       while(t.step > 0){
         # x,y indices of individual
         X.ind <- ceiling(X[ci,i-1]*(q^0.5/max(bounds)))
@@ -58,9 +70,15 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
                            cbind(grid.ints[X.ind],grid.ints[Y.ind]),
                            cbind(grid.ints[X.ind],grid.ints[Y.ind+1]),
                            cbind(grid.ints[X.ind+1],grid.ints[Y.ind]))
+        
         # step lengths to add to corners
         r.length <- rbind(cbind(0,dy),cbind(dx,0),cbind(dx,0),cbind(0,dy))
         
+        
+        # check for intersections with grid
+        # Don't use intersections when start point is on the line (a,b = 0),
+        # or if a full step lands on a line (a,b = 1)
+        # Account for points that start on grid
         a <- c()
         b <- c()
         int.check <- c()
@@ -73,10 +91,6 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
                                                   c(dX,dY)))
         }
         
-        # check for intersections with grid
-        # Don't use intersections when start point is on the line (a,b = 0),
-        # or if a full step lands on a line (a,b = 1)
-        # Account for points that start on grid
         int.check <- a<1 & a>0 & b<1 & b>0 | 
           (a==0 & b<1 & b>0) | (a==1 & b<1 & b>0) | (b==0 & a<1 & a>0) | (b==1 & a<1 & a>0) 
         
@@ -105,9 +119,15 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
               temp.Y < (max(bounds)) & temp.Y > (min(bounds))){
             t.step <- t.step - sqrt((X[ci,i-1]-(temp.X))^2+
                                       (Y[ci,i-1]-(temp.Y))^2)/mu.s
+            
             # perturb individual so that they are not on intersection
             X[ci,i-1] <- temp.X + 0.00001*sign(cos(theta.all[ci]))*(temp.X==r.corners[int.ind,1])
             Y[ci,i-1] <- temp.Y + 0.00001*sign(sin(theta.all[ci]))*(temp.Y==r.corners[int.ind,2])
+            
+            # Track all intermediate steps
+            X.all.temp <- c(X.all.temp, X[ci,i-1])
+            Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
+            
           }
           # If encounter border, change turning angle
           else{
@@ -121,7 +141,6 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
               if(ci == 1){
                 theta <- theta.all[ci]
               }
-              X.track <- X.track + 1
             }
             if(temp.Y >= (max(bounds)) || temp.Y <= (min(bounds))) {
               theta.x <- cos(theta.all[ci])
@@ -133,7 +152,6 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
               if(ci == 1){
                 theta <- theta.all[ci]
               }
-              Y.track <- Y.track + 1
             }
           }
         }
@@ -142,12 +160,21 @@ clump.corr.walk <- function(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, 
           X[ci,i] <- X[ci,i-1] + dX
           Y[ci,i] <- Y[ci,i-1] + dY
           t.step <- 0
+          
+          # Track all intermediate steps
+          X.all.temp <- c(X.all.temp, X[ci,i-1])
+          Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
         }
       }
+      
+      
     }
   }
   out <- data.frame(t(rbind(as.vector(t(X)),as.vector(t(Y)))))
   return(out)
+  
+  list(animalxy = data.frame(t(rbind(as.vector(t(X)),as.vector(t(Y))))),
+       allxy = data.frame(t(rbind(as.vector(t(X.all)),as.vector(t(Y.all))))))
 }
 
 
@@ -194,7 +221,7 @@ for (tt in 1:t.steps) {
   for(inds in 1:nind) {
     x.round <- ceiling(animalxy[ind.seq[inds],1]*(q^0.5/max(bounds)))
     y.round <- ceiling(animalxy[ind.seq[inds],2]*(q^0.5/max(bounds)))
-
+    
     # Transpose for converting matrix to raster
     u.temp[x.round,y.round] <- u.temp[x.round,y.round]+1
   }
