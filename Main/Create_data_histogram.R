@@ -2,32 +2,32 @@
 
 ## NOTE tidyr may cause errors in extract function
 library(tidyverse)
-library(pbapply) # For progress bar in bootstrap
-library(msm) # Delta method from Fewster
+# library(pbapply) 
+library(msm) 
 library(MASS)
 library(Directional)
 library(raster)
-library(fields)
+# library(fields)
 library(RColorBrewer)
-library(rasterVis)
+# library(rasterVis)
 library(truncnorm)
-library(mvtnorm)
-library(gridExtra)
+# library(mvtnorm)
+# library(gridExtra)
 library(fBasics)
 library(coda)
-library(Rlab)
-library(fitdistrplus)
-library(patchwork)
+# library(Rlab)
+# library(fitdistrplus)
+# library(patchwork)
 library(crayon)
+# library(GMCM)
 library(beepr)
 options(error = beep)
 
 gc() # take out the trash
 set.seed(1)
 
-setwd("/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models")
-source("MCMC_functions.R")
-source("MLE_functions.R")
+source("./Main/MCMC_functions.R")
+source("./Main/MLE_functions.R")
 
 
 ###########################
@@ -144,7 +144,7 @@ for (ii in 1:q){
 # Random walks for nind animals
 #########################################
 # Run agent-based model
-source("ABM_sims.R")
+source("./Main/ABM_sims.R")
 
 # # 1-cell sized cameras, randomly selected
 cam.samps <- sample(1:q,ncam, replace=FALSE)
@@ -187,7 +187,7 @@ abm.distribution.scale <- abm.distribution/sum(abm.distribution)
 ################################
 # Collect data
 ################################
-source("collect_data.R")
+source("./Main/collect_data.R")
 
 row_counts <- rowSums(cam.counts)
 row_count_df <- data.frame(counts = c(c(row_counts[cam.slow]),
