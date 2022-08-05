@@ -36,7 +36,8 @@ clump.corr.walk <- function(bounds,
   # corner locations of each grid cell
   grid.ints <- seq(min(bounds), max(bounds),by=max(bounds)/q^0.5)
   
-  X.all <- matrix(X[,1], nrow = clump.size, ncol = 1)
+  XY.all <- as.data.frame(matrix(NA, nrow = 1, ncol = 4))
+  colnames(XY.all) <- c("ID","X","Y","t")
   Y.all <- matrix(Y[,1], nrow = clump.size, ncol = 1)
   
   foo <- 5
@@ -50,8 +51,8 @@ clump.corr.walk <- function(bounds,
       # time step
       t.step <- dt
       
-      X.all.temp <- c()
-      Y.all.temp <- c()
+      # X.all.temp <- c()
+      # Y.all.temp <- c()
       while(t.step > 0){
         # x,y indices of individual
         X.ind <- ceiling(X[ci,i-1]*(q^0.5/max(bounds)))
@@ -125,8 +126,9 @@ clump.corr.walk <- function(bounds,
             Y[ci,i-1] <- temp.Y + 0.00001*sign(sin(theta.all[ci]))*(temp.Y==r.corners[int.ind,2])
             
             # Track all intermediate steps
-            X.all.temp <- c(X.all.temp, X[ci,i-1])
-            Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
+            XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i - t.step)
+            # X.all.temp <- c(X.all.temp, X[ci,i-1])
+            # Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
             
           }
           # If encounter border, change turning angle
@@ -162,24 +164,28 @@ clump.corr.walk <- function(bounds,
           t.step <- 0
           
           # Track all intermediate steps
-          X.all.temp <- c(X.all.temp, X[ci,i-1])
-          Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
+          XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i], Y[ci,i], i)
+          # X.all.temp <- c(X.all.temp, X[ci,i-1])
+          # Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
         }
       }
       
       
     }
   }
-  out <- data.frame(t(rbind(as.vector(t(X)),as.vector(t(Y)))))
-  return(out)
+  # out <- data.frame(t(rbind(as.vector(t(X)),as.vector(t(Y)))))
+  # return(out)
   
   list(animalxy = data.frame(t(rbind(as.vector(t(X)),as.vector(t(Y))))),
-       allxy = data.frame(t(rbind(as.vector(t(X.all)),as.vector(t(Y.all))))))
+       XY.all = XY.all)
 }
 
 
 # Correlated random walk with clumping behavior
 animalxy <- data.frame(matrix(NA, t.steps*sum(clump.size),4))
+animalxy.all <- data.frame(matrix(NA, 0, 4))
+colnames(animalxy) <- c("X", "Y", "t", "ID")
+colnames(animalxy.all) <- c("ID", "X", "Y", "t")
 t.inds <- 1
 ind.index <- 1
 # print("ABM progress")
@@ -190,10 +196,15 @@ ind.index <- 1
 #                          char = "=")   # Character used to create the bar
 for(nc in 1:num.clumps){
   # setTxtProgressBar(abm_pb, nc)
-  XY <- clump.corr.walk(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, corr.walk.kappa,clump.size[nc],clump.rad = clump.rad)
+  abm.out <- clump.corr.walk(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, corr.walk.kappa,clump.size[nc],clump.rad = clump.rad)
+  XY <- abm.out$animalxy
+  XY.all <- abm.out$XY.all[2:nrow(abm.out$XY.all),] 
+  XY.all <- XY.all[order(XY.all$ID),]
+  XY.all$ID <- XY.all$ID + ind.index - 1
   tot.inds <- t.steps*clump.size[nc]
   animalxy[t.inds:(t.inds+(t.steps*clump.size[nc])-1),] <-
     cbind(XY,rep(1:t.steps, times = clump.size[nc]),rep(ind.index:(ind.index+clump.size[nc]-1), each = t.steps))
+  animalxy.all <- rbind(animalxy.all, XY.all)
   t.inds <- t.inds+(t.steps*clump.size[nc])
   ind.index <- ind.index + clump.size[nc]
 }
@@ -228,9 +239,13 @@ for (tt in 1:t.steps) {
   u.abm.all[[tt]] <- raster(t(u.temp))
 }
 
-# Convert animalxy [0,1] coordinates to integer coordinates
+# Convert animalxy 2D coordinates to single digit coordinates
 animalxy.inds.2D <- ceiling(animalxy[,1:2]*q^0.5)
 animalxy.inds <- animalxy.inds.2D[,1]+(animalxy.inds.2D[,2]-1)*q^0.5
+
+animalxy.all <- mutate(animalxy.all,
+                       XY_inds = ceiling(animalxy.all$X*q^0.5) +
+                         (ceiling(animalxy.all$Y*q^0.5)-1)*q^0.5)
 
 # # Plot ABM simulations
 b.df <- data.frame(c(bounds,dx))
