@@ -51,8 +51,7 @@ clump.corr.walk <- function(bounds,
       # time step
       t.step <- dt
       
-      # X.all.temp <- c()
-      # Y.all.temp <- c()
+      XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i - t.step)
       while(t.step > 0){
         # x,y indices of individual
         X.ind <- ceiling(X[ci,i-1]*(q^0.5/max(bounds)))
@@ -127,9 +126,7 @@ clump.corr.walk <- function(bounds,
             
             # Track all intermediate steps
             XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i - t.step)
-            # X.all.temp <- c(X.all.temp, X[ci,i-1])
-            # Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
-            
+
           }
           # If encounter border, change turning angle
           else{
@@ -165,8 +162,6 @@ clump.corr.walk <- function(bounds,
           
           # Track all intermediate steps
           XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i], Y[ci,i], i)
-          # X.all.temp <- c(X.all.temp, X[ci,i-1])
-          # Y.all.temp <- c(Y.all.temp, Y[ci,i-1])
         }
       }
       
