@@ -12,22 +12,48 @@ for(cc in 1:ncam){
   
   cam_ind <- cam.samps[cc]
   
-  cam_dat_temp <- filter(animalxy.all, XY_inds == 11) |> 
-                  group_by(ID) |> 
-                  summarise(inds = min(ii):max(ii),
-                            i_diff = animalxy.all$ii[(inds[1]+1):inds[2]] - 
-                            animalxy.all$ii[inds[1]:(inds[2]-1)],
-                            t_diff = animalxy.all$t[(inds[1]+1):inds[2]] - 
-                              animalxy.all$t[inds[1]:(inds[2]-1)],
-                            .groups = 'drop')
-  cam_dat_temp <- group_by(animalxy.all, ID) |> 
-    summarise(t_diff =  t[2:nrow(animalxy.all)] - 
-                t[1:(nrow(animalxy.all)-1)],
-              XY_inds = XY_inds[1:(nrow(animalxy.all)-1)],
+  # cam_dat_temp <- filter(animalxy.all, XY_inds == cam_ind) |> 
+  #                 group_by(ID) |> 
+  #                 summarise(inds = min(ii):max(ii),
+  #                           i_diff = animalxy.all$ii[(inds[1]+1):inds[2]] - 
+  #                           animalxy.all$ii[inds[1]:(inds[2]-1)],
+  #                           t_diff = animalxy.all$t[(inds[1]+1):inds[2]] - 
+  #                             animalxy.all$t[inds[1]:(inds[2]-1)],
+  #                           .groups = 'drop')
+  cam_dat_temp <- group_by(animalxy.all, ID) %>%  
+              summarise(t_diff =  t[2:length(t)] - 
+                t[1:(length(t)-1)],
+              XY_inds = XY_inds[1:(length(XY_inds)-1)],
+              i_diff = ii[2:length(ii)] - ii[1:(length(ii)-1)],
+              ii = ii[1:(length(ii)-1)],
               .groups = 'drop'
-                )
+                ) 
+  if(nrow(filter(cam_dat_temp, XY_inds == cam_ind)) == 0) {
+    num.encounters.dat[cc] <- 0
+  } else {
+  t_staying_temp <- filter(cam_dat_temp, XY_inds == cam_ind) %>% 
+    group_by(ID) %>% 
+    mutate(ii_diff = ifelse(length(ii) == 1,
+                             1,
+                             c(1,ii[2:length(ii)] - ii[1:(length(ii)-1)])),
+           encounter = cumsum(c(1, abs(ii[-length(ii)] - ii[-1]) > 1)))
   
-  num.encounters.dat[cc] <- sum(cam_dat_temp$i_diff>1) + length(unique(cam_dat_temp$ID))
+  num.encounters.dat[cc] <- nrow(group_by(t_staying_temp, ID) %>% 
+                                   summarise(mm = unique(encounter),
+                                 .groups = 'drop'))
+  # num.encounters.dat[cc] <- sum(t_staying_temp$ii_diff>1) + 
+  #   length(unique(t_staying_temp$ID))
+  
+  t_staying <- group_by(t_staying_temp, ID, encounter) %>% 
+    summarise(t_stay = sum(t_diff),
+              .groups = 'drop')
+    
+  # Extend matrix by number of new encounters
+  if(sum(num.encounters.dat[cc])>dim(t.staying.dat)[2]){
+    t.staying.dat <- cbind(t.staying.dat, matrix(NA,ncam,sum(num.encounters.dat[cc,])-1))
+  }
+  t.staying.dat[cc,1:sum(num.encounters.dat[cc])] <- t_staying$t_stay
+  }
   
   # Determine if a new individual has entered or exited the camera
   all.counts <- cam.counts[cc,]  # number of counts in sample occasion
@@ -60,7 +86,7 @@ for(cc in 1:ncam){
   t.stay.jj <- c(t.stay.jj,t.exit-t.enter)
   
   # Calculate number of encounters for each camera (REST)
-  num.encounters.dat[cc] <- length(t.enter)
+  # num.encounters.dat[cc] <- length(t.enter)
   
   # Collect TTE
   for(jj in 1:num.occ){
@@ -76,14 +102,14 @@ for(cc in 1:ncam){
     }
   }
   
-  # Calculate staying times for each encounter (REST and TTE)
-  if(sum(num.encounters.dat[cc])>0){
-    # Extend matrix by number of new encounters
-    if(sum(num.encounters.dat[cc])>dim(t.staying.dat)[2]){
-      t.staying.dat <- cbind(t.staying.dat, matrix(NA,ncam,sum(num.encounters.dat[cc,])-1))
-    }
-    t.staying.dat[cc,1:sum(num.encounters.dat[cc])] <- t.stay.jj
-  }
+  # # Calculate staying times for each encounter (REST and TTE)
+  # if(sum(num.encounters.dat[cc])>0){
+  #   # Extend matrix by number of new encounters
+  #   if(sum(num.encounters.dat[cc])>dim(t.staying.dat)[2]){
+  #     t.staying.dat <- cbind(t.staying.dat, matrix(NA,ncam,sum(num.encounters.dat[cc,])-1))
+  #   }
+  #   t.staying.dat[cc,1:sum(num.encounters.dat[cc])] <- t.stay.jj
+  # }
 }
 
 ########################################
