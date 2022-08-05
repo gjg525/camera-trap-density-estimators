@@ -36,9 +36,9 @@ clump.corr.walk <- function(bounds,
   # corner locations of each grid cell
   grid.ints <- seq(min(bounds), max(bounds),by=max(bounds)/q^0.5)
   
-  XY.all <- as.data.frame(matrix(NA, nrow = 1, ncol = 4))
+  XY.all <- as.data.frame(matrix(NA, nrow = 0, ncol = 4))
   colnames(XY.all) <- c("ID","X","Y","t")
-  Y.all <- matrix(Y[,1], nrow = clump.size, ncol = 1)
+  XY.all[1:clump.size,] <- t(rbind(1:clump.size, X[,1], Y[,1], 1))
   
   foo <- 5
   for(i in 2:(t.steps)) {
@@ -51,7 +51,6 @@ clump.corr.walk <- function(bounds,
       # time step
       t.step <- dt
       
-      XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i - t.step)
       while(t.step > 0){
         # x,y indices of individual
         X.ind <- ceiling(X[ci,i-1]*(q^0.5/max(bounds)))
@@ -193,7 +192,7 @@ for(nc in 1:num.clumps){
   # setTxtProgressBar(abm_pb, nc)
   abm.out <- clump.corr.walk(bounds, t.steps, steplen, dx, dy, v.abm,t.stay.cdf, corr.walk.kappa,clump.size[nc],clump.rad = clump.rad)
   XY <- abm.out$animalxy
-  XY.all <- abm.out$XY.all[2:nrow(abm.out$XY.all),] 
+  XY.all <- abm.out$XY.all
   XY.all <- XY.all[order(XY.all$ID),]
   XY.all$ID <- XY.all$ID + ind.index - 1
   tot.inds <- t.steps*clump.size[nc]
@@ -240,7 +239,8 @@ animalxy.inds <- animalxy.inds.2D[,1]+(animalxy.inds.2D[,2]-1)*q^0.5
 
 animalxy.all <- mutate(animalxy.all,
                        XY_inds = ceiling(animalxy.all$X) +
-                         floor(animalxy.all$Y)*q^0.5)
+                         floor(animalxy.all$Y)*q^0.5,
+                       ii = 1:nrow(animalxy.all))
 
 # # Plot ABM simulations
 b.df <- data.frame(c(bounds,dx))

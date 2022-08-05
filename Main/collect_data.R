@@ -10,6 +10,25 @@ for(cc in 1:ncam){
   t.stay.jj <- c()
   num.encounters.temp <- c()
   
+  cam_ind <- cam.samps[cc]
+  
+  cam_dat_temp <- filter(animalxy.all, XY_inds == 11) |> 
+                  group_by(ID) |> 
+                  summarise(inds = min(ii):max(ii),
+                            i_diff = animalxy.all$ii[(inds[1]+1):inds[2]] - 
+                            animalxy.all$ii[inds[1]:(inds[2]-1)],
+                            t_diff = animalxy.all$t[(inds[1]+1):inds[2]] - 
+                              animalxy.all$t[inds[1]:(inds[2]-1)],
+                            .groups = 'drop')
+  cam_dat_temp <- group_by(animalxy.all, ID) |> 
+    summarise(t_diff =  t[2:nrow(animalxy.all)] - 
+                t[1:(nrow(animalxy.all)-1)],
+              XY_inds = XY_inds[1:(nrow(animalxy.all)-1)],
+              .groups = 'drop'
+                )
+  
+  num.encounters.dat[cc] <- sum(cam_dat_temp$i_diff>1) + length(unique(cam_dat_temp$ID))
+  
   # Determine if a new individual has entered or exited the camera
   all.counts <- cam.counts[cc,]  # number of counts in sample occasion
   count.diff <- all.counts[2:t.steps]- all.counts[1:(t.steps-1)] 
