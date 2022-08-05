@@ -240,12 +240,12 @@ for (tt in 1:t.steps) {
 }
 
 # Convert animalxy 2D coordinates to single digit coordinates
-animalxy.inds.2D <- ceiling(animalxy[,1:2]*q^0.5)
+animalxy.inds.2D <- ceiling(animalxy[,1:2])
 animalxy.inds <- animalxy.inds.2D[,1]+(animalxy.inds.2D[,2]-1)*q^0.5
 
 animalxy.all <- mutate(animalxy.all,
-                       XY_inds = ceiling(animalxy.all$X*q^0.5) +
-                         (ceiling(animalxy.all$Y*q^0.5)-1)*q^0.5)
+                       XY_inds = ceiling(animalxy.all$X) +
+                         floor(animalxy.all$Y)*q^0.5)
 
 # # Plot ABM simulations
 b.df <- data.frame(c(bounds,dx))
