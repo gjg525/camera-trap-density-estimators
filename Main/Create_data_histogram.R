@@ -5,7 +5,7 @@ library(tidyverse)
 # library(pbapply) 
 library(msm) 
 library(MASS)
-library(Directional)
+# library(Directional)
 library(raster)
 # library(fields)
 library(RColorBrewer)
@@ -20,11 +20,15 @@ library(coda)
 # library(patchwork)
 library(crayon)
 # library(GMCM)
+library(Rfast)
+library(dplyr)
 library(beepr)
 options(error = beep)
 
 gc() # take out the trash
 set.seed(1)
+
+fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
 
 source("./Main/MCMC_functions.R")
 source("./Main/MLE_functions.R")
@@ -44,7 +48,7 @@ lv.all <- 4
 lv.labels <- c("slow_lscape_all","med_lscape_all","fast_lscape_all","","fast_lscape")
 
 # Variable parms
-num.clumps <- 100
+num.clumps <- 10
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
 num.runs <- 100 # number of repeated runs
@@ -209,7 +213,7 @@ ggplot(row_count_df, aes(x=counts, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = "figs/Counts_dat_histogram.eps", device = cairo_ps)
+# ggsave(file = paste(fig_dir,"figs/Counts_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
                                 c(num.encounters.dat[cam.med]),
@@ -228,7 +232,7 @@ ggplot(enc_df, aes(x=encounter, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = "figs/Encounter_dat_histogram.eps", device = cairo_ps)
+# ggsave(file = paste(fig_dir,"figs/Encounter_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 
 stay_df <- data.frame(Stay_time = c(c(t.staying.dat[cam.slow,]),
@@ -250,7 +254,7 @@ ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = "figs/Stay_time_dat_histogram.eps", device = cairo_ps)
+# ggsave(file = paste(fig_dir,"figs/Stay_time_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
                                 c(TTE.dat[cam.med,]),
@@ -270,5 +274,5 @@ ggplot(TTE_df, aes(x=TTE, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = "figs/TTE_dat_histogram.eps", device = cairo_ps)
+# ggsave(file = paste(fig_dir,"figs/TTE_dat_histogram.eps", sep = ""), device = cairo_ps)
 

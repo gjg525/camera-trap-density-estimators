@@ -31,9 +31,9 @@ fit.model.mcmc.EEDE.cov <- function(n.iter,
   
   # Account for censored times
   t.staying.dat.all <- t.staying.dat
-  t.staying.dat.all[t.staying.dat.all>censor] <- NA
+  t.staying.dat.all[t.staying.dat.all>=censor] <- NA
   t.staying.dat.censor <- t.staying.dat
-  t.staying.dat.censor[t.staying.dat.censor<=censor] <- NA
+  t.staying.dat.censor[t.staying.dat.censor<censor] <- NA
   
   # Initialize with landscape-scale covariates
   beta <- exp(gamma[1])   
@@ -184,7 +184,7 @@ fit.model.mcmc.REST <- function(n.iter,
   
   u <- exp(gamma[1])
   phi <- exp(kappa[1])
-  eta <- u*t.steps*cam.A/phi
+  eta <- u*dt*t.steps*cam.A/phi
   tot.u <- tot.A*u
 
   tune.check <- 100
@@ -298,7 +298,7 @@ fit.model.mcmc.REST.cov <- function(n.iter,
   # Initialize with landscape-scale covariates
   u <- exp(Z%*%gamma[1,])
   phi <- exp(Z%*%kappa[1,])
-  eta <- u*t.steps/phi
+  eta <- u*dt*t.steps/phi
   tot.u[1] <- sum(u)
   
   tune.check <- 100

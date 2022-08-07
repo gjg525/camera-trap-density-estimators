@@ -16,7 +16,6 @@ EEDE.cov.fn <- function(cam.counts,
   
   # repeat estimated parms for fitting
   u.all.cams <- u.all[cam.samps]
-  u.all.cam.rep <- matrix(rep(u.all.cams,t.steps),nrow = ncam,ncol = t.steps)
   phi.cams <- phi[cam.samps]
   phi.cam.rep <- matrix(rep(phi.cams,dim(t.staying.dat)[2]),
                         nrow = ncam,
@@ -28,7 +27,7 @@ EEDE.cov.fn <- function(cam.counts,
   stay.censor <- t.staying.dat
   stay.censor[stay.censor<censor] <- NA
   
-  logL <- sum(dpois(cam.counts,u.all.cam.rep,log=TRUE)) +
+  logL <- sum(dpois(cam.counts,u.all.cams,log=TRUE)) +
     sum(dexp(t.stay, 1/phi.cam.rep, log = TRUE),na.rm=T) +
     sum(pexp(stay.censor, 1/phi.cam.rep, lower.tail = F, log = TRUE),na.rm=T)
   return(logL)
@@ -46,7 +45,7 @@ REST.fn <- function(num.encounters.dat,
   u <- exp(param[1])
   phi <- exp(param[2])
   
-  Y <- u*t.steps*cam.A/phi
+  Y <- u*dt*t.steps*cam.A/phi
 
   # Account for censored times
   t.stay <- t.staying.dat
@@ -79,7 +78,7 @@ REST.cov.fn <- function(num.encounters.dat,
   u <- exp(Z%*%param[1:num.covs])
   phi <- exp(Z%*%param[(num.covs+1):length(param)])
 
-  eta <- u*t.steps/phi
+  eta <- u*dt*t.steps/phi
   
   # Account for censored times
   t.stay <- t.staying.dat

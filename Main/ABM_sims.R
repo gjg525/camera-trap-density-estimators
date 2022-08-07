@@ -38,7 +38,7 @@ clump.corr.walk <- function(bounds,
   
   XY.all <- as.data.frame(matrix(NA, nrow = 0, ncol = 4))
   colnames(XY.all) <- c("ID","X","Y","t")
-  XY.all[1:clump.size,] <- t(rbind(1:clump.size, X[,1], Y[,1], 1))
+  XY.all[1:clump.size,] <- t(rbind(1:clump.size, X[,1], Y[,1], dt))
   
   foo <- 5
   for(i in 2:(t.steps)) {
@@ -124,7 +124,7 @@ clump.corr.walk <- function(bounds,
             Y[ci,i-1] <- temp.Y + 0.00001*sign(sin(theta.all[ci]))*(temp.Y==r.corners[int.ind,2])
             
             # Track all intermediate steps
-            XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i - t.step)
+            XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i-1], Y[ci,i-1], i*dt - t.step)
 
           }
           # If encounter border, change turning angle
@@ -160,7 +160,7 @@ clump.corr.walk <- function(bounds,
           t.step <- 0
           
           # Track all intermediate steps
-          XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i], Y[ci,i], i)
+          XY.all[nrow(XY.all)+1,] <- c(ci, X[ci,i], Y[ci,i], i*dt)
         }
       }
       
@@ -238,8 +238,8 @@ animalxy.inds.2D <- ceiling(animalxy[,1:2])
 animalxy.inds <- animalxy.inds.2D[,1]+(animalxy.inds.2D[,2]-1)*q^0.5
 
 animalxy.all <- mutate(animalxy.all,
-                       XY_inds = ceiling(animalxy.all$X) +
-                         floor(animalxy.all$Y)*q^0.5,
+                       XY_inds = ceiling(animalxy.all$X/dx) +
+                         floor(animalxy.all$Y/dx)*q^0.5,
                        ii = 1:nrow(animalxy.all))
 
 # # Plot ABM simulations

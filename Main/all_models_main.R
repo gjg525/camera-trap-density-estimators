@@ -1,10 +1,10 @@
 # # Main script
 
-library(tidyverse)
+# library(tidyverse)
 # library(pbapply) 
 library(msm) 
 library(MASS)
-library(Directional)
+# library(Directional)
 library(raster)
 # library(fields)
 library(RColorBrewer)
@@ -19,6 +19,7 @@ library(coda)
 # library(patchwork)
 library(crayon)
 # library(GMCM)
+library(dplyr)
 library(beepr)
 options(error = beep)
 
@@ -37,12 +38,12 @@ source("./Main/MLE_functions.R")
 ###########################
 # Define camera sample variations
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- c(3:4)
+cs.all <- c(1:4)
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
-# 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
+# 1: all slow, 2: all medium, 3: all fast, 4: random 5: 80% fast
 lv.all <- c(5)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
@@ -222,24 +223,24 @@ for (cam.dist.set in cs.all){
       
       
       cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-      # Make sure all landscape types are sampled
-      sample_check <- c(sum(cam.counts[cam.slow]),
-                        sum(cam.counts[cam.med]),
-                        sum(cam.counts[cam.fast]))
-      while(any(sample_check == 0)) {
-        cam.samps <- sample(1:q,ncam, replace=FALSE)
-        # indices for each covariate type
-        cam.slow <- which(cam.samps %in% slow.inds)
-        cam.med <- which(cam.samps %in% med.inds)
-        cam.fast <- which(cam.samps %in% fast.inds)
-        cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
-        cam.props.rounds <- round(cam.props*100)/100
-
-        cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-        sample_check <- c(sum(cam.counts[cam.slow]),
-                          sum(cam.counts[cam.med]),
-                          sum(cam.counts[cam.fast]))
-      }
+      # # Make sure all landscape types are sampled
+      # sample_check <- c(sum(cam.counts[cam.slow]),
+      #                   sum(cam.counts[cam.med]),
+      #                   sum(cam.counts[cam.fast]))
+      # while(any(sample_check == 0)) {
+      #   cam.samps <- sample(1:q,ncam, replace=FALSE)
+      #   # indices for each covariate type
+      #   cam.slow <- which(cam.samps %in% slow.inds)
+      #   cam.med <- which(cam.samps %in% med.inds)
+      #   cam.fast <- which(cam.samps %in% fast.inds)
+      #   cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
+      #   cam.props.rounds <- round(cam.props*100)/100
+      # 
+      #   cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
+      #   sample_check <- c(sum(cam.counts[cam.slow]),
+      #                     sum(cam.counts[cam.med]),
+      #                     sum(cam.counts[cam.fast]))
+      # }
       }else{
       # # proportion sampled slow, med, fast
       ps <- ncam*c(0.1,0.1,0.1)
@@ -254,25 +255,25 @@ for (cam.dist.set in cs.all){
       cam.props.rounds <- round(cam.props*100)/100
       
       cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-      # Make sure all landscape types are sampled
-      sample_check <- c(sum(cam.counts[cam.slow]),
-                        sum(cam.counts[cam.med]),
-                        sum(cam.counts[cam.fast]))
-      while(any(sample_check == 0)) {
-        cam.samps <- c(sample(slow.inds,ps[1],replace=F),sample(med.inds,ps[2],replace=F),
-                       sample(fast.inds,ps[3],replace=F))
-        # indices for each covariate type
-        cam.slow <- which(cam.samps %in% slow.inds)
-        cam.med <- which(cam.samps %in% med.inds)
-        cam.fast <- which(cam.samps %in% fast.inds)
-        cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
-        cam.props.rounds <- round(cam.props*100)/100
-
-        cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
-        sample_check <- c(sum(cam.counts[cam.slow]),
-                          sum(cam.counts[cam.med]),
-                          sum(cam.counts[cam.fast]))
-      }
+      # # Make sure all landscape types are sampled
+      # sample_check <- c(sum(cam.counts[cam.slow]),
+      #                   sum(cam.counts[cam.med]),
+      #                   sum(cam.counts[cam.fast]))
+      # while(any(sample_check == 0)) {
+      #   cam.samps <- c(sample(slow.inds,ps[1],replace=F),sample(med.inds,ps[2],replace=F),
+      #                  sample(fast.inds,ps[3],replace=F))
+      #   # indices for each covariate type
+      #   cam.slow <- which(cam.samps %in% slow.inds)
+      #   cam.med <- which(cam.samps %in% med.inds)
+      #   cam.fast <- which(cam.samps %in% fast.inds)
+      #   cam.props <- c(length(cam.slow),length(cam.med),length(cam.fast))/ncam
+      #   cam.props.rounds <- round(cam.props*100)/100
+      # 
+      #   cam.counts <- u.abm.all[cam.samps] # num counts at each camera for each time
+      #   sample_check <- c(sum(cam.counts[cam.slow]),
+      #                     sum(cam.counts[cam.med]),
+      #                     sum(cam.counts[cam.fast]))
+      # }
       }
     
     # Make sure cam.samps adds up correctly
@@ -378,10 +379,10 @@ for (cam.dist.set in cs.all){
                          control = list(fnscale = -1, maxit = 5000),
                          hessian = T)
     # Calculate densities
-    beta.EEDE.cov <- exp(opt.EEDE.cov$par[1])
+    D.EEDE.cov <- exp(opt.EEDE.cov$par[1])
     phi.EEDE.cov <- exp(Z%*%opt.EEDE.cov$par[2:length(EEDE.cov.start)])
-    u.EEDE.cov <- beta.EEDE.cov*phi.EEDE.cov/sum(phi.EEDE.cov)
-    D.EEDE.MLE.cov <- sum(u.EEDE.cov)/t.steps
+    u.EEDE.cov <- D.EEDE.cov*phi.EEDE.cov/(sum(phi.EEDE.cov)*t.steps)
+    D.EEDE.MLE.cov <- sum(u.EEDE.cov)
     
     # Variance with msm::deltamethod
     varB <- -ginv(opt.EEDE.cov$hessian)
@@ -543,8 +544,8 @@ for (cam.dist.set in cs.all){
                          control = list(fnscale = -1, maxit = 5000),
                          hessian = T)
     # Calculate densities
-    u.MCT.cov <- exp(Z%*%opt.MCT.cov$par[1:sum(covariates.index)])
-    D.MCT.MLE.cov <- sum(u.MCT.cov)/t.steps
+    u.MCT.cov <- exp(Z%*%opt.MCT.cov$par[1:sum(covariates.index)])/t.steps
+    D.MCT.MLE.cov <- sum(u.MCT.cov)
     
     # Variance with msm::deltamethod
     varB <- -ginv(opt.MCT.cov$hessian)
@@ -619,9 +620,9 @@ for (cam.dist.set in cs.all){
     }
     
     # # plot(chain.EEDE.cov$tot.u[burn.in:n.iter])
-    beta.EEDE <- exp(mean(chain.EEDE.cov$gamma[burn.in:n.iter]))
+    D.EEDE <- exp(mean(chain.EEDE.cov$gamma[burn.in:n.iter]))
     phi.EEDE <- exp(Z%*%colMeans(chain.EEDE.cov$kappa[burn.in:n.iter,]))
-    u.EEDE <- beta.EEDE*phi.EEDE/sum(phi.EEDE)
+    u.EEDE <- D.EEDE*phi.EEDE/sum(phi.EEDE*t.steps)
     
     D.EEDE.cov <- mean(chain.EEDE.cov$tot.u[burn.in:n.iter])
     SD.EEDE.cov <- sd(chain.EEDE.cov$tot.u[burn.in:n.iter])
@@ -1070,15 +1071,15 @@ points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=1,cex=1.8)
   
   
   # # Compare proportional staying time distributions to abm distributions 
-  # comp.props <- rbind(abm.distribution.scale,stay.time.distribution.scale)
-  # colnames(comp.props) <- c("Slow","Medium","Fast")
-  # barplot(comp.props,legend = c("ABM Abundances","Staying Time"),
-  #         args.legend = list(x = "topright"),
-  #         beside=TRUE,
-  #         xlab = "Landscape Type",
-  #         # ylab = "Relative Quantities")
-  #         ylab = "Proportional Quantities",
-  #         cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
+  comp.props <- rbind(abm.distribution.scale,stay.time.distribution.scale)
+  colnames(comp.props) <- c("Slow","Medium","Fast")
+  barplot(comp.props,legend = c("ABM Abundances","Staying Time"),
+          args.legend = list(x = "topright"),
+          beside=TRUE,
+          xlab = "Landscape Type",
+          # ylab = "Relative Quantities")
+          ylab = "Proportional Quantities",
+          cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
   
   # # Compare absolute staying time distributions to abm distributions 
   # DF <- data.frame(Speed = c("Slow","Medium","Fast"), 
