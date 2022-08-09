@@ -1,6 +1,6 @@
 # # Main script
 
-# library(tidyverse)
+library(tidyverse)
 # library(pbapply) 
 library(msm) 
 library(MASS)
@@ -18,6 +18,7 @@ library(coda)
 # library(fitdistrplus)
 # library(patchwork)
 library(crayon)
+library(Rfast)
 # library(GMCM)
 library(dplyr)
 library(beepr)
@@ -44,7 +45,7 @@ cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: random 5: 80% fast
-lv.all <- c(5)
+lv.all <- c(4)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
@@ -91,7 +92,7 @@ covariates.index <- c(0,rep(1,3))
 
 # Data collection parms
 # Occasion length for TTE
-JJ <- 10  
+JJ <- 20  
 # TTE and staying time censor
 t.censor <- JJ
 num.occ <- t.steps/JJ
@@ -145,41 +146,62 @@ for (cam.dist.set in cs.all){
     # Define slow, medium, and fast movement speed cells
     z.slow <- matrix(0,q^0.5,q^0.5)
     z.med <- matrix(0,q^0.5,q^0.5)
-    z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
-    
-    # Initialize landscape with equal slow, medium, and fast cells
-    num.slow.inds <- round(q/3)
-    num.med.inds <- round(q/3)
-    
-    # Initialize landscape with mostly fast cells
-    if (lscape_var == 5){
-    num.slow.inds <- q/10
-    num.med.inds <- q/10
-    }
-    
-    # Calculate the number of fast cells
-    num.fast.inds <- q-num.slow.inds-num.med.inds
-    sample.inds <- sample(1:q,num.slow.inds+num.med.inds,replace = F)
-    fast.inds <- 1:q
-    fast.inds<-fast.inds[-sample.inds]
-    slow.inds <- sample.inds[1:num.slow.inds]
-    med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
-    z.fast[sample.inds] <- 0
-    z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
-    z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+    z.fast <- matrix(0,q^0.5,q^0.5)
+    # z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
+
+    sample.inds <- sample(1:q,q,replace = F)
     
     # Initialize homogeneous landscapes
     if (lscape_var == 1) {
-      z.med[med.inds] <- runif(num.med.inds,speed.bounds[1,1],speed.bounds[1,2])
-      z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[1,1],speed.bounds[1,2])
+      num.slow.inds <- q
+      num.med.inds <- 0
+      num.fast.inds <- 0
+      slow.inds <- sample.inds
+      med.inds <- 0
+      fast.inds <- 0
+      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
     } 
     else if (lscape_var == 2) {
-      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[2,1],speed.bounds[2,2])
-      z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[2,1],speed.bounds[2,2])
+      num.slow.inds <- 0
+      num.med.inds <- q
+      num.fast.inds <- 0
+      slow.inds <- 0
+      med.inds <- sample.inds
+      fast.inds <- 0
+      z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
     }
     else if (lscape_var == 3) {
-      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[3,1],speed.bounds[3,2])
-      z.med[med.inds] <- runif(num.med.inds,speed.bounds[3,1],speed.bounds[3,2])
+      num.slow.inds <- 0
+      num.med.inds <- 0
+      num.fast.inds <- q
+      slow.inds <- 0
+      med.inds <- 0
+      fast.inds <- sample.inds
+      z.fast <- matrix(runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
+    }
+    else if (lscape_var == 4) {
+      # Initialize landscape with equal slow, medium, and fast cells
+      num.slow.inds <- round(q/3)
+      num.med.inds <- round(q/3)
+      num.fast.inds <- q-num.slow.inds-num.med.inds
+      slow.inds <- sample.inds[1:num.slow.inds]
+      med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
+      fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
+      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
+      z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+      z.fast[sample.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
+    }
+    # Initialize landscape with mostly fast cells
+    else if (lscape_var == 5){
+      num.slow.inds <- q/10
+      num.med.inds <- q/10
+      num.fast.inds <- q-num.slow.inds-num.med.inds
+      slow.inds <- sample.inds[1:num.slow.inds]
+      med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
+      fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
+      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
+      z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+      z.fast[sample.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
     }
     
     ## Create rasterstack object for covariates
@@ -379,9 +401,9 @@ for (cam.dist.set in cs.all){
                          control = list(fnscale = -1, maxit = 5000),
                          hessian = T)
     # Calculate densities
-    D.EEDE.cov <- exp(opt.EEDE.cov$par[1])
+    D.EEDE.cov <- exp(opt.EEDE.cov$par[1])/t.steps
     phi.EEDE.cov <- exp(Z%*%opt.EEDE.cov$par[2:length(EEDE.cov.start)])
-    u.EEDE.cov <- D.EEDE.cov*phi.EEDE.cov/(sum(phi.EEDE.cov)*t.steps)
+    u.EEDE.cov <- D.EEDE.cov*phi.EEDE.cov/sum(phi.EEDE.cov)
     D.EEDE.MLE.cov <- sum(u.EEDE.cov)
     
     # Variance with msm::deltamethod
@@ -620,9 +642,9 @@ for (cam.dist.set in cs.all){
     }
     
     # # plot(chain.EEDE.cov$tot.u[burn.in:n.iter])
-    D.EEDE <- exp(mean(chain.EEDE.cov$gamma[burn.in:n.iter]))
+    D.EEDE <- exp(mean(chain.EEDE.cov$gamma[burn.in:n.iter]))/t.steps
     phi.EEDE <- exp(Z%*%colMeans(chain.EEDE.cov$kappa[burn.in:n.iter,]))
-    u.EEDE <- D.EEDE*phi.EEDE/sum(phi.EEDE*t.steps)
+    u.EEDE <- D.EEDE*phi.EEDE/sum(phi.EEDE)
     
     D.EEDE.cov <- mean(chain.EEDE.cov$tot.u[burn.in:n.iter])
     SD.EEDE.cov <- sd(chain.EEDE.cov$tot.u[burn.in:n.iter])
@@ -1005,6 +1027,7 @@ for (cam.dist.set in cs.all){
   
   # # Save .csv files
   write.csv(D.all,paste(fig_dir,"sim_data/",means_label,"_all.csv", sep = ""))
+  write.csv(SD.all,paste(fig_dir,"sim_data/",means_label,"_SD_all.csv", sep = ""))
   write.csv(D.all.Means.mat,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
   write.csv(D.all.Sds.mat,paste(fig_dir,"sim_data/",means_label,"_sds.csv", sep = ""))
   write.csv(all.props.Means,paste(fig_dir,"sim_data/",props_label,".csv", sep = ""))
@@ -1071,15 +1094,15 @@ points(seq(0.9,4.9,by=1),D.all.MLE.cov.Means, col="black", pch=1,cex=1.8)
   
   
   # # Compare proportional staying time distributions to abm distributions 
-  comp.props <- rbind(abm.distribution.scale,stay.time.distribution.scale)
-  colnames(comp.props) <- c("Slow","Medium","Fast")
-  barplot(comp.props,legend = c("ABM Abundances","Staying Time"),
-          args.legend = list(x = "topright"),
-          beside=TRUE,
-          xlab = "Landscape Type",
-          # ylab = "Relative Quantities")
-          ylab = "Proportional Quantities",
-          cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
+  # comp.props <- rbind(abm.distribution.scale,stay.time.distribution.scale)
+  # colnames(comp.props) <- c("Slow","Medium","Fast")
+  # barplot(comp.props,legend = c("ABM Abundances","Staying Time"),
+  #         args.legend = list(x = "topright"),
+  #         beside=TRUE,
+  #         xlab = "Landscape Type",
+  #         # ylab = "Relative Quantities")
+  #         ylab = "Proportional Quantities",
+  #         cex=1.3, cex.lab = 1.5, cex.axis = 1.3)
   
   # # Compare absolute staying time distributions to abm distributions 
   # DF <- data.frame(Speed = c("Slow","Medium","Fast"), 

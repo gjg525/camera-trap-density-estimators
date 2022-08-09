@@ -203,8 +203,9 @@ row_count_df <- data.frame(counts = c(c(row_counts[cam.slow]),
 
 ggplot(row_count_df, aes(x=counts, fill = speed)) +
   # geom_histogram(position = "identity", alpha = 0.4, bins = 4)
-  geom_density(position = "identity", alpha = 0.4, adjust = 2) +
+  geom_density(position = "identity", alpha = 0.4, adjust = 3) +
   labs(x = "Count", y = "Density", fill="Landscape Type") +
+  xlim(c(0,20)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -213,7 +214,7 @@ ggplot(row_count_df, aes(x=counts, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = paste(fig_dir,"figs/Counts_dat_histogram.eps", sep = ""), device = cairo_ps)
+ggsave(file = paste(fig_dir,"figs/Counts_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
                                 c(num.encounters.dat[cam.med]),
@@ -232,7 +233,7 @@ ggplot(enc_df, aes(x=encounter, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = paste(fig_dir,"figs/Encounter_dat_histogram.eps", sep = ""), device = cairo_ps)
+ggsave(file = paste(fig_dir,"figs/Encounter_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 
 stay_df <- data.frame(Stay_time = c(c(t.staying.dat[cam.slow,]),
@@ -254,7 +255,7 @@ ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = paste(fig_dir,"figs/Stay_time_dat_histogram.eps", sep = ""), device = cairo_ps)
+ggsave(file = paste(fig_dir,"figs/Stay_time_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
                                 c(TTE.dat[cam.med,]),
@@ -274,5 +275,5 @@ ggplot(TTE_df, aes(x=TTE, fill = speed)) +
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         panel.border = element_rect(colour = "black", fill=NA, size=1))
-# ggsave(file = paste(fig_dir,"figs/TTE_dat_histogram.eps", sep = ""), device = cairo_ps)
+ggsave(file = paste(fig_dir,"figs/TTE_dat_histogram.eps", sep = ""), device = cairo_ps)
 

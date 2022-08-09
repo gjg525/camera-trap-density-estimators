@@ -36,9 +36,9 @@ fit.model.mcmc.EEDE.cov <- function(n.iter,
   t.staying.dat.censor[t.staying.dat.censor<censor] <- NA
   
   # Initialize with landscape-scale covariates
-  beta <- exp(gamma[1])   
+  beta <- exp(gamma[1])
   phi <- exp(Z%*%kappa[1,]) 
-  u <- beta*phi/(sum(phi)*t.steps)
+  u <- beta*phi/sum(phi)
   
   tune.check <- 100
   batch_n <- 0
@@ -50,7 +50,7 @@ fit.model.mcmc.EEDE.cov <- function(n.iter,
     #Sample gamma
     gamma.star <- rnorm(1,gamma[i],exp(2*gamma.tune))
     beta.star <- exp(gamma.star)
-    u.star <- beta.star*phi/(sum(phi)*t.steps)
+    u.star <- beta.star*phi/(sum(phi))
     
     # repeat estimated parms for fitting
     u.star.cams <- u.star[cam.samps]
@@ -82,7 +82,7 @@ fit.model.mcmc.EEDE.cov <- function(n.iter,
       kappa.star <- kappa[i,]
       kappa.star[kk] <- rnorm(1,kappa[i,kk],exp(2*kappa.tune[kk]))
       phi.star <- exp(Z%*%kappa.star)
-      u.star <- beta*phi.star/(sum(phi.star)*t.steps)
+      u.star <- beta*phi.star/sum(phi.star)
       
       # # repeat estimated parms for fitting
       phi.star.cams <- phi.star[cam.samps]
