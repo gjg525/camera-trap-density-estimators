@@ -200,16 +200,10 @@ MCT.cov.fn <- function(cam.counts, param, Z, cam.samps, cov.inds){
 
   # repeat estimated parms for fitting
   d.cams <- d[cam.samps]
-  d.cam.rep <- matrix(rep(d.cams,t.steps),nrow = ncam,ncol = t.steps)
 
-  logL <- sum(dpois(cam.counts,d.cam.rep,log=TRUE)) 
+  logL <- sum(dpois(cam.counts,d.cams,log=TRUE)) 
   return(logL)
 }
-
-
-
-
-
 
 ####################################
 # STE no covariates

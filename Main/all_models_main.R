@@ -147,7 +147,6 @@ for (cam.dist.set in cs.all){
     z.slow <- matrix(0,q^0.5,q^0.5)
     z.med <- matrix(0,q^0.5,q^0.5)
     z.fast <- matrix(0,q^0.5,q^0.5)
-    # z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
 
     sample.inds <- sample(1:q,q,replace = F)
     
@@ -189,7 +188,7 @@ for (cam.dist.set in cs.all){
       fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
       z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
       z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
-      z.fast[sample.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
+      z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
     }
     # Initialize landscape with mostly fast cells
     else if (lscape_var == 5){
@@ -201,7 +200,7 @@ for (cam.dist.set in cs.all){
       fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
       z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
       z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
-      z.fast[sample.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
+      z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
     }
     
     ## Create rasterstack object for covariates
@@ -317,19 +316,19 @@ for (cam.dist.set in cs.all){
     med.counts <- sum(u.abm.all[med.inds])/t.steps
     fast.counts <- sum(u.abm.all[fast.inds])/t.steps
     
-    # Check that abm distributions match predicted distributions based on staying time
-    stay.time.distribution <- c(mean(t.stay.abm[slow.inds]),
-                                mean(t.stay.abm[med.inds]),
-                                mean(t.stay.abm[fast.inds]))
-    stay.time.distribution.scale <-stay.time.distribution/sum(stay.time.distribution)
-    abm.distribution <- c(slow.counts,med.counts,fast.counts)/c(num.slow.inds,num.med.inds,num.fast.inds)
-    abm.distribution.scale <- abm.distribution/sum(abm.distribution)
-    
     ################################
     # Collect data
     ################################
     source("./Main/collect_data.R")
   
+    # Check that abm distributions match predicted distributions based on staying time
+    stay.time.distribution <- c(mean(t.staying.dat[cam.slow,], na.rm=T),
+                                mean(t.staying.dat[cam.med,], na.rm=T),
+                                mean(t.staying.dat[cam.fast,], na.rm=T))
+    stay.time.distribution.scale <-stay.time.distribution/sum(stay.time.distribution)
+    abm.distribution <- c(slow.counts,med.counts,fast.counts)/c(num.slow.inds,num.med.inds,num.fast.inds)
+    abm.distribution.scale <- abm.distribution/sum(abm.distribution)
+    
     # Initialize start values for covariate fits based on data
     Zcam <- Z[cam.samps,]
     
@@ -337,7 +336,7 @@ for (cam.dist.set in cs.all){
       num.enc.cov.start <- rep(log(mean(num.encounters.dat))/mean(Zcam),3)
       t.staying.cov.start <- rep(log(mean(t.staying.dat,na.rm=T))/mean(Zcam),3)
       TTE.dat.cov.start <- rep(log(mean(TTE.dat,na.rm=T)/t.steps)/mean(Zcam),3)
-      cam.counts.cov.start <- rep(log(mean(cam.counts))/mean(Zcam),3)
+      cam.counts.cov.start <- rep(log(mean(cam.counts.sum))/mean(Zcam),3)
     } else {
     num.enc.cov.start <- c((log(mean(num.encounters.dat[cam.slow])))/mean(Zcam[cam.slow,1]),
                            (log(mean(num.encounters.dat[cam.med])))/mean(Zcam[cam.med,2]),
@@ -348,9 +347,9 @@ for (cam.dist.set in cs.all){
     TTE.dat.cov.start <- c((log(mean(TTE.dat[cam.slow,],na.rm=T)/t.steps))/mean(Zcam[cam.slow,1]),
                            (log(mean(TTE.dat[cam.med,],na.rm=T)/t.steps))/mean(Zcam[cam.med,2]),
                            (log(mean(TTE.dat[cam.fast,],na.rm=T)/t.steps))/mean(Zcam[cam.fast,3]))
-    cam.counts.cov.start <- c((log(mean(cam.counts[cam.slow,])))/mean(Zcam[cam.slow,1]),
-                              (log(mean(cam.counts[cam.med,])))/mean(Zcam[cam.med,2]),
-                              (log(mean(cam.counts[cam.fast,])))/mean(Zcam[cam.fast,3]))
+    cam.counts.cov.start <- c((log(mean(cam.counts.sum[cam.slow])))/mean(Zcam[cam.slow,1]),
+                              (log(mean(cam.counts.sum[cam.med])))/mean(Zcam[cam.med,2]),
+                              (log(mean(cam.counts.sum[cam.fast])))/mean(Zcam[cam.fast,3]))
     }
     
     
@@ -533,7 +532,7 @@ for (cam.dist.set in cs.all){
     # MCT no covariates 
     ################################
     # print("Fit Mean Count with MLE")
-    MCT.start <- log(mean(cam.counts))
+    MCT.start <- log(mean(cam.counts.sum))
     opt.MCT <- optim(MCT.start,
                      MCT.fn,
                      cam.counts = cam.counts.sum,
@@ -862,7 +861,7 @@ for (cam.dist.set in cs.all){
       warning(('Mean Count accept rate OOB'))
     }
     
-    # plot(chain.MCT.cov$tot.u)
+    # plot(chain.MCT.cov$tot.u[(n.iter-1000):n.iter])
     u.MCT <- exp(Z%*%colMeans(chain.MCT.cov$gamma[burn.in:n.iter,]))
 
     D.MCT.MCMC.cov <- mean(chain.MCT.cov$tot.u[burn.in:n.iter])

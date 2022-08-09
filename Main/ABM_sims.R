@@ -252,5 +252,5 @@ g <- ggplot( ) +
             color="black",
             fill= NA) +
   theme(legend.position = "none")
-g
+# g
 
