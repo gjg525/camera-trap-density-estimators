@@ -167,7 +167,7 @@ for (cam.dist.set in cs.all){
       slow.inds <- 0
       med.inds <- sample.inds
       fast.inds <- 0
-      z.med[med.inds] <- mean(speed.bounds[1,])
+      z.med[med.inds] <- mean(speed.bounds[2,])
     }
     else if (lscape_var == 3) {
       num.slow.inds <- 0
@@ -176,7 +176,7 @@ for (cam.dist.set in cs.all){
       slow.inds <- 0
       med.inds <- 0
       fast.inds <- sample.inds
-      z.fast[fast.inds] <- mean(speed.bounds[1,])
+      z.fast[fast.inds] <- mean(speed.bounds[3,])
     }
     else if (lscape_var == 4) {
       # Initialize landscape with equal slow, medium, and fast cells
@@ -1025,8 +1025,8 @@ for (cam.dist.set in cs.all){
   ####################################
   
   # # Save .csv files
-  write.csv(D.all,paste(fig_dir,"sim_data/",means_label,"_all.csv", sep = ""))
-  write.csv(SD.all,paste(fig_dir,"sim_data/",means_label,"_SD_all.csv", sep = ""))
+  write.csv(D.all,paste(fig_dir,"sim_data/all_",means_label,".csv", sep = ""))
+  write.csv(SD.all,paste(fig_dir,"sim_data/all_",means_label,"_SD.csv", sep = ""))
   write.csv(D.all.Means.mat,paste(fig_dir,"sim_data/",means_label,".csv", sep = ""))
   write.csv(D.all.Sds.mat,paste(fig_dir,"sim_data/",means_label,"_sds.csv", sep = ""))
   write.csv(all.props.Means,paste(fig_dir,"sim_data/",props_label,".csv", sep = ""))
