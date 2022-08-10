@@ -60,7 +60,7 @@ for(cc in 1:ncam){
     }
   }
 }
-TTE.dat[TTE.dat == 1] <- 0
+TTE.dat[TTE.dat == 1] <- 0.00001
 
 ########################################
 ## Collect STE data
