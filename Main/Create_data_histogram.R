@@ -102,24 +102,45 @@ STE.censor <- ncam*cam.A
 # Initialize landscape
 #########################################
 # Define slow, medium, and fast movement speed cells
-z.slow <- matrix(0,q^0.5,q^0.5)
-z.med <- matrix(0,q^0.5,q^0.5)
-z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
+# z.slow <- matrix(0,q^0.5,q^0.5)
+# z.med <- matrix(0,q^0.5,q^0.5)
+# z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
 
 # Initialize landscape with equal slow, medium, and fast cells
+# num.slow.inds <- round(q/3)
+# num.med.inds <- round(q/3)
+
+# # Calculate the number of fast cells
+# num.fast.inds <- q-num.slow.inds-num.med.inds
+# sample.inds <- sample(1:q,num.slow.inds+num.med.inds,replace = F)
+# fast.inds <- 1:q
+# fast.inds<-fast.inds[-sample.inds]
+# slow.inds <- sample.inds[1:num.slow.inds]
+# med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
+# z.fast[sample.inds] <- 0
+# z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
+# z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+
+
+
+
+# Define slow, medium, and fast movement speed cells
+z.slow <- matrix(0,q^0.5,q^0.5)
+z.med <- matrix(0,q^0.5,q^0.5)
+z.fast <- matrix(0,q^0.5,q^0.5)
+
+sample.inds <- sample(1:q,q,replace = F)
+
 num.slow.inds <- round(q/3)
 num.med.inds <- round(q/3)
-
-# Calculate the number of fast cells
 num.fast.inds <- q-num.slow.inds-num.med.inds
-sample.inds <- sample(1:q,num.slow.inds+num.med.inds,replace = F)
-fast.inds <- 1:q
-fast.inds<-fast.inds[-sample.inds]
 slow.inds <- sample.inds[1:num.slow.inds]
 med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
-z.fast[sample.inds] <- 0
+fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
 z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
 z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
+
 
 ## Create rasterstack object for covariates
 spatial.covariates <- raster(, nrows = q^0.5, ncols = q^0.5, xmn = 0, xmx = 1,
@@ -193,16 +214,14 @@ abm.distribution.scale <- abm.distribution/sum(abm.distribution)
 ################################
 source("./Main/collect_data.R")
 
-row_counts <- rowSums(cam.counts)
-row_count_df <- data.frame(counts = c(c(row_counts[cam.slow]),
-                                  c(row_counts[cam.med]),
-                                  c(row_counts[cam.fast])),
+row_count_df <- data.frame(counts = c(c(cam.counts.sum[cam.slow]),
+                                  c(cam.counts.sum[cam.med]),
+                                  c(cam.counts.sum[cam.fast])),
                        speed = rep(c("Slow","Medium","Fast"),
                                    each = length(c(row_counts[cam.slow]))))
 
 
 ggplot(row_count_df, aes(x=counts, fill = speed)) +
-  # geom_histogram(position = "identity", alpha = 0.4, bins = 4)
   geom_density(position = "identity", alpha = 0.4, adjust = 3) +
   labs(x = "Count", y = "Density", fill="Landscape Type") +
   xlim(c(0,100)) +
