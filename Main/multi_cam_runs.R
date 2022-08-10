@@ -1,34 +1,37 @@
 # # Main script (run aux_functions, MLE_functions, and Initializations prior)
 
-## NOTE tidyr may cause errors in extract function
 library(tidyverse)
-library(pbapply) # For progress bar in bootstrap
-library(msm) # Delta method from Fewster
+# library(pbapply) 
+library(msm) 
 library(MASS)
-library(Directional)
+# library(Directional)
 library(raster)
-library(fields)
+# library(fields)
 library(RColorBrewer)
-library(rasterVis)
+# library(rasterVis)
 library(truncnorm)
-library(mvtnorm)
-library(gridExtra)
+# library(mvtnorm)
+# library(gridExtra)
 library(fBasics)
 library(coda)
-library(Rlab)
-library(fitdistrplus)
-library(patchwork)
+# library(Rlab)
+# library(fitdistrplus)
+# library(patchwork)
 library(crayon)
+library(Rfast)
+# library(GMCM)
+library(dplyr)
 library(beepr)
 options(error = beep)
 
 gc() # take out the trash
 set.seed(1)
 
-setwd("/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models")
-source("MCMC_functions.R")
-source("MLE_functions.R")
+source("./Main/MCMC_functions.R")
+source("./Main/MLE_functions.R")
 
+# file directory for saving
+fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
 
 ###########################
 # Initialize
@@ -47,14 +50,14 @@ lv.labels <- c("slow_lscape_all","med_lscape_all","fast_lscape_all","","fast_lsc
 num.clumps <- 100
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
-num.runs <- 100 # number of repeated runs
+num.runs <- 2 # number of repeated runs
 
 # Correlated random walk parameter
 # 0 is uncorrelated random walk, inf is ideal gas model (5 is good correlation)
 corr.walk.kappa <- 5
 
 # # Number cameras
-ncam <-  20
+ncam <-  50
 ncam_all <- c(5, 10, 20, 50, 100)
 
 # # Legend labels
@@ -79,7 +82,7 @@ n.iter <- 5000
 burn.in <- 2000
 
 # moving speed bounds for slow, medium, fast speeds
-speed.bounds <- dx/rbind(c(5.1,4.9),c(3.1,2.9),c(1.1,0.9))
+speed.bounds <- dx/rbind(c(10.1,9.9),c(2.6,2.4),c(0.6,0.4))
 
 # indices for all covariates including intercept in spatial.covariates
 # Assumes 3 covariate types (slow, medium, fast)
@@ -87,7 +90,7 @@ covariates.index <- c(0,rep(1,3))
 
 # Data collection parms
 # Occasion length for TTE
-JJ <- 10  
+JJ <- 20  
 # TTE and staying time censor
 t.censor <- JJ
 num.occ <- t.steps/JJ
@@ -114,6 +117,10 @@ for (nca in 1:length(ncam_all)) {
   
   for (cam.dist.set in cs.all){
   for (lscape_var in lv.all){
+    # Labels for saving figures
+    means_label <- paste(cam.dist.labels[cam.dist.set],"_cams_means",lv.labels[lscape_var], sep = "")
+    props_label <- paste(cam.dist.labels[cam.dist.set],"_cams_props",lv.labels[lscape_var], sep = "")
+    
     ################################
     # Initialize multi-run results
     ################################
@@ -150,44 +157,16 @@ for (nca in 1:length(ncam_all)) {
       # Initialize landscape
       #########################################
       # Define slow, medium, and fast movement speed cells
-      z.slow <- matrix(0,q^0.5,q^0.5)
-      z.med <- matrix(0,q^0.5,q^0.5)
-      z.fast <- matrix(runif(q,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
-      
       # Initialize landscape with equal slow, medium, and fast cells
       num.slow.inds <- round(q/3)
       num.med.inds <- round(q/3)
-      
-      # Initialize landscape with mostly fast cells
-      if (lscape_var == 5){
-        num.slow.inds <- q/10
-        num.med.inds <- q/10
-      }
-      
-      # Calculate the number of fast cells
       num.fast.inds <- q-num.slow.inds-num.med.inds
-      sample.inds <- sample(1:q,num.slow.inds+num.med.inds,replace = F)
-      fast.inds <- 1:q
-      fast.inds<-fast.inds[-sample.inds]
       slow.inds <- sample.inds[1:num.slow.inds]
       med.inds <- sample.inds[(num.slow.inds+1):(num.slow.inds+num.med.inds)]
-      z.fast[sample.inds] <- 0
+      fast.inds <- sample.inds[(num.slow.inds+num.med.inds+1):q]
       z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
       z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
-      
-      # Initialize homogeneous landscapes
-      if (lscape_var == 1) {
-        z.med[med.inds] <- runif(num.med.inds,speed.bounds[1,1],speed.bounds[1,2])
-        z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[1,1],speed.bounds[1,2])
-      } 
-      else if (lscape_var == 2) {
-        z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[2,1],speed.bounds[2,2])
-        z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[2,1],speed.bounds[2,2])
-      }
-      else if (lscape_var == 3) {
-        z.med[med.inds] <- runif(num.med.inds,speed.bounds[3,1],speed.bounds[3,2])
-        z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
-      }
+      z.fast[fast.inds] <- runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2])
       
       ## Create rasterstack object for covariates
       spatial.covariates <- raster(, nrows = q^0.5, ncols = q^0.5, xmn = 0, xmx = 1,
@@ -216,7 +195,7 @@ for (nca in 1:length(ncam_all)) {
       # Random walks for nind animals
       #########################################
       # Run agent-based model
-      source("ABM_sims.R")
+      source("./Main/ABM_sims.R")
       
       if(cam.dist.set == 1){
         # # 1-cell sized cameras, randomly selected
@@ -232,12 +211,6 @@ for (nca in 1:length(ncam_all)) {
                             any(cam.samps == med.inds), 
                             any(cam.samps == fast.inds))
         }
-      }else{
-        # # proportion sampled slow, med, fast
-        ps <- ncam*c(0.1,0.1,0.1)
-        ps[cam.dist.set-1] <- ncam*0.8 
-        cam.samps <- c(sample(slow.inds,ps[1],replace=F),sample(med.inds,ps[2],replace=F),
-                       sample(fast.inds,ps[3],replace=F))
       }
       
       # Make sure cam.samps adds up correctly
@@ -278,31 +251,54 @@ for (nca in 1:length(ncam_all)) {
       ################################
       # Collect data
       ################################
-      source("collect_data.R")
+      source("./Main/collect_data.R")
       
-      # Fix start values for covariate fits 
-      gamma.EEDE.start <- -3
-      kappa.EEDE.start <- c(7.3, 3.4, 0.12)
+      # Initialize start values for covariate fits based on data
+      Zcam <- Z[cam.samps,]
+      
+      if (all(cam.counts[cam.slow,]==0) || all(cam.counts[cam.med,]==0) || all(cam.counts[cam.fast,]==0)) {
+        num.enc.cov.start <- rep(log(mean(num.encounters.dat))/mean(Zcam),3)
+        t.staying.cov.start <- rep(log(mean(t.staying.dat,na.rm=T))/mean(Zcam),3)
+        TTE.dat.cov.start <- rep(log(mean(TTE.dat,na.rm=T)/t.steps)/mean(Zcam),3)
+        cam.counts.cov.start <- rep(log(mean(cam.counts.sum))/mean(Zcam),3)
+      } else {
+        num.enc.cov.start <- c((log(mean(num.encounters.dat[cam.slow])))/mean(Zcam[cam.slow,1]),
+                               (log(mean(num.encounters.dat[cam.med])))/mean(Zcam[cam.med,2]),
+                               (log(mean(num.encounters.dat[cam.fast])))/mean(Zcam[cam.fast,3]))
+        t.staying.cov.start <- c((log(mean(t.staying.dat[cam.slow,],na.rm=T)))/mean(Zcam[cam.slow,1]),
+                                 (log(mean(t.staying.dat[cam.med,],na.rm=T)))/mean(Zcam[cam.med,2]),
+                                 (log(mean(t.staying.dat[cam.fast,],na.rm=T)))/mean(Zcam[cam.fast,3]))
+        TTE.dat.cov.start <- c((log(mean(TTE.dat[cam.slow,],na.rm=T)/t.steps))/mean(Zcam[cam.slow,1]),
+                               (log(mean(TTE.dat[cam.med,],na.rm=T)/t.steps))/mean(Zcam[cam.med,2]),
+                               (log(mean(TTE.dat[cam.fast,],na.rm=T)/t.steps))/mean(Zcam[cam.fast,3]))
+        cam.counts.cov.start <- c((log(mean(cam.counts.sum[cam.slow])))/mean(Zcam[cam.slow,1]),
+                                  (log(mean(cam.counts.sum[cam.med])))/mean(Zcam[cam.med,2]),
+                                  (log(mean(cam.counts.sum[cam.fast])))/mean(Zcam[cam.fast,3]))
+      }
+      
+      
+      gamma.EEDE.start <- log(mean(cam.counts))-mean(Zcam%*%c(t.staying.cov.start))
+      kappa.EEDE.start <- c(t.staying.cov.start)
       gamma.EEDE.prior.var <- 10^6
       kappa.EEDE.prior.var <- 10^6
       gamma.EEDE.tune <- -1
       kappa.EEDE.tune <- c(-1,-1,-1)
       
-      gamma.REST.start <- c(-10.7, -6.38, -1.73)
-      kappa.REST.start <- c(7.3, 3.4, 0.12)
+      gamma.REST.start <- -c(num.enc.cov.start)
+      kappa.REST.start <- c(t.staying.cov.start)
       gamma.REST.prior.var <- 10^6
       kappa.REST.prior.var <- 10^6
       gamma.REST.tune <- c(-1,-1,-1)
       kappa.REST.tune <-c(-1,-1,-1)
       
-      gamma.TTE.start <- c(-20.0, -11.2, -3.56)
-      kappa.TTE.start <- c(7.3, 3.4, 0.12)
+      gamma.TTE.start <- c(TTE.dat.cov.start)
+      kappa.TTE.start <- c(t.staying.cov.start)
       gamma.TTE.prior.var <- 10^6
       kappa.TTE.prior.var <- 10^6
       gamma.TTE.tune <- c(-1,-1,-1)
       kappa.TTE.tune <- c(-1,-1,-1)
       
-      gamma.MCT.start <-c(-8.34, -6.20, -3.40)
+      gamma.MCT.start <-c(cam.counts.cov.start)
       gamma.MCT.prior.var <- 10^6
       gamma.MCT.tune <- c(-1,-1,-1)
       
@@ -462,12 +458,12 @@ for (nca in 1:length(ncam_all)) {
       MCT.start <- -2.17
       opt.MCT <- optim(MCT.start,
                        MCT.fn,
-                       cam.counts = cam.counts,
+                       cam.counts = cam.counts.sum,
                        control = list(fnscale = -1, maxit = 5000),
                        hessian = T, 
                        method = "Brent", lower = -10, upper = 10)
       MCT.d <- exp(opt.MCT$par)
-      D.MCT.MLE <- tot.A*MCT.d/cam.A
+      D.MCT.MLE <- tot.A*MCT.d/(cam.A*t.steps)
       
       # Variance with msm::deltamethod
       varB <- -ginv(opt.MCT$hessian)
@@ -485,14 +481,14 @@ for (nca in 1:length(ncam_all)) {
       MCT.cov.start <- gamma.MCT.start
       opt.MCT.cov <- optim(MCT.cov.start,
                            MCT.cov.fn,
-                           cam.counts = cam.counts,
+                           cam.counts = cam.counts.sum,
                            Z = Z,
                            cam.samps = cam.samps,
                            cov.inds = covariates.index,
                            control = list(fnscale = -1, maxit = 5000),
                            hessian = T)
       # Calculate densities
-      u.MCT.cov <- exp(Z%*%opt.MCT.cov$par[1:sum(covariates.index)])
+      u.MCT.cov <- exp(Z%*%opt.MCT.cov$par[1:sum(covariates.index)])/t.steps
       D.MCT.MLE.cov <- sum(u.MCT.cov)
       
       # Variance with msm::deltamethod
@@ -879,6 +875,10 @@ for (nca in 1:length(ncam_all)) {
       
     }
 
+    # # Save .csv files
+    write.csv(D.all,paste(fig_dir,"sim_data/",means_label,nca, "_cams.csv", sep = ""))
+    write.csv(SD.all,paste(fig_dir,"sim_data/",means_label,nca, "_cams_SD.csv", sep = ""))
+    
     ####################################
     # Calculate Summaries
     ####################################
