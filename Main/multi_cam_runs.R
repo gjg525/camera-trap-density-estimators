@@ -50,7 +50,7 @@ lv.labels <- c("slow_lscape_all","med_lscape_all","fast_lscape_all","","fast_lsc
 num.clumps <- 100
 clump.size <- rep(1,num.clumps)
 nind<-sum(clump.size)
-num.runs <- 2 # number of repeated runs
+num.runs <- 100 # number of repeated runs
 
 # Correlated random walk parameter
 # 0 is uncorrelated random walk, inf is ideal gas model (5 is good correlation)
@@ -157,6 +157,11 @@ for (nca in 1:length(ncam_all)) {
       # Initialize landscape
       #########################################
       # Define slow, medium, and fast movement speed cells
+      z.slow <- matrix(0,q^0.5,q^0.5)
+      z.med <- matrix(0,q^0.5,q^0.5)
+      z.fast <- matrix(0,q^0.5,q^0.5)
+      
+      sample.inds <- sample(1:q,q,replace = F)
       # Initialize landscape with equal slow, medium, and fast cells
       num.slow.inds <- round(q/3)
       num.med.inds <- round(q/3)
