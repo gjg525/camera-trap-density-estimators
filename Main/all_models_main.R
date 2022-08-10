@@ -39,13 +39,13 @@ source("./Main/MLE_functions.R")
 ###########################
 # Define camera sample variations
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- c(1:4)
+cs.all <- c(1)
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: random 5: 80% fast
-lv.all <- c(4)
+lv.all <- c(1:3)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
@@ -158,7 +158,7 @@ for (cam.dist.set in cs.all){
       slow.inds <- sample.inds
       med.inds <- 0
       fast.inds <- 0
-      z.slow[slow.inds] <- runif(num.slow.inds,speed.bounds[1,1],speed.bounds[1,2])
+      z.slow[slow.inds] <- mean(speed.bounds[1,])
     } 
     else if (lscape_var == 2) {
       num.slow.inds <- 0
@@ -167,7 +167,7 @@ for (cam.dist.set in cs.all){
       slow.inds <- 0
       med.inds <- sample.inds
       fast.inds <- 0
-      z.med[med.inds] <- runif(num.med.inds,speed.bounds[2,1],speed.bounds[2,2])
+      z.med[med.inds] <- mean(speed.bounds[1,])
     }
     else if (lscape_var == 3) {
       num.slow.inds <- 0
@@ -176,7 +176,7 @@ for (cam.dist.set in cs.all){
       slow.inds <- 0
       med.inds <- 0
       fast.inds <- sample.inds
-      z.fast <- matrix(runif(num.fast.inds,speed.bounds[3,1],speed.bounds[3,2]),q^0.5,q^0.5)
+      z.fast[fast.inds] <- mean(speed.bounds[1,])
     }
     else if (lscape_var == 4) {
       # Initialize landscape with equal slow, medium, and fast cells
