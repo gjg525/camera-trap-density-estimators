@@ -10,13 +10,13 @@ leg.props<-c("EEDE (MLE)", "EEDE (MCMC)","REST (MLE)", "REST (MCMC)",
              "TTE (MLE)", "TTE (MCMC)", "MCT (MLE)", "MCT (MCMC)")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 1:4
+cs.all <- 1
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 4
+lv.all <- 5
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){

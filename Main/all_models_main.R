@@ -39,13 +39,13 @@ source("./Main/MLE_functions.R")
 ###########################
 # Define camera sample variations
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- c(1)
+cs.all <- c(1:4)
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: random 5: 80% fast
-lv.all <- c(1:3)
+lv.all <- c(5)
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 # Variable parms
