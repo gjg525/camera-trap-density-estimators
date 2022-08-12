@@ -940,39 +940,44 @@ for (cam.dist.set in cs.all){
   # Calculate Summaries
   ####################################
   D.all.Means <- colMeans(D.all)
-  # colSds for some reason does not like NA vals
-  D.all2 <- D.all
-  D.all2[is.na(D.all2)] <- 0
-  D.all.Sds <- colSds(D.all2)
-  D.all.Sds[D.all.Sds == 0] <- NA
+  D.all.Sds <- apply(D.all, 2, sd)
+  # # colSds for some reason does not like NA vals
+  # D.all2 <- D.all
+  # D.all2[is.na(D.all2)] <- 0
+  # D.all.Sds <- colSds(D.all2)
+  # D.all.Sds[D.all.Sds == 0] <- NA
   
   D.all.MLE.Means <- colMeans(D.all.MLE)
-  # colSds for some reason does not like NA vals
-  D.all2.MLE <- D.all.MLE
-  D.all2.MLE[is.na(D.all2.MLE)] <- 0
-  D.all.MLE.Sds <- colSds(D.all2.MLE)
-  D.all.MLE.Sds[D.all.MLE.Sds == 0] <- NA
+  D.all.MLE.Sds <- apply(D.all.MLE, 2, sd)
+  # # colSds for some reason does not like NA vals
+  # D.all2.MLE <- D.all.MLE
+  # D.all2.MLE[is.na(D.all2.MLE)] <- 0
+  # D.all.MLE.Sds <- colSds(D.all2.MLE)
+  # D.all.MLE.Sds[D.all.MLE.Sds == 0] <- NA
   
   D.all.MLE.cov.Means <- colMeans(D.all.MLE.cov)
-  # colSds for some reason does not like NA vals
-  D.all2.MLE.cov<- D.all.MLE.cov
-  D.all2.MLE.cov[is.na(D.all2.MLE.cov)] <- 0
-  D.all.MLE.cov.Sds <- colSds(D.all2.MLE.cov)
-  D.all.MLE.cov.Sds[D.all.MLE.cov.Sds == 0] <- NA
+  D.all.MLE.cov.Sds <- apply(D.all.MLE.cov, 2, sd)
+  # # colSds for some reason does not like NA vals
+  # D.all2.MLE.cov<- D.all.MLE.cov
+  # D.all2.MLE.cov[is.na(D.all2.MLE.cov)] <- 0
+  # D.all.MLE.cov.Sds <- colSds(D.all2.MLE.cov)
+  # D.all.MLE.cov.Sds[D.all.MLE.cov.Sds == 0] <- NA
   
   D.all.MCMC.Means <- colMeans(D.all.MCMC)
-  # colSds for some reason does not like NA vals
-  D.all2.MCMC <- D.all.MCMC
-  D.all2.MCMC[is.na(D.all2.MCMC)] <- 0
-  D.all.MCMC.Sds <- colSds(D.all2.MCMC)
-  D.all.MCMC.Sds[D.all.MCMC.Sds == 0] <- NA
+  D.all.MCMC.Sds <- apply(D.all.MCMC, 2, sd)
+  # # colSds for some reason does not like NA vals
+  # D.all2.MCMC <- D.all.MCMC
+  # D.all2.MCMC[is.na(D.all2.MCMC)] <- 0
+  # D.all.MCMC.Sds <- colSds(D.all2.MCMC)
+  # D.all.MCMC.Sds[D.all.MCMC.Sds == 0] <- NA
   
   D.all.MCMC.cov.Means <- colMeans(D.all.MCMC.cov)
-  # colSds for some reason does not like NA vals
-  D.all2.MCMC.cov <- D.all.MCMC.cov
-  D.all2.MCMC.cov[is.na(D.all2.MCMC.cov)] <- 0
-  D.all.MCMC.cov.Sds <- colSds(D.all2.MCMC.cov)
-  D.all.MCMC.cov.Sds[D.all.MCMC.cov.Sds == 0] <- NA
+  D.all.MCMC.cov.Sds <- apply(D.all.MCMC.cov, 2, sd)
+  # # colSds for some reason does not like NA vals
+  # D.all2.MCMC.cov <- D.all.MCMC.cov
+  # D.all2.MCMC.cov[is.na(D.all2.MCMC.cov)] <- 0
+  # D.all.MCMC.cov.Sds <- colSds(D.all2.MCMC.cov)
+  # D.all.MCMC.cov.Sds[D.all.MCMC.cov.Sds == 0] <- NA
   
   D.all.Means.mat <- matrix(D.all.Means, nrow = 4, ncol = 5, byrow = T) 
   D.all.Sds.mat <- matrix(D.all.Sds, nrow = 4, ncol = 5, byrow = T) 
