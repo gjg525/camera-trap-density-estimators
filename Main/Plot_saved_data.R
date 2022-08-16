@@ -3,6 +3,7 @@ library(GMCM)
 
 # Read saved files for plotting
 fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
+fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Initializations
 nind <- 100
@@ -10,7 +11,7 @@ leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
 leg.props<-c("EEDE", "REST", "TTE", "MCT")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 4
+cs.all <- 1
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
@@ -122,11 +123,9 @@ if (any(lv.all == 1:3)) {
                    names = c("Slow", "Medium", "Fast"), 
                    beside = T, 
                    legend.text=T,
-                   # col = c("black",brewer.pal(4, "Set2"),brewer.pal(4, "Set2")),
-                   col = c("black",brewer.pal(4, "Set2")),
+                   # col = c("black",brewer.pal(4, "Set2")),
+                   col = c("black",fig_colors[1:4]),
                    # border = c("black",brewer.pal(8, "Paired")),
-                   # alpha = c(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5),
-                   # col=c("black","blue","red","green","violet","blue","red","green","violet"),
                    density=c(300,300,300,300,300),
                    angle=c(0,0,0,0,0),
                    ylim=c(0,1) , ylab="Proportion Occupied",xlab = "Movement Speeds",

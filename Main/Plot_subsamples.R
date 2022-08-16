@@ -5,9 +5,10 @@ fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models
 
 means_label <- "random_cams_means"
 
-IDs <- c("mean", "mean_cov", "sd", "sd_cov", "CI", "CI_cov", "CI_sd", "CI_cov_sd")
+IDs <- c("mean", "mean_cov", "sd", "sd_cov", "SD", "SD_cov", "SD_sd", "SD_cov_sd")
 Model <- c("EEDE", "REST", "TTE", "MCT", "STE")
 ncam_all <- c(5, 10, 20, 50, 100)
+fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 results_out <- data.frame(matrix(NA, nrow = 0, ncol = 4))
 for (nca in 1:length(ncam_all)) {
@@ -41,8 +42,8 @@ for (nca in 1:length(ncam_all)) {
   # mcmc.sds[nca,] <- apply(D.all.mcmc, 2, sd, na.rm = T)
   # mcmc.sds.cov[nca,] <- apply(D.all.mcmc.cov, 2, sd, na.rm = T)
   # 
-  # mcmc.CI[nca,] <- colMeans(SD.all.mcmc, na.rm = T)
-  # mcmc.CI.cov[nca,] <- colMeans(SD.all.mcmc.cov, na.rm = T)
+  # mcmc.SD[nca,] <- colMeans(SD.all.mcmc, na.rm = T)
+  # mcmc.SD.cov[nca,] <- colMeans(SD.all.mcmc.cov, na.rm = T)
   
 }
 # colnames(results_out) <- c("num_cams", "ID", "EEDE", "REST", "TTE", "MCT", "STE")
@@ -50,63 +51,78 @@ colnames(results_out) <- c("num_cams", "ID", "Model", "Est")
 results_out$Est <- as.numeric(results_out$Est)
 results_out$num_cams <- as.numeric(results_out$num_cams)
 results_out <- results_out[!is.na(results_out$Est),]
+results_out$Model <- factor(results_out$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
 
 
 ggplot(data = results_out[results_out$ID == "mean",], 
        aes(x = num_cams[ID == "mean"], color = Model[ID == "mean"])) +
-  geom_line(aes(y = Est[ID == "mean"]), size = 1.5) +
   geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "mean"] - results_out$Est[results_out$ID == "sd"],
                   ymax=results_out$Est[results_out$ID == "mean"] + results_out$Est[results_out$ID == "sd"], 
                   fill = results_out$Model[results_out$ID == "mean"]),
               linetype = 2,
-              alpha=0.3) +
+              alpha=0.6) +
+  geom_line(aes(y = Est[ID == "mean"]), size = 1.5) +
   labs(x = "Number of Cameras",
        y = paste("Non-Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15)) +
+  scale_color_manual(values = fig_colors[2:5]) +
+  scale_fill_manual(values = fig_colors[2:5])
+ggsave(paste(fig_dir,"figs/Noncov_subcam_mean.eps", sep = ""), device = cairo_ps)
 
 ggplot(data = results_out[results_out$ID == "mean_cov",], 
        aes(x = num_cams[ID == "mean_cov"], color = Model[ID == "mean_cov"])) +
-  geom_line(aes(y = Est[ID == "mean_cov"]), size = 1.5) +
   geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "mean_cov"] - results_out$Est[results_out$ID == "sd_cov"],
                   ymax=results_out$Est[results_out$ID == "mean_cov"] + results_out$Est[results_out$ID == "sd_cov"], 
                   fill = results_out$Model[results_out$ID == "mean_cov"]),
               linetype = 2,
-              alpha=0.3) +
+              alpha=0.6) +
+  geom_line(aes(y = Est[ID == "mean_cov"]), size = 1.5) +
   labs(x = "Number of Cameras",
        y = paste("Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15)) +
+  scale_color_manual(values = fig_colors[1:4]) +
+  scale_fill_manual(values = fig_colors[1:4]) 
+ggsave(paste(fig_dir,"figs/Cov_subcam_mean.eps", sep = ""), device = cairo_ps)
 
-ggplot(data = results_out[results_out$ID == "CI",], 
-       aes(x = num_cams[ID == "CI"], color = Model[ID == "CI"])) +
-  geom_line(aes(y = Est[ID == "CI"]), size = 1.5) +
-  geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "CI"] - results_out$Est[results_out$ID == "CI_sd"],
-                  ymax=results_out$Est[results_out$ID == "CI"] + results_out$Est[results_out$ID == "CI_sd"], 
-                  fill = results_out$Model[results_out$ID == "CI"]),
+
+ggplot(data = results_out[results_out$ID == "SD",], 
+       aes(x = num_cams[ID == "SD"], color = Model[ID == "SD"])) +
+  geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "SD"] - results_out$Est[results_out$ID == "SD_sd"],
+                  ymax=results_out$Est[results_out$ID == "SD"] + results_out$Est[results_out$ID == "SD_sd"], 
+                  fill = results_out$Model[results_out$ID == "SD"]),
               linetype = 2,
-              alpha=0.3) +
+              alpha=0.6) +
+  geom_line(aes(y = Est[ID == "SD"]), size = 1.5) +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n CI Estimates"),
+       y = paste("Non-Covariate \n SD Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15)) +
+  scale_color_manual(values = fig_colors[2:5]) +
+  scale_fill_manual(values = fig_colors[2:5])
+ggsave(paste(fig_dir,"figs/Noncov_subcam_sd.eps", sep = ""), device = cairo_ps)
 
-ggplot(data = results_out[results_out$ID == "CI_cov",], 
-       aes(x = num_cams[ID == "CI_cov"], color = Model[ID == "CI_cov"])) +
-  geom_line(aes(y = Est[ID == "CI_cov"]), size = 1.5) +
-  geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "CI_cov"] - results_out$Est[results_out$ID == "CI_cov_sd"],
-                  ymax=results_out$Est[results_out$ID == "CI_cov"] + results_out$Est[results_out$ID == "CI_cov_sd"], 
-                  fill = results_out$Model[results_out$ID == "CI_cov"]),
+
+ggplot(data = results_out[results_out$ID == "SD_cov",], 
+       aes(x = num_cams[ID == "SD_cov"], color = Model[ID == "SD_cov"])) +
+  geom_ribbon(aes(ymin=results_out$Est[results_out$ID == "SD_cov"] - results_out$Est[results_out$ID == "SD_cov_sd"],
+                  ymax=results_out$Est[results_out$ID == "SD_cov"] + results_out$Est[results_out$ID == "SD_cov_sd"], 
+                  fill = results_out$Model[results_out$ID == "SD_cov"]),
               linetype = 2,
-              alpha=0.3) +
+              alpha=0.6) +
+  geom_line(aes(y = Est[ID == "SD_cov"]), size = 1.5) +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n CI Estimates"),
+       y = paste("Covariate \n SD Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15)) +
+  scale_color_manual(values = fig_colors[1:4]) +
+  scale_fill_manual(values = fig_colors[1:4])
+ggsave(paste(fig_dir,"figs/Cov_subcam_sd.eps", sep = ""), device = cairo_ps)
 
 
 
