@@ -66,10 +66,16 @@ ggplot(data = results_out[results_out$ID == "mean",],
        y = paste("Non-Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 20)) +
+  theme(text = element_text(size = 20),
+        legend.title=element_blank(), panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.87, 0.77)) +
   scale_color_manual(values = fig_colors[2:5]) +
   scale_fill_manual(values = fig_colors[2:5])
-ggsave(paste(fig_dir,"figs/Noncov_subcam_mean.eps", sep = ""), device = cairo_ps)
+# ggsave(paste(fig_dir,"figs/Noncov_subcam_mean.eps", sep = ""), device = cairo_ps)
 
 ggplot(data = results_out[results_out$ID == "mean_cov",], 
        aes(x = num_cams[ID == "mean_cov"], color = Model[ID == "mean_cov"])) +
@@ -83,10 +89,16 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
        y = paste("Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 20)) +
+  theme(text = element_text(size = 20),
+        legend.title=element_blank(), panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.87, 0.77)) +
   scale_color_manual(values = fig_colors[1:4]) +
   scale_fill_manual(values = fig_colors[1:4]) 
-ggsave(paste(fig_dir,"figs/Cov_subcam_mean.eps", sep = ""), device = cairo_ps)
+# ggsave(paste(fig_dir,"figs/Cov_subcam_mean.eps", sep = ""), device = cairo_ps)
 
 
 ggplot(data = results_out[results_out$ID == "SD",], 
@@ -101,10 +113,16 @@ ggplot(data = results_out[results_out$ID == "SD",],
        y = paste("Non-Covariate \n SD Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 20)) +
+  theme(text = element_text(size = 20),
+        legend.title=element_blank(), panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.87, 0.77)) +
   scale_color_manual(values = fig_colors[2:5]) +
   scale_fill_manual(values = fig_colors[2:5])
-ggsave(paste(fig_dir,"figs/Noncov_subcam_sd.eps", sep = ""), device = cairo_ps)
+# ggsave(paste(fig_dir,"figs/Noncov_subcam_sd.eps", sep = ""), device = cairo_ps)
 
 
 ggplot(data = results_out[results_out$ID == "SD_cov",], 
@@ -119,10 +137,16 @@ ggplot(data = results_out[results_out$ID == "SD_cov",],
        y = paste("Covariate \n SD Estimates"),
        fill = "Model") +
   guides(color = "none") +
-  theme(text = element_text(size = 20)) +
+  theme(text = element_text(size = 20),
+        legend.title=element_blank(), panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.87, 0.77)) +
   scale_color_manual(values = fig_colors[1:4]) +
   scale_fill_manual(values = fig_colors[1:4])
-ggsave(paste(fig_dir,"figs/Cov_subcam_sd.eps", sep = ""), device = cairo_ps)
+# ggsave(paste(fig_dir,"figs/Cov_subcam_sd.eps", sep = ""), device = cairo_ps)
 
 
 
