@@ -1,5 +1,6 @@
 library(RColorBrewer)
 library(GMCM)
+library(tidyverse)
 
 # Read saved files for plotting
 fig_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Code/All_models/"
@@ -11,7 +12,7 @@ leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
 leg.props<-c("EEDE", "REST", "TTE", "MCT")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 1
+cs.all <- 4
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
@@ -47,6 +48,39 @@ colnames(all.props.Means) <- c("Slow","Medium","fast")
 D.all.Means <- colMeans(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)])
 D.all.Sds <- apply(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)], 2, sd)
 
+# Convert all data from wide to long format
+D.all.df <- data.frame(D.all.Means.mat.all[,12:21])
+D.all.df <- D.all.df %>% 
+  pivot_longer(cols = colnames(D.all.df),
+               names_to='Model',
+               values_to='Est') %>% 
+  mutate(Covariate = NA)
+D.all.df$Covariate[grepl(".2", D.all.df$Model, fixed = TRUE)] <- "Non-Covariate"
+D.all.df$Covariate[grepl(".3", D.all.df$Model, fixed = TRUE)] <- "Covariate"
+D.all.df$Model <- gsub(x = D.all.df$Model, pattern = "(.2)", replacement = "")
+D.all.df$Model <- gsub(x = D.all.df$Model, pattern = "(.3)", replacement = "")
+D.all.df$Model[grepl(".3", D.all.df$Model, fixed = TRUE)] <- "Yes"
+D.all.df$Est[is.na(D.all.df$Est)] <- 100
+D.all.df$Model <- factor(D.all.df$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
+D.all.df$Covariate <- factor(D.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
+  
+# Convert all data from wide to long format
+SD.all.df <- data.frame(D.all.Sds.mat.all[,12:21])
+SD.all.df <- SD.all.df %>% 
+  pivot_longer(cols = colnames(SD.all.df),
+               names_to='Model',
+               values_to='Est') %>% 
+  mutate(Covariate = NA)
+SD.all.df$Covariate[grepl(".2", SD.all.df$Model, fixed = TRUE)] <- "Non-Covariate"
+SD.all.df$Covariate[grepl(".3", SD.all.df$Model, fixed = TRUE)] <- "Covariate"
+SD.all.df$Model <- gsub(x = SD.all.df$Model, pattern = "(.2)", replacement = "")
+SD.all.df$Model <- gsub(x = SD.all.df$Model, pattern = "(.3)", replacement = "")
+SD.all.df$Model[grepl(".3", SD.all.df$Model, fixed = TRUE)] <- "Yes"
+SD.all.df$Est[is.na(SD.all.df$Est)] <- 0
+SD.all.df$Model <- factor(SD.all.df$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
+SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
+
+
 D.all.MLE.Means <- D.all.Means[1:5]
 D.all.MLE.Sds <- D.all.Sds[1:5]
 D.all.MLE.cov.Means <- D.all.Means[6:10]
@@ -68,54 +102,73 @@ SD.all.MCMC.cov.Sds <- SD.all.Sds[16:20]
 if (any(lv.all == 1:3)) {
   # setEPS()
   # postscript(paste(fig_dir,"figs/",means_label,".eps", sep = ""),width=8,height=5)
-  op <- par(mar=c(5, 6, 4, 2) + 0.1)
+  # op <- par(mar=c(5, 6, 4, 2) + 0.1)
   cam.props.label <- paste("Camera Bias: ", cam.dist.labels.caps[cam.dist.set], sep = "")
-  plot(seq(0.9,4.9,by=1), 
-       D.all.MCMC.Means, 
-       ylim=c(min(nind, D.all.Means[11:20] - D.all.Sds[11:20],na.rm=T),
-              max(nind, D.all.Means[11:20] + D.all.Sds[11:20],na.rm=T)),
-       xlim=c(0.5,5.5),xlab="Method", 
-       ylab=paste(cam.props.label,"\n Mean Estimates"), 
-       pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
-  points(seq(1.1,5.1,by=1),D.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
-  arrows(x0=seq(0.9,4.9,by=1), y0=D.all.MCMC.Means-D.all.MCMC.Sds, 
-         x1=seq(0.9,4.9,by=1), y1=D.all.MCMC.Means+D.all.MCMC.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  arrows(x0=seq(1.1,5.1,by=1), y0=D.all.MCMC.cov.Means-D.all.MCMC.cov.Sds, 
-         x1=seq(1.1,5.1,by=1), y1=D.all.MCMC.cov.Means+D.all.MCMC.cov.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  lines(c(0.3,5.7), c(nind,nind), type = "l", lty = 2, lwd = 3.5)
-  axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
-  legend("topright", c("Non-Covariate","Covariate"),
-         pch=c(16,1), col=c("black","black"))
-  par(op)
+  # plot(seq(0.9,4.9,by=1), 
+  #      D.all.MCMC.Means, 
+  #      ylim=c(min(nind, D.all.Means[11:20] - D.all.Sds[11:20],na.rm=T),
+  #             max(nind, D.all.Means[11:20] + D.all.Sds[11:20],na.rm=T)),
+  #      xlim=c(0.5,5.5),xlab="Method", 
+  #      ylab=paste(cam.props.label,"\n Mean Estimates"), 
+  #      pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
+  # points(seq(1.1,5.1,by=1),D.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
+  # arrows(x0=seq(0.9,4.9,by=1), y0=D.all.MCMC.Means-D.all.MCMC.Sds, 
+  #        x1=seq(0.9,4.9,by=1), y1=D.all.MCMC.Means+D.all.MCMC.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # arrows(x0=seq(1.1,5.1,by=1), y0=D.all.MCMC.cov.Means-D.all.MCMC.cov.Sds, 
+  #        x1=seq(1.1,5.1,by=1), y1=D.all.MCMC.cov.Means+D.all.MCMC.cov.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # lines(c(0.3,5.7), c(nind,nind), type = "l", lty = 2, lwd = 3.5)
+  # axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
+  # legend("topright", c("Non-Covariate","Covariate"),
+  #        pch=c(16,1), col=c("black","black"))
+  # par(op)
   # dev.off()
+  
+  ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
+    geom_boxplot() +
+    geom_hline(yintercept=100, linetype="dashed", size=1) +
+    labs(x = "Model",
+         y = paste(cam.props.label,"\n Mean Estimates")) +
+    theme(text = element_text(size = 15),
+          legend.title=element_blank()) 
+  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  
   
 } else{
   # setEPS()
   # postscript(paste(fig_dir,"figs/",means_label,".eps", sep = ""),width=8,height=5)
-  op <- par(mar=c(5, 6, 4, 2) + 0.1)
+  # op <- par(mar=c(5, 6, 4, 2) + 0.1)
   cam.props.label <- paste("Camera Bias: ", cam.dist.labels.caps[cam.dist.set], sep = "")
-  plot(seq(0.9,4.9,by=1), 
-       D.all.MCMC.Means, 
-       ylim=c(min(nind, D.all.Means[11:20] - D.all.Sds[11:20],na.rm=T),
-              max(nind, D.all.Means[11:20] + D.all.Sds[11:20],na.rm=T)),
-       xlim=c(0.5,5.5),xlab="Method", 
-       ylab=paste(cam.props.label,"\n Mean Estimates"), 
-       pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
-  points(seq(1.1,5.1,by=1),D.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
-  arrows(x0=seq(0.9,4.9,by=1), y0=D.all.MCMC.Means-D.all.MCMC.Sds, 
-         x1=seq(0.9,4.9,by=1), y1=D.all.MCMC.Means+D.all.MCMC.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  arrows(x0=seq(1.1,5.1,by=1), y0=D.all.MCMC.cov.Means-D.all.MCMC.cov.Sds, 
-         x1=seq(1.1,5.1,by=1), y1=D.all.MCMC.cov.Means+D.all.MCMC.cov.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  lines(c(0.3,5.7), c(nind,nind), type = "l", lty = 2, lwd = 3.5)
-  axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
-  legend("topright", c("Non-Covariate","Covariate"),
-         pch=c(16,1), col=c("black","black"))
-  par(op)
+  # plot(seq(0.9,4.9,by=1), 
+  #      D.all.MCMC.Means, 
+  #      ylim=c(min(nind, D.all.Means[11:20] - D.all.Sds[11:20],na.rm=T),
+  #             max(nind, D.all.Means[11:20] + D.all.Sds[11:20],na.rm=T)),
+  #      xlim=c(0.5,5.5),xlab="Method", 
+  #      ylab=paste(cam.props.label,"\n Mean Estimates"), 
+  #      pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
+  # points(seq(1.1,5.1,by=1),D.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
+  # arrows(x0=seq(0.9,4.9,by=1), y0=D.all.MCMC.Means-D.all.MCMC.Sds, 
+  #        x1=seq(0.9,4.9,by=1), y1=D.all.MCMC.Means+D.all.MCMC.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # arrows(x0=seq(1.1,5.1,by=1), y0=D.all.MCMC.cov.Means-D.all.MCMC.cov.Sds, 
+  #        x1=seq(1.1,5.1,by=1), y1=D.all.MCMC.cov.Means+D.all.MCMC.cov.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # lines(c(0.3,5.7), c(nind,nind), type = "l", lty = 2, lwd = 3.5)
+  # axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
+  # legend("topright", c("Non-Covariate","Covariate"),
+  #        pch=c(16,1), col=c("black","black"))
+  # par(op)
   # dev.off()
+  
+  ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
+    geom_boxplot() +
+    geom_hline(yintercept=100, linetype="dashed", size=1) +
+    labs(x = "Model",
+         y = paste(cam.props.label,"\n Mean Estimates")) +
+    theme(text = element_text(size = 15),
+          legend.title=element_blank()) 
+  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   # setEPS()
   # postscript(paste(fig_dir,"figs/",props_label,".eps", sep = ""),width=8,height=5)
@@ -144,27 +197,36 @@ if (any(lv.all == 1:3)) {
   
   # setEPS()
   # postscript(paste(fig_dir,"figs/SD_",means_label,".eps", sep = ""),width=8,height=5)
-  op <- par(mar=c(5, 6, 4, 2) + 0.1)
+  # op <- par(mar=c(5, 6, 4, 2) + 0.1)
   cam.props.label <- paste("Camera Bias: ", cam.dist.labels.caps[cam.dist.set], sep = "")
-  plot(seq(0.9,4.9,by=1), 
-       SD.all.MCMC.Means, 
-       ylim=c(min(SD.all.Means[11:20] - SD.all.Sds[11:20],na.rm=T),
-              max(SD.all.Means[11:20] + SD.all.Sds[11:20],na.rm=T)),
-       xlim=c(0.5,5.5),xlab="Method", 
-       ylab=paste(cam.props.label,"\n SD Estimates"), 
-       pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
-  points(seq(1.1,5.1,by=1),SD.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
-  arrows(x0=seq(0.9,4.9,by=1), y0=SD.all.MCMC.Means-SD.all.MCMC.Sds, 
-         x1=seq(0.9,4.9,by=1), y1=SD.all.MCMC.Means+SD.all.MCMC.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  arrows(x0=seq(1.1,5.1,by=1), y0=SD.all.MCMC.cov.Means-SD.all.MCMC.cov.Sds, 
-         x1=seq(1.1,5.1,by=1), y1=SD.all.MCMC.cov.Means+SD.all.MCMC.cov.Sds, 
-         code=3, angle=90, length=0.1, col="black", lwd=2)
-  axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
-  legend("topright", c("Non-Covariate","Covariate"),
-         pch=c(16,1), col=c("black","black"))
-  par(op)
+  # plot(seq(0.9,4.9,by=1), 
+  #      SD.all.MCMC.Means, 
+  #      ylim=c(min(SD.all.Means[11:20] - SD.all.Sds[11:20],na.rm=T),
+  #             max(SD.all.Means[11:20] + SD.all.Sds[11:20],na.rm=T)),
+  #      xlim=c(0.5,5.5),xlab="Method", 
+  #      ylab=paste(cam.props.label,"\n SD Estimates"), 
+  #      pch=16, col="black", cex=1.8, xaxt = "n", cex.lab = 1.5, cex.axis = 1.3)
+  # points(seq(1.1,5.1,by=1),SD.all.MCMC.cov.Means, col="black", pch=1,cex=1.8)
+  # arrows(x0=seq(0.9,4.9,by=1), y0=SD.all.MCMC.Means-SD.all.MCMC.Sds, 
+  #        x1=seq(0.9,4.9,by=1), y1=SD.all.MCMC.Means+SD.all.MCMC.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # arrows(x0=seq(1.1,5.1,by=1), y0=SD.all.MCMC.cov.Means-SD.all.MCMC.cov.Sds, 
+  #        x1=seq(1.1,5.1,by=1), y1=SD.all.MCMC.cov.Means+SD.all.MCMC.cov.Sds, 
+  #        code=3, angle=90, length=0.1, col="black", lwd=2)
+  # axis(1, at = c(1:5), labels = leg1, cex.axis = 1.3)
+  # legend("topright", c("Non-Covariate","Covariate"),
+  #        pch=c(16,1), col=c("black","black"))
+  # par(op)
   # dev.off()
+  
+  ggplot(SD.all.df, aes(x=Model, y=Est, fill=Covariate)) +
+    geom_boxplot() +
+    labs(x = "Model",
+         y = paste(cam.props.label,"\n SD Estimates")) +
+    theme(text = element_text(size = 15),
+          legend.title=element_blank()) 
+  ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  
 
 }
   }
