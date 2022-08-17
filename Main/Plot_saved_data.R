@@ -130,8 +130,13 @@ if (any(lv.all == 1:3)) {
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
          y = paste(cam.props.label,"\n Mean Estimates")) +
-    theme(text = element_text(size = 15),
-          legend.title=element_blank()) 
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.17, 0.84)) 
   ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   
@@ -166,8 +171,13 @@ if (any(lv.all == 1:3)) {
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
          y = paste(cam.props.label,"\n Mean Estimates")) +
-    theme(text = element_text(size = 15),
-          legend.title=element_blank()) 
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.17, 0.84)) 
   ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   # setEPS()
@@ -223,8 +233,13 @@ if (any(lv.all == 1:3)) {
     geom_boxplot() +
     labs(x = "Model",
          y = paste(cam.props.label,"\n SD Estimates")) +
-    theme(text = element_text(size = 15),
-          legend.title=element_blank()) 
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.17, 0.84)) 
   ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
 
