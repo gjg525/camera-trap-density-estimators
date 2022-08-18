@@ -12,13 +12,13 @@ leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
 leg.props<-c("EEDE", "REST", "TTE", "MCT")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 4
+cs.all <- 1
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 5
+lv.all <- 4
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -99,6 +99,8 @@ SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "
 if (any(lv.all == 1:3)) {
   ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
     geom_boxplot() +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
          y = paste(cam.props.label,"\n Posterior Mean")) +
@@ -118,7 +120,11 @@ if (any(lv.all == 1:3)) {
   
 } else{
   ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
+    # geom_line(aes(x = c(1,2), y = c(100,100)),linetype = "dashed") +
     geom_boxplot() +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
+    # geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE" & D.all.df$Covariate == "Covariate"), colour="white") +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
          y = paste(cam.props.label,"\n Posterior Mean")) +
@@ -154,7 +160,7 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  ggsave(paste(fig_dir,"figs/",props_label,".eps", sep = ""), device = cairo_ps)
+  # ggsave(paste(fig_dir,"figs/",props_label,".eps", sep = ""), device = cairo_ps)
   
   ggplot(SD.all.df, aes(x=Model, y=Est, fill=Covariate)) +
     geom_boxplot() +
@@ -172,7 +178,7 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  # ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
 
 }
