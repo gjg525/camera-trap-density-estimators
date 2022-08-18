@@ -12,13 +12,13 @@ leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
 leg.props<-c("EEDE", "REST", "TTE", "MCT")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 1
+cs.all <- 4
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 4
+lv.all <- 5
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -101,7 +101,7 @@ if (any(lv.all == 1:3)) {
     geom_boxplot() +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Mean Estimates")) +
+         y = paste(cam.props.label,"\n Posterior Mean")) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
@@ -113,7 +113,7 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   
 } else{
@@ -121,7 +121,7 @@ if (any(lv.all == 1:3)) {
     geom_boxplot() +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Mean Estimates")) +
+         y = paste(cam.props.label,"\n Posterior Mean")) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
@@ -132,14 +132,14 @@ if (any(lv.all == 1:3)) {
           legend.position = c(0.17, 0.84),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
-          legend.box.background = element_rect(colour = "black")) 
-  # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+          legend.box.background = element_rect(colour = "black"))
+    ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   ggplot(all.props.df, aes(x=Speed, y = Proportions, fill=Model)) +
     geom_bar(stat="identity", color="black", position=position_dodge()) +
     geom_errorbar(aes(ymin=Proportions-sd, ymax=Proportions+sd), width=.2,
                   position=position_dodge(.9), size = .7) +
-    # geom_hline(yintercept=100, linetype="dashed", size=1) +
+    scale_y_continuous(limits=c(0, max(all.props.df$Proportions+all.props.df$sd) +.01), expand = c(0, 0)) +
     labs(x = "Speed",
          y = "Proportion Occupied") +
     scale_fill_manual(values = c("black",fig_colors[1:4])) +
@@ -154,12 +154,13 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  # ggsave(paste(fig_dir,"figs/",props_label,".eps", sep = ""), device = cairo_ps)
+  ggsave(paste(fig_dir,"figs/",props_label,".eps", sep = ""), device = cairo_ps)
   
   ggplot(SD.all.df, aes(x=Model, y=Est, fill=Covariate)) +
     geom_boxplot() +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n SD Estimates")) +
+         y = paste(cam.props.label,"\n Posterior SD")) +
+    scale_y_continuous(limits=c(0, max(SD.all.df$Est) +2), expand = c(0, 0)) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
@@ -171,7 +172,7 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  # ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
 
 }
