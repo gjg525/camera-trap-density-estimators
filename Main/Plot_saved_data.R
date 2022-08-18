@@ -12,13 +12,13 @@ leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
 leg.props<-c("EEDE", "REST", "TTE", "MCT")
 
 # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
-cs.all <- 4
+cs.all <- 1
 cam.dist.labels <- c("random","slow","med","fast")
 cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 5
+lv.all <- 4
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -37,16 +37,36 @@ D.all.Sds.mat.all <- as.matrix(read.csv(paste(fig_dir,"sim_data/all_",means_labe
 all.props.Means <- as.matrix(read.csv(paste(fig_dir,"sim_data/",props_label,".csv", sep = "")))
 all.props.Sds <- as.matrix(read.csv(paste(fig_dir,"sim_data/",props_label,"_sds.csv", sep = "")))
 
+# Omit MLE results
 all.props.Means <- matrix(as.numeric(all.props.Means[c(1,3,5,7,9),2:4]),nrow = 5, ncol = 3)
 all.props.Sds <- matrix(as.numeric(all.props.Sds[c(1,3,5,7,9),2:4]),nrow = 5, ncol = 3)
-rownames(all.props.Means) <- c("ABM (Truth)",leg.props)
 colnames(all.props.Means) <- c("Slow","Medium","fast")
+all.props.df <- data.frame(all.props.Means) %>% 
+  mutate(Model = c("ABM (Truth)",leg.props))
 
+
+colnames(all.props.Sds) <- c("Slow","Medium","fast")
+all.props.sd.df <- data.frame(all.props.Sds) %>% 
+  mutate(Model = c("ABM (Truth)",leg.props))
+
+all.props.sd.df <- all.props.sd.df %>% 
+  pivot_longer(cols = !Model,
+               names_to = 'Speed',
+               values_to = 'sd')
+
+all.props.df <- all.props.df %>% 
+  pivot_longer(cols = !Model,
+               names_to = 'Speed',
+               values_to = 'Proportions') %>% 
+  mutate(sd = all.props.sd.df$sd)
+
+all.props.df$Speed <- factor(all.props.df$Speed, levels = c("Slow", "Medium", "Fast"))
+all.props.df$Model <- factor(all.props.df$Model, levels = c("ABM (Truth)", "EEDE", "REST", "TTE", "MCT", "STE"))
 ####################################
 # Calculate Summaries
 ####################################
-D.all.Means <- colMeans(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)])
-D.all.Sds <- apply(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)], 2, sd)
+# D.all.Means <- colMeans(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)])
+# D.all.Sds <- apply(D.all.Means.mat.all[,2:ncol(D.all.Means.mat.all)], 2, sd)
 
 # Convert all data from wide to long format
 D.all.df <- data.frame(D.all.Means.mat.all[,12:21])
@@ -81,23 +101,23 @@ SD.all.df$Model <- factor(SD.all.df$Model, levels = c("EEDE", "REST", "TTE", "MC
 SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
 
 
-D.all.MLE.Means <- D.all.Means[1:5]
-D.all.MLE.Sds <- D.all.Sds[1:5]
-D.all.MLE.cov.Means <- D.all.Means[6:10]
-D.all.MLE.cov.Sds <- D.all.Sds[6:10]
-D.all.MCMC.Means <- D.all.Means[11:15]
-D.all.MCMC.Sds <- D.all.Sds[11:15]
-D.all.MCMC.cov.Means <- D.all.Means[16:20]
-D.all.MCMC.cov.Sds <- D.all.Sds[16:20]
-
-# Standard deviation results
-SD.all.Means <- colMeans(D.all.Sds.mat.all[,2:ncol(D.all.Sds.mat.all)])
-SD.all.Sds <- apply(D.all.Sds.mat.all[,2:ncol(D.all.Sds.mat.all)], 2, sd)
-
-SD.all.MCMC.Means <- SD.all.Means[11:15]
-SD.all.MCMC.Sds <- SD.all.Sds[11:15]
-SD.all.MCMC.cov.Means <- SD.all.Means[16:20]
-SD.all.MCMC.cov.Sds <- SD.all.Sds[16:20]
+# D.all.MLE.Means <- D.all.Means[1:5]
+# D.all.MLE.Sds <- D.all.Sds[1:5]
+# D.all.MLE.cov.Means <- D.all.Means[6:10]
+# D.all.MLE.cov.Sds <- D.all.Sds[6:10]
+# D.all.MCMC.Means <- D.all.Means[11:15]
+# D.all.MCMC.Sds <- D.all.Sds[11:15]
+# D.all.MCMC.cov.Means <- D.all.Means[16:20]
+# D.all.MCMC.cov.Sds <- D.all.Sds[16:20]
+# 
+# # Standard deviation results
+# SD.all.Means <- colMeans(D.all.Sds.mat.all[,2:ncol(D.all.Sds.mat.all)])
+# SD.all.Sds <- apply(D.all.Sds.mat.all[,2:ncol(D.all.Sds.mat.all)], 2, sd)
+# 
+# SD.all.MCMC.Means <- SD.all.Means[11:15]
+# SD.all.MCMC.Sds <- SD.all.Sds[11:15]
+# SD.all.MCMC.cov.Means <- SD.all.Means[16:20]
+# SD.all.MCMC.cov.Sds <- SD.all.Sds[16:20]
 
 if (any(lv.all == 1:3)) {
   # setEPS()
@@ -131,13 +151,17 @@ if (any(lv.all == 1:3)) {
     labs(x = "Model",
          y = paste(cam.props.label,"\n Mean Estimates")) +
     theme(text = element_text(size = 20),
-          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          legend.title=element_blank(), 
+          panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           panel.background = element_blank(), 
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.17, 0.84)) 
-  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+          legend.position = c(0.17, 0.84),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"), 
+          legend.box.background = element_rect(colour = "black")) 
+  # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   
 } else{
@@ -172,38 +196,64 @@ if (any(lv.all == 1:3)) {
     labs(x = "Model",
          y = paste(cam.props.label,"\n Mean Estimates")) +
     theme(text = element_text(size = 20),
-          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          legend.title=element_blank(), 
+          panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           panel.background = element_blank(), 
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.17, 0.84)) 
-  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+          legend.position = c(0.17, 0.84),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"), 
+          legend.box.background = element_rect(colour = "black")) 
+  # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
-  # setEPS()
-  # postscript(paste(fig_dir,"figs/",props_label,".eps", sep = ""),width=8,height=5)
-  bar.p <- barplot(all.props.Means, 
-                   names = c("Slow", "Medium", "Fast"), 
-                   beside = T, 
-                   legend.text=T,
-                   # col = c("black",brewer.pal(4, "Set2")),
-                   col = c("black",fig_colors[1:4]),
-                   # border = c("black",brewer.pal(8, "Paired")),
-                   density=c(300,300,300,300,300),
-                   angle=c(0,0,0,0,0),
-                   ylim=c(0,1) , ylab="Proportion Occupied",xlab = "Movement Speeds",
-                   args.legend = list(x = "topright",
-                                      inset = c( 0.035, 0)),
-                   cex=1.3, 
-                   cex.lab = 1.5, 
-                   cex.axis = 1.3)
-  arrows(bar.p,all.props.Means+all.props.Sds, 
-         bar.p, 
-         all.props.Means-all.props.Sds, 
-         angle=90, 
-         code=3, 
-         length=0.05)
-  # dev.off()
+  # # setEPS()
+  # # postscript(paste(fig_dir,"figs/",props_label,".eps", sep = ""),width=8,height=5)
+  # bar.p <- barplot(all.props.Means, 
+  #                  names = c("Slow", "Medium", "Fast"), 
+  #                  beside = T, 
+  #                  legend.text=T,
+  #                  # col = c("black",brewer.pal(4, "Set2")),
+  #                  col = c("black",fig_colors[1:4]),
+  #                  # border = c("black",brewer.pal(8, "Paired")),
+  #                  density=c(300,300,300,300,300),
+  #                  angle=c(0,0,0,0,0),
+  #                  ylim=c(0,1) , ylab="Proportion Occupied",xlab = "Movement Speeds",
+  #                  args.legend = list(x = "topright",
+  #                                     inset = c( 0.035, 0)),
+  #                  cex=1.3, 
+  #                  cex.lab = 1.5, 
+  #                  cex.axis = 1.3)
+  # arrows(bar.p,all.props.Means+all.props.Sds, 
+  #        bar.p, 
+  #        all.props.Means-all.props.Sds, 
+  #        angle=90, 
+  #        code=3, 
+  #        length=0.05)
+  # # dev.off()
+  
+  ggplot(all.props.df, aes(x=Speed, y = Proportions, fill=Model)) +
+    geom_bar(stat="identity", color="black", position=position_dodge()) +
+    geom_errorbar(aes(ymin=Proportions-sd, ymax=Proportions+sd), width=.2,
+                  position=position_dodge(.9), size = .7) +
+    # geom_hline(yintercept=100, linetype="dashed", size=1) +
+    labs(x = "Speed",
+         y = "Proportion Occupied") +
+    scale_fill_manual(values = c("black",fig_colors[1:4])) +
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.87, 0.7),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"), 
+          legend.box.background = element_rect(colour = "black")) 
+  # ggsave(paste(fig_dir,"figs/",props_label,".eps", sep = ""), device = cairo_ps)
+  
   
   # setEPS()
   # postscript(paste(fig_dir,"figs/SD_",means_label,".eps", sep = ""),width=8,height=5)
@@ -234,13 +284,17 @@ if (any(lv.all == 1:3)) {
     labs(x = "Model",
          y = paste(cam.props.label,"\n SD Estimates")) +
     theme(text = element_text(size = 20),
-          legend.title=element_blank(), panel.grid.major = element_blank(), 
+          legend.title=element_blank(), 
+          panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(),
           panel.background = element_blank(), 
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.17, 0.84)) 
-  ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
+          legend.position = c(0.17, 0.84),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"), 
+          legend.box.background = element_rect(colour = "black")) 
+  # ggsave(paste(fig_dir,"figs/SD_",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
 
 }
