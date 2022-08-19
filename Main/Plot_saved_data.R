@@ -98,7 +98,8 @@ SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "
 
 if (any(lv.all == 1:3)) {
   ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
-    geom_boxplot() +
+    geom_boxplot(lwd = .1, fatten = .1) +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
@@ -115,16 +116,15 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black")) 
-  ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+  # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   
 } else{
   ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
-    # geom_line(aes(x = c(1,2), y = c(100,100)),linetype = "dashed") +
-    geom_boxplot() +
+    geom_boxplot(lwd = .1, fatten = .1) +
+    geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
-    # geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE" & D.all.df$Covariate == "Covariate"), colour="white") +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
          y = paste(cam.props.label,"\n Posterior Mean")) +
@@ -139,7 +139,7 @@ if (any(lv.all == 1:3)) {
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"), 
           legend.box.background = element_rect(colour = "black"))
-    ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
+    # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
   ggplot(all.props.df, aes(x=Speed, y = Proportions, fill=Model)) +
     geom_bar(stat="identity", color="black", position=position_dodge()) +

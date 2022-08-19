@@ -218,13 +218,15 @@ row_count_df <- data.frame(counts = c(c(cam.counts.sum[cam.slow]),
                                   c(cam.counts.sum[cam.med]),
                                   c(cam.counts.sum[cam.fast])),
                        speed = rep(c("Slow","Medium","Fast"),
-                                   each = length(c(row_counts[cam.slow]))))
+                                   each = length(c(cam.counts.sum[cam.slow]))))
 
 
 ggplot(row_count_df, aes(x=counts, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 3) +
   labs(x = "Count", y = "Density", fill="Landscape Type") +
   xlim(c(0,100)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -241,9 +243,10 @@ enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
                      speed = rep(c("Slow","Medium","Fast"),each = 300))
 
 ggplot(enc_df, aes(x=encounter, fill = speed)) +
-  # geom_histogram(position = "identity", alpha = 0.2, bins = 5)
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
   labs(x = "Number of Encounters", y = "Density", fill="Landscape Type") +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -262,10 +265,11 @@ stay_df <- data.frame(Stay_time = c(c(t.staying.dat[cam.slow,]),
                                   each = c(length(c(t.staying.dat[cam.slow,])))))
 
 ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
-  # geom_histogram(position = "identity", alpha = 0.4, bins = 20)
   geom_density(position = "identity", alpha = 0.4, adjust = 5) +
   xlim(c(0,20)) +
   labs(x = "Staying Time", y = "Density", fill="Landscape Type") +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -283,9 +287,10 @@ TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
                                   each = length(c(TTE.dat[cam.slow,]))))
 
 ggplot(TTE_df, aes(x=TTE, fill = speed)) +
-  # geom_histogram(position = "identity", alpha = 0.2, bins = 5)
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
   labs(x = "Time to Encounter", y = "Density", fill="Landscape Type") +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
