@@ -62,8 +62,10 @@ ggplot(data = results_out[results_out$ID == "mean",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "mean"]), size = 1.5) +
+  geom_point(aes(y = Est[ID == "mean"]), shape = 4, stroke = 2, color = "black") +
+  geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n Mean Estimates"),
+       y = paste("Non-Covariate \n Posterior Mean"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -85,8 +87,10 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "mean_cov"]), size = 1.5) +
+  geom_point(aes(y = Est[ID == "mean_cov"]), shape = 4, stroke = 2, color = "black") +
+  geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n Mean Estimates"),
+       y = paste("Covariate \n Posterior Mean"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -109,8 +113,9 @@ ggplot(data = results_out[results_out$ID == "SD",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD"]), size = 1.5) +
+  geom_point(aes(y = Est[ID == "SD"]), shape = 4, stroke = 2, color = "black") +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n SD Estimates"),
+       y = paste("Non-Covariate \n Posterior SD"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -133,10 +138,12 @@ ggplot(data = results_out[results_out$ID == "SD_cov",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD_cov"]), size = 1.5) +
+  geom_point(aes(y = Est[ID == "SD_cov"]), shape = 4, stroke = 2, color = "black") +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n SD Estimates"),
+       y = paste("Covariate \n Posterior SD"),
        fill = "Model") +
   guides(color = "none") +
+  # scale_x_continuous(expand = c(0, 0)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(), panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
