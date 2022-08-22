@@ -62,7 +62,7 @@ ggplot(data = results_out[results_out$ID == "mean",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "mean"]), size = 1.5) +
-  geom_point(aes(y = Est[ID == "mean"]), shape = 4, stroke = 2, color = "black") +
+  geom_point(aes(y = Est[ID == "mean"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
        y = paste("Non-Covariate \n Posterior Mean"),
@@ -87,7 +87,7 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "mean_cov"]), size = 1.5) +
-  geom_point(aes(y = Est[ID == "mean_cov"]), shape = 4, stroke = 2, color = "black") +
+  geom_point(aes(y = Est[ID == "mean_cov"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
        y = paste("Covariate \n Posterior Mean"),
@@ -113,7 +113,7 @@ ggplot(data = results_out[results_out$ID == "SD",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD"]), size = 1.5) +
-  geom_point(aes(y = Est[ID == "SD"]), shape = 4, stroke = 2, color = "black") +
+  geom_point(aes(y = Est[ID == "SD"]), shape = 4, size = 3, color = "black") +
   labs(x = "Number of Cameras",
        y = paste("Non-Covariate \n Posterior SD"),
        fill = "Model") +
@@ -138,7 +138,7 @@ ggplot(data = results_out[results_out$ID == "SD_cov",],
               linetype = 2,
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD_cov"]), size = 1.5) +
-  geom_point(aes(y = Est[ID == "SD_cov"]), shape = 4, stroke = 2, color = "black") +
+  geom_point(aes(y = Est[ID == "SD_cov"]), shape = 4, size = 3, color = "black") +
   labs(x = "Number of Cameras",
        y = paste("Covariate \n Posterior SD"),
        fill = "Model") +
