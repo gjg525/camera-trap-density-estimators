@@ -225,7 +225,7 @@ ggplot(row_count_df, aes(x=counts, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 3) +
   labs(x = "Count", y = "Density", fill="Landscape Type") +
   xlim(c(0,100)) +
-  scale_y_continuous(limits = c(0, 0.2), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 0.22), expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
@@ -234,7 +234,11 @@ ggplot(row_count_df, aes(x=counts, fill = speed)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1))
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.83, 0.74),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black"))
 # ggsave(file = paste(fig_dir,"figs/Counts_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
@@ -245,7 +249,7 @@ enc_df <- data.frame(encounter = c(c(num.encounters.dat[cam.slow]),
 ggplot(enc_df, aes(x=encounter, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
   labs(x = "Number of Encounters", y = "Density", fill="Landscape Type") +
-  scale_y_continuous(limits = c(0, 0.13), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 0.14), expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
@@ -254,7 +258,11 @@ ggplot(enc_df, aes(x=encounter, fill = speed)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1))
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.83, 0.74),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black"))
 # ggsave(file = paste(fig_dir,"figs/Encounter_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 
@@ -267,7 +275,7 @@ stay_df <- data.frame(Stay_time = c(c(t.staying.dat[cam.slow,]),
 ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 5) +
   labs(x = "Staying Time", y = "Density", fill="Landscape Type") +
-  scale_y_continuous(limits = c(0, 1.5), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1.56), expand = c(0, 0)) +
   scale_x_continuous(limits = c(0, 20), expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
@@ -276,19 +284,23 @@ ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1))
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.83, 0.74),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black"))
 # ggsave(file = paste(fig_dir,"figs/Stay_time_dat_histogram.eps", sep = ""), device = cairo_ps)
 
 TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
-                                c(TTE.dat[cam.med,]),
-                                c(TTE.dat[cam.fast,])),
-                      speed = rep(c("Slow","Medium","Fast"),
-                                  each = length(c(TTE.dat[cam.slow,]))))
+                             c(TTE.dat[cam.med,]),
+                             c(TTE.dat[cam.fast,])),
+                     speed = rep(c("Slow","Medium","Fast"),
+                                 each = length(c(TTE.dat[cam.slow,]))))
 
 ggplot(TTE_df, aes(x=TTE, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
   labs(x = "Time to Encounter", y = "Density", fill="Landscape Type") +
-  scale_y_continuous(limits = c(0, 0.08), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 0.085), expand = c(0, 0)) +
   scale_x_continuous(limits = c(0, 20), expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
@@ -297,6 +309,36 @@ ggplot(TTE_df, aes(x=TTE, fill = speed)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1))
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.83, 0.74),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black"))
 # ggsave(file = paste(fig_dir,"figs/TTE_dat_histogram.eps", sep = ""), device = cairo_ps)
+
+Prop_df <- data.frame(Props = c(abm.distribution.scale, stay.time.distribution.scale),
+                     Speed = rep(c("Slow","Medium","Fast"), 2),
+                     Model = rep(c("ABM Abundances", "Staying Time"), each = 3)
+                     )
+Prop_df$Speed <- factor(Prop_df$Speed, levels = c("Slow", "Medium", "Fast"))
+
+ggplot(Prop_df, aes(x=Speed, y = Props, fill = Model)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(x = "Landscape Type", y = "Relative Distributions") +
+  scale_y_continuous(limits = c(0, 0.85),expand = c(0, 0)) +
+  scale_x_discrete(expand = c(0, .6)) + 
+  scale_fill_manual(values=c('grey40','Grey')) +
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=22),
+        legend.text=element_text(size=20),
+        legend.title=element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.8, 0.83),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black")) 
+# ggsave(file = paste(fig_dir,"figs/staytime_vs_abm.eps", sep = ""), device = cairo_ps)
 
