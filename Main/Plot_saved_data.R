@@ -18,7 +18,7 @@ cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 4
+lv.all <- 1:3
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -96,7 +96,7 @@ SD.all.df$Est[is.na(SD.all.df$Est)] <- 0
 SD.all.df$Model <- factor(SD.all.df$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
 SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
 
-if (any(lv.all == 1:3)) {
+if (any(lv.all %in% 1:3)) {
   ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
     geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
@@ -104,7 +104,8 @@ if (any(lv.all == 1:3)) {
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Posterior Mean")) +
+         y = paste("Mean Estimates")) +
+    scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
@@ -127,7 +128,8 @@ if (any(lv.all == 1:3)) {
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Posterior Mean")) +
+         y = paste(cam.props.label,"\n Mean Estimates")) +
+    scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
@@ -165,8 +167,9 @@ if (any(lv.all == 1:3)) {
   ggplot(SD.all.df, aes(x=Model, y=Est, fill=Covariate)) +
     geom_boxplot() +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Posterior SD")) +
+         y = paste(cam.props.label,"\n SD Results")) +
     scale_y_continuous(limits=c(0, max(SD.all.df$Est) +2), expand = c(0, 0)) +
+    scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 

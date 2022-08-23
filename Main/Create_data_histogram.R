@@ -323,8 +323,8 @@ Prop_df <- data.frame(Props = c(abm.distribution.scale, stay.time.distribution.s
 Prop_df$Speed <- factor(Prop_df$Speed, levels = c("Slow", "Medium", "Fast"))
 
 ggplot(Prop_df, aes(x=Speed, y = Props, fill = Model)) +
-  geom_bar(stat="identity", position=position_dodge()) +
-  labs(x = "Landscape Type", y = "Relative Distributions") +
+  geom_bar(stat="identity", color = "black", position=position_dodge()) +
+  labs(x = "Landscape Type", y = "Proportion Occupied") +
   scale_y_continuous(limits = c(0, 0.85),expand = c(0, 0)) +
   scale_x_discrete(expand = c(0, .6)) + 
   scale_fill_manual(values=c('grey40','Grey')) +

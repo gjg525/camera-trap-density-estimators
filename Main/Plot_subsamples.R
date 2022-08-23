@@ -65,7 +65,7 @@ ggplot(data = results_out[results_out$ID == "mean",],
   geom_point(aes(y = Est[ID == "mean"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n Posterior Mean"),
+       y = paste("Non-Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -90,7 +90,7 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
   geom_point(aes(y = Est[ID == "mean_cov"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n Posterior Mean"),
+       y = paste("Covariate \n Mean Estimates"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -115,7 +115,7 @@ ggplot(data = results_out[results_out$ID == "SD",],
   geom_line(aes(y = Est[ID == "SD"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "SD"]), shape = 4, size = 3, color = "black") +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n Posterior SD"),
+       y = paste("Non-Covariate \n SD Results"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -140,7 +140,7 @@ ggplot(data = results_out[results_out$ID == "SD_cov",],
   geom_line(aes(y = Est[ID == "SD_cov"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "SD_cov"]), shape = 4, size = 3, color = "black") +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n Posterior SD"),
+       y = paste("Covariate \n SD Results"),
        fill = "Model") +
   guides(color = "none") +
   # scale_x_continuous(expand = c(0, 0)) +
