@@ -64,8 +64,9 @@ ggplot(data = results_out[results_out$ID == "mean",],
   geom_line(aes(y = Est[ID == "mean"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "mean"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
+  scale_x_continuous(breaks = ncam_all, expand = c(0, 1)) +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n Mean Estimates"),
+       y = paste("Non-Covariate \n Posterior Means"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -74,7 +75,10 @@ ggplot(data = results_out[results_out$ID == "mean",],
         panel.background = element_blank(), 
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.87, 0.77)) +
+        legend.position = c(0.9, 0.77),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black")) +
   scale_color_manual(values = fig_colors[2:5]) +
   scale_fill_manual(values = fig_colors[2:5])
 # ggsave(paste(fig_dir,"figs/Noncov_subcam_mean.eps", sep = ""), device = cairo_ps)
@@ -89,8 +93,9 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
   geom_line(aes(y = Est[ID == "mean_cov"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "mean_cov"]), shape = 4, size = 3, color = "black") +
   geom_hline(yintercept=100, linetype="dashed", size=1) +
+  scale_x_continuous(breaks = ncam_all, expand = c(0, 1)) +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n Mean Estimates"),
+       y = paste("Covariate \n Posterior Means"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -99,7 +104,10 @@ ggplot(data = results_out[results_out$ID == "mean_cov",],
         panel.background = element_blank(), 
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.87, 0.77)) +
+        legend.position = c(0.9, 0.77),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black")) +
   scale_color_manual(values = fig_colors[1:4]) +
   scale_fill_manual(values = fig_colors[1:4]) 
 # ggsave(paste(fig_dir,"figs/Cov_subcam_mean.eps", sep = ""), device = cairo_ps)
@@ -114,8 +122,9 @@ ggplot(data = results_out[results_out$ID == "SD",],
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "SD"]), shape = 4, size = 3, color = "black") +
+  scale_x_continuous(breaks = ncam_all, expand = c(0, 1)) +
   labs(x = "Number of Cameras",
-       y = paste("Non-Covariate \n SD Results"),
+       y = paste("Non-Covariate \n Posterior SDs"),
        fill = "Model") +
   guides(color = "none") +
   theme(text = element_text(size = 20),
@@ -124,7 +133,10 @@ ggplot(data = results_out[results_out$ID == "SD",],
         panel.background = element_blank(), 
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.87, 0.77)) +
+        legend.position = c(0.9, 0.77),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black")) +
   scale_color_manual(values = fig_colors[2:5]) +
   scale_fill_manual(values = fig_colors[2:5])
 # ggsave(paste(fig_dir,"figs/Noncov_subcam_sd.eps", sep = ""), device = cairo_ps)
@@ -139,18 +151,21 @@ ggplot(data = results_out[results_out$ID == "SD_cov",],
               alpha=0.6) +
   geom_line(aes(y = Est[ID == "SD_cov"]), size = 1.5) +
   geom_point(aes(y = Est[ID == "SD_cov"]), shape = 4, size = 3, color = "black") +
+  scale_x_continuous(breaks = ncam_all, expand = c(0, 1)) +
   labs(x = "Number of Cameras",
-       y = paste("Covariate \n SD Results"),
+       y = paste("Covariate \n Posterior SDs"),
        fill = "Model") +
   guides(color = "none") +
-  # scale_x_continuous(expand = c(0, 0)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(), panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(), 
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.87, 0.77)) +
+        legend.position = c(0.9, 0.77),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"), 
+        legend.box.background = element_rect(colour = "black")) +
   scale_color_manual(values = fig_colors[1:4]) +
   scale_fill_manual(values = fig_colors[1:4])
 # ggsave(paste(fig_dir,"figs/Cov_subcam_sd.eps", sep = ""), device = cairo_ps)

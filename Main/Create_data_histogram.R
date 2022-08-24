@@ -276,7 +276,7 @@ ggplot(stay_df, aes(x=Stay_time, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 5) +
   labs(x = "Staying Time", y = "Density", fill="Landscape Type") +
   scale_y_continuous(limits = c(0, 1.56), expand = c(0, 0)) +
-  scale_x_continuous(limits = c(0, 20), expand = c(0, 0)) +
+  scale_x_continuous(limits = c(0, 20.5), expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -299,9 +299,9 @@ TTE_df <- data.frame(TTE = c(c(TTE.dat[cam.slow,]),
 
 ggplot(TTE_df, aes(x=TTE, fill = speed)) +
   geom_density(position = "identity", alpha = 0.4, adjust = 2) +
-  labs(x = "Time to Encounter", y = "Density", fill="Landscape Type") +
+  labs(x = "Time to Event", y = "Density", fill="Landscape Type") +
   scale_y_continuous(limits = c(0, 0.085), expand = c(0, 0)) +
-  scale_x_continuous(limits = c(0, 20), expand = c(0, 0)) +
+  scale_x_continuous(limits = c(0, 20.5), expand = c(0, 0)) +
   theme(axis.text=element_text(size=20),
         axis.title=element_text(size=22),
         legend.text=element_text(size=20),
@@ -324,7 +324,7 @@ Prop_df$Speed <- factor(Prop_df$Speed, levels = c("Slow", "Medium", "Fast"))
 
 ggplot(Prop_df, aes(x=Speed, y = Props, fill = Model)) +
   geom_bar(stat="identity", color = "black", position=position_dodge()) +
-  labs(x = "Landscape Type", y = "Proportion Occupied") +
+  labs(x = "Landscape Type", y = "Relative Distributions") +
   scale_y_continuous(limits = c(0, 0.85),expand = c(0, 0)) +
   scale_x_discrete(expand = c(0, .6)) + 
   scale_fill_manual(values=c('grey40','Grey')) +

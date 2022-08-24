@@ -18,7 +18,7 @@ cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 1:3
+lv.all <- 4
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -39,12 +39,12 @@ all.props.Sds <- as.matrix(read.csv(paste(fig_dir,"sim_data/",props_label,"_sds.
 # Omit MLE results
 all.props.Means <- matrix(as.numeric(all.props.Means[c(1,3,5,7,9),2:4]),nrow = 5, ncol = 3)
 all.props.Sds <- matrix(as.numeric(all.props.Sds[c(1,3,5,7,9),2:4]),nrow = 5, ncol = 3)
-colnames(all.props.Means) <- c("Slow","Medium","fast")
+colnames(all.props.Means) <- c("Slow","Medium","Fast")
 all.props.df <- data.frame(all.props.Means) %>% 
   mutate(Model = c("ABM (Truth)",leg.props))
 
 
-colnames(all.props.Sds) <- c("Slow","Medium","fast")
+colnames(all.props.Sds) <- c("Slow","Medium","Fast")
 all.props.sd.df <- data.frame(all.props.Sds) %>% 
   mutate(Model = c("ABM (Truth)",leg.props))
 
@@ -104,7 +104,7 @@ if (any(lv.all %in% 1:3)) {
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste("Mean Estimates")) +
+         y = paste("Abundance Estimates")) +
     scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
@@ -128,7 +128,7 @@ if (any(lv.all %in% 1:3)) {
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste(cam.props.label,"\n Mean Estimates")) +
+         y = paste(cam.props.label,"\n Abundance Estimates")) +
     scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
@@ -143,14 +143,14 @@ if (any(lv.all %in% 1:3)) {
           legend.box.background = element_rect(colour = "black"))
     # ggsave(paste(fig_dir,"figs/",means_label,"_box.eps", sep = ""), device = cairo_ps)
   
-  ggplot(all.props.df, aes(x=Speed, y = Proportions, fill=Model)) +
+  ggplot(all.props.df, aes(x=Speed, y = Proportions, fill = Model)) +
     geom_bar(stat="identity", color="black", position=position_dodge()) +
     geom_errorbar(aes(ymin=Proportions-sd, ymax=Proportions+sd), width=.2,
                   position=position_dodge(.9), size = .7) +
     scale_y_continuous(limits=c(0, max(all.props.df$Proportions+all.props.df$sd) +.01), expand = c(0, 0)) +
-    labs(x = "Speed",
-         y = "Proportion Occupied") +
-    scale_fill_manual(values = c("black",fig_colors[1:4])) +
+    labs(x = "Landscape Type",
+         y = "Relative Distributions") +
+    scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
           panel.grid.major = element_blank(), 
