@@ -18,7 +18,7 @@ cam.dist.labels.caps <- c("Random","Slow","Medium","Fast")
 
 # Define landscape variations
 # 1: all slow, 2: all medium, 3: all fast, 4: equal slow, medium, fast 5: 80% fast
-lv.all <- 4
+lv.all <- 1:3
 lv.labels <- c("_slow_lscape_all","_med_lscape_all","_fast_lscape_all","","_fast_lscape")
 
 for (cam.dist.set in cs.all){
@@ -104,7 +104,7 @@ if (any(lv.all %in% 1:3)) {
     geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste("Abundance Estimates")) +
+         y = paste(cam.dist.labels.caps[lscape_var+1], " Landscape \n Abundance Estimates")) +
     scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(), 
