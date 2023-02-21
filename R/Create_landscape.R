@@ -6,18 +6,42 @@ lscape_creator <- function(tag = "Random", speed_index = 1) {
                              Min = double(),
                              Max = double()
   )
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Slow",
+  #                                Min = 0.02,
+  #                                Max = 0.04)
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Medium",
+  #                                Min = 0.09,
+  #                                Max = 0.11)
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Fast",
+  #                                Min = 0.4,
+  #                                Max = 0.6)
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Slow",
+  #                                Min = 0.09,
+  #                                Max = 0.11)
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Medium",
+  #                                Min = 0.3,
+  #                                Max = 0.5)
+  # speed_bounds <- dplyr::add_row(speed_bounds,
+  #                                Speed = "Fast",
+  #                                Min = 0.9,
+  #                                Max = 1.1)
   speed_bounds <- dplyr::add_row(speed_bounds,
-                          Speed = "Slow",
-                          Min = 0.02,
-                          Max = 0.04)
+                                 Speed = "Slow",
+                                 Min = 0.6,
+                                 Max = 0.8)
   speed_bounds <- dplyr::add_row(speed_bounds,
-                          Speed = "Medium",
-                          Min = 0.09,
-                          Max = 0.11)
+                                 Speed = "Medium",
+                                 Min = 0.6,
+                                 Max = 0.8)
   speed_bounds <- dplyr::add_row(speed_bounds,
-                          Speed = "Fast",
-                          Min = 0.4,
-                          Max = 0.6)
+                                 Speed = "Fast",
+                                 Min = 0.6,
+                                 Max = 0.8)
   speed_bounds$Min <- speed_bounds$Min*dx
   speed_bounds$Max <- speed_bounds$Max*dx
 

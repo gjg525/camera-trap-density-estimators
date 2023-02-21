@@ -24,6 +24,8 @@ source("./R/Create_landscape.R")
 # Initializations
 ################################################################################
 
+fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
+
 # Simulation variations
 sim_num <- 1
 
@@ -34,24 +36,28 @@ sim_vars <- data.frame(
   cam.dist.set = c(rep(1, 4), 2, 3, 4)
 )
 
-for (sim_num in 2:7) {
-
 lscape_tag <- sim_vars$lscape_tag[sim_num]
 all_speed <- sim_vars$all_speed[sim_num] # 1: Slow, 2: Medium, 3: Fast
 
 # Cam sample designs (1: random, 2-4: biased slow, medium, fast)
 cam.dist.set <- sim_vars$cam.dist.set[sim_num]
 
-D.all <- data.frame(Model = character(),
-                    Covariate = character(),
-                    Est = double(),
-                    SD = double(),
-                    Prop_roads = double()
-                    )
-num_runs <- 10
+# D.all <- data.frame(Model = character(),
+#                     Covariate = character(),
+#                     Est = double(),
+#                     SD = double(),
+#                     Prop_speeds = double()
+# )
+D.all <- data.frame(Model = NA,
+                    Covariate = NA,
+                    Est = NA,
+                    SD = NA,
+                    Prop_speeds = NA
+)
+num_runs <- 2
 
 # Define number of clumps
-num.clumps <- 10
+num.clumps <- 100
 
 # Define clump sizes for every clump
 clump_sizes <- rep(1,num.clumps)
@@ -79,36 +85,42 @@ clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
 ncam <- 250
-cam_length <- dx*.2 # length of all viewshed sides
+cam_length <- dx*.3 # length of all viewshed sides
+# cam_length <- dx*.7 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2
 
 # MCMC parms
-n.iter <- 1000
-burn.in <- 500
+n.iter <- 10000
+burn.in <- 5000
 
 ################################################################################
 # Define movement speeds for each cell across landscape
 ################################################################################
 
-# # Create custom landscape (tag = "Random", "Homogeneous")
-lscape_speeds <- lscape_creator(tag = lscape_tag, speed_index = all_speed)
-
-# Calculate total area using available space
-tot.A <- (bounds[2]-bounds[1])^2 * sum(!is.na(lscape_speeds$Road))/q
-
-# indices for all covariates including intercept in spatial.covariates
-# Assumes 3 covariate types (slow, medium, fast)
-covariates.index <- c(0,rep(1,3))
-covariate_labels <- c("Slow", "Medium", "Fast")
-
-# Define covariate speeds (There is a better way to do this)
-Z <- matrix(0, nrow = q, ncol = length(covariate_labels))
-Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- lscape_speeds$Value[lscape_speeds$Speed == "Slow"]
-Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- lscape_speeds$Value[lscape_speeds$Speed == "Medium"]
-Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- lscape_speeds$Value[lscape_speeds$Speed == "Fast"]
-
 # Repeat Simulations
 for (run in 1:num_runs) {
+  
+  # # Create custom landscape (tag = "Random", "Homogeneous")
+  lscape_speeds <- lscape_creator(tag = lscape_tag, speed_index = all_speed)
+  
+  # Calculate total area using available space
+  tot.A <- (bounds[2]-bounds[1])^2 * sum(!is.na(lscape_speeds$Road))/q
+  
+  # indices for all covariates including intercept in spatial.covariates
+  # Assumes 3 covariate types (slow, medium, fast)
+  covariates.index <- c(0,rep(1,3))
+  covariate_labels <- c("Slow", "Medium", "Fast")
+  
+  # Define covariate speeds (There is a better way to do this)
+  Z <- matrix(0, nrow = q, ncol = length(covariate_labels))
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- lscape_speeds$Value[lscape_speeds$Speed == "Slow"]
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- lscape_speeds$Value[lscape_speeds$Speed == "Medium"]
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- lscape_speeds$Value[lscape_speeds$Speed == "Fast"]
+
+  slow_inds <- which(lscape_speeds$Speed == "Slow")
+  med_inds <- which(lscape_speeds$Speed == "Medium")
+  fast_inds <- which(lscape_speeds$Speed == "Fast")
+  
   print(paste("Run", run, "of", num_runs))
 
   # Create camera sample designs
@@ -155,9 +167,9 @@ for (run in 1:num_runs) {
   # Run models only if any data points were collected
   if(max(count_data$count) > 0 & sum(!is.na(TTE_data)) > 0) {
 
-  ################################
-  # MCMC methods
-  ################################
+    ################################
+    # MCMC methods
+    ################################
     # Run models in parallel
     # n_cores <- parallel::detectCores() $ Check number of cores available
     my_cluster <- parallel::makeCluster(3, type = "PSOCK")
@@ -193,12 +205,19 @@ for (run in 1:num_runs) {
 
     # ## Posterior summaries
     # pop.ind.TDST <- which(names(chain.TDST) == "u")
-    # MCMC.parms.TDST.cov <- as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
+    # MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
     # summary(MCMC.parms.TDST.cov)
 
     # plot(chain.TDST$tot.u[burn.in:n.iter])
     D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
     SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
+    
+    Prop_speeds <- c(mean(chain.TDST$u[slow_inds]),
+                     mean(chain.TDST$u[med_inds]),
+                     mean(chain.TDST$u[fast_inds]))/
+      mean(mean(chain.TDST$u[slow_inds])+
+             mean(chain.TDST$u[med_inds])+
+             mean(chain.TDST$u[fast_inds]))
 
     if(any(colMeans(chain.TDST$accept[burn.in:n.iter,])< 0.2) ||
        any(colMeans(chain.TDST$accept[burn.in:n.iter,])> 0.7)){
@@ -217,7 +236,8 @@ for (run in 1:num_runs) {
       Model = "TDST",
       Covariate = "Covariate",
       Est = D.TDST.MCMC,
-      SD = SD.TDST.MCMC
+      SD = SD.TDST.MCMC,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -245,8 +265,8 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # MCMC.parms.REST <- as.mcmc(do.call(cbind, chain.REST)[-c(1:burn.in), ])
-    # summary(MCMC.parms.REST)
+    MCMC.parms.REST <- mcmcr::as.mcmc(do.call(cbind, chain.REST)[-c(1:burn.in), ])
+    summary(MCMC.parms.REST)
 
     # plot(chain.REST$tot.u[burn.in:n.iter])
     D.REST.MCMC <- mean(chain.REST$tot.u[burn.in:n.iter])
@@ -258,6 +278,13 @@ for (run in 1:num_runs) {
       SD.REST.MCMC <- NA
     }
 
+    Prop_speeds <- c(mean(chain.REST$u[slow_inds]),
+                     mean(chain.REST$u[med_inds]),
+                     mean(chain.REST$u[fast_inds]))/
+      mean(mean(chain.REST$u[slow_inds])+
+             mean(chain.REST$u[med_inds])+
+             mean(chain.REST$u[fast_inds]))
+    
     # D.all<- rbind(D.all, data.frame(
     #   Model = "REST",
     #   Covariate = "Non-Covariate",
@@ -268,7 +295,8 @@ for (run in 1:num_runs) {
       Model = "REST",
       Covariate = "Non-Covariate",
       Est = D.REST.MCMC,
-      SD = SD.REST.MCMC
+      SD = SD.REST.MCMC,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -299,9 +327,9 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # pop.ind.REST <- which(names(chain.REST.cov) == "u")
-    # MCMC.parms.REST.cov <- as.mcmc(do.call(cbind, chain.REST.cov[-pop.ind.REST])[-c(1:burn.in), ])
-    # summary(MCMC.parms.REST.cov)
+    pop.ind.REST <- which(names(chain.REST.cov) == "u")
+    MCMC.parms.REST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.REST.cov[-pop.ind.REST])[-c(1:burn.in), ])
+    summary(MCMC.parms.REST.cov)
 
     # plot(chain.REST$tot.u[burn.in:n.iter])
     D.REST.MCMC.cov <- mean(chain.REST.cov$tot.u[burn.in:n.iter])
@@ -314,6 +342,13 @@ for (run in 1:num_runs) {
       SD.REST.MCMC.cov <- NA
     }
 
+    Prop_speeds <- c(mean(chain.REST.cov$u[slow_inds]),
+                     mean(chain.REST.cov$u[med_inds]),
+                     mean(chain.REST.cov$u[fast_inds]))/
+      mean(mean(chain.REST.cov$u[slow_inds])+
+           mean(chain.REST.cov$u[med_inds])+
+           mean(chain.REST.cov$u[fast_inds]))
+    
     # D.all<- rbind(D.all, data.frame(
     #   Model = "REST",
     #   Covariate = "Covariate",
@@ -324,7 +359,8 @@ for (run in 1:num_runs) {
       Model = "REST",
       Covariate = "Covariate",
       Est = D.REST.MCMC.cov,
-      SD = SD.REST.MCMC.cov
+      SD = SD.REST.MCMC.cov,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -351,8 +387,15 @@ for (run in 1:num_runs) {
       cam.A = cam.A)
     proc.time() - ptm
 
+    Prop_speeds <- c(mean(chain.TTE$u[slow_inds]),
+                     mean(chain.TTE$u[med_inds]),
+                     mean(chain.TTE$u[fast_inds]))/
+      mean(mean(chain.TTE$u[slow_inds])+
+             mean(chain.TTE$u[med_inds])+
+             mean(chain.TTE$u[fast_inds]))
+    
     # ## Posterior summaries
-    # MCMC.parms.TTE <- as.mcmc(do.call(cbind, chain.TTE)[-c(1:burn.in), ])
+    # MCMC.parms.TTE <- mcmcr::as.mcmc(do.call(cbind, chain.TTE)[-c(1:burn.in), ])
     # summary(MCMC.parms.TTE)
 
     # plot(chain.TTE$tot.u[burn.in:n.iter])
@@ -375,7 +418,8 @@ for (run in 1:num_runs) {
       Model = "TTE",
       Covariate = "Non-Covariate",
       Est = D.TTE.MCMC,
-      SD = SD.TTE.MCMC
+      SD = SD.TTE.MCMC,
+      Prop_speeds = list(Prop_speeds)
     )
 
     }
@@ -408,13 +452,20 @@ for (run in 1:num_runs) {
 
     # ## Posterior summaries
     # pop.ind.TTE <- which(names(chain.TTE.cov) == "u")
-    # MCMC.parms.TTE.cov <- as.mcmc(do.call(cbind, chain.TTE.cov[-pop.ind.TTE])[-c(1:burn.in), ])
+    # MCMC.parms.TTE.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TTE.cov[-pop.ind.TTE])[-c(1:burn.in), ])
     # summary(MCMC.parms.TTE.cov)
 
     # plot(chain.TTE.cov$tot.u[burn.in:n.iter])
     D.TTE.MCMC.cov <- mean(chain.TTE.cov$tot.u[burn.in:n.iter])
     SD.TTE.MCMC.cov <- sd(chain.TTE.cov$tot.u[burn.in:n.iter])
 
+    Prop_speeds <- c(mean(chain.TTE.cov$u[slow_inds]),
+                     mean(chain.TTE.cov$u[med_inds]),
+                     mean(chain.TTE.cov$u[fast_inds]))/
+      mean(mean(chain.TTE.cov$u[slow_inds])+
+             mean(chain.TTE.cov$u[med_inds])+
+             mean(chain.TTE.cov$u[fast_inds]))
+    
     if(any(colMeans(chain.TTE.cov$accept[burn.in:n.iter,])< 0.2) ||
        any(colMeans(chain.TTE.cov$accept[burn.in:n.iter,])> 0.7)){
       warning(('TTE accept rate OOB'))
@@ -432,7 +483,8 @@ for (run in 1:num_runs) {
       Model = "TTE",
       Covariate = "Covariate",
       Est = D.TTE.MCMC.cov,
-      SD = SD.TTE.MCMC.cov
+      SD = SD.TTE.MCMC.cov,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -453,13 +505,20 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # MCMC.parms.MCT <- as.mcmc(do.call(cbind, chain.MCT)[-c(1:burn.in), ])
+    # MCMC.parms.MCT <- mcmcr::as.mcmc(do.call(cbind, chain.MCT)[-c(1:burn.in), ])
     # summary(MCMC.parms.MCT)
 
     # plot(chain.MCT$tot.u[burn.in:n.iter])
     D.MCT.MCMC <- mean(chain.MCT$tot.u[burn.in:n.iter])
     SD.MCT.MCMC <- sd(chain.MCT$tot.u[burn.in:n.iter])
 
+    Prop_speeds <- c(mean(chain.MCT$u[slow_inds]),
+                     mean(chain.MCT$u[med_inds]),
+                     mean(chain.MCT$u[fast_inds]))/
+      mean(mean(chain.MCT$u[slow_inds])+
+             mean(chain.MCT$u[med_inds])+
+             mean(chain.MCT$u[fast_inds]))
+    
     if(mean(chain.MCT$accept[burn.in:n.iter,])< 0.2 || mean(chain.MCT$accept[burn.in:n.iter,])> 0.7){
       warning(('Mean Count accept rate OOB'))
       D.MCT.MCMC <- NA
@@ -476,7 +535,8 @@ for (run in 1:num_runs) {
       Model = "MCT",
       Covariate = "Non-Covariate",
       Est = D.MCT.MCMC,
-      SD = SD.MCT.MCMC
+      SD = SD.MCT.MCMC,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -502,13 +562,20 @@ for (run in 1:num_runs) {
 
     # ## Posterior summaries
     # pop.ind.MCT <- which(names(chain.MCT.cov) == "u")
-    # MCMC.parms.MCT.cov <- as.mcmc(do.call(cbind, chain.MCT.cov[-pop.ind.MCT])[-c(1:burn.in), ])
+    # MCMC.parms.MCT.cov <- mcmcr::as.mcmc(do.call(cbind, chain.MCT.cov[-pop.ind.MCT])[-c(1:burn.in), ])
     # summary(MCMC.parms.MCT.cov)
 
     # plot(chain.MCT$tot.u[burn.in:n.iter])
     D.MCT.MCMC.cov <- mean(chain.MCT.cov$tot.u[burn.in:n.iter])
     SD.MCT.MCMC.cov <- sd(chain.MCT.cov$tot.u[burn.in:n.iter])
 
+    Prop_speeds <- c(mean(chain.MCT.cov$u[slow_inds]),
+                     mean(chain.MCT.cov$u[med_inds]),
+                     mean(chain.MCT.cov$u[fast_inds]))/
+      mean(mean(chain.MCT.cov$u[slow_inds])+
+             mean(chain.MCT.cov$u[med_inds])+
+             mean(chain.MCT.cov$u[fast_inds]))
+    
     if(mean(chain.MCT.cov$accept[burn.in:n.iter,])< 0.2 || mean(chain.MCT.cov$accept[burn.in:n.iter,])> 0.7){
       warning(('Mean Count accept rate OOB'))
       D.MCT.MCMC.cov <- NA
@@ -525,7 +592,8 @@ for (run in 1:num_runs) {
       Model = "MCT",
       Covariate = "Covariate",
       Est = D.MCT.MCMC.cov,
-      SD = SD.MCT.MCMC.cov
+      SD = SD.MCT.MCMC.cov,
+      Prop_speeds = list(Prop_speeds)
     )
     }
 
@@ -549,13 +617,20 @@ for (run in 1:num_runs) {
 
   # ## Posterior summaries
   # # plot(chain.STE$tot.u[burn.in:n.iter])
-  # MCMC.parms.STE <- as.mcmc(do.call(cbind, chain.STE)[-c(1:burn.in), ])
+  # MCMC.parms.STE <- mcmcr::as.mcmc(do.call(cbind, chain.STE)[-c(1:burn.in), ])
   # summary(MCMC.parms.STE)
 
   # plot(chain.STE$tot.u[burn.in:n.iter])
   D.STE.MCMC <- mean(chain.STE$tot.u[burn.in:n.iter])
   SD.STE.MCMC <- sd(chain.STE$tot.u[burn.in:n.iter])
 
+  Prop_speeds <- c(mean(chain.STE$u[slow_inds]),
+                   mean(chain.STE$u[med_inds]),
+                   mean(chain.STE$u[fast_inds]))/
+    mean(mean(chain.STE$u[slow_inds])+
+           mean(chain.STE$u[med_inds])+
+           mean(chain.STE$u[fast_inds]))
+  
   if(mean(chain.STE$accept[burn.in:n.iter])< 0.2 || mean(chain.STE$accept[burn.in:n.iter,])> 0.7){
     warning(('STE accept rate OOB'))
     D.STE.MCMC <- NA
@@ -572,7 +647,8 @@ for (run in 1:num_runs) {
     Model = "STE",
     Covariate = "Non-Covariate",
     Est = D.STE.MCMC,
-    SD = SD.STE.MCMC
+    SD = SD.STE.MCMC,
+    Prop_speeds = list(Prop_speeds)
   )
   }
 
@@ -580,8 +656,8 @@ for (run in 1:num_runs) {
     }
   } # End
 
-  # # Stop cluster
-  # stopCluster(my_cluster)
+  # Stop cluster
+  stopCluster(my_cluster)
 
   # Is there a better way to select each element in the list?
   for (ch in 1:8) {
@@ -590,7 +666,8 @@ for (run in 1:num_runs) {
       dplyr::add_row(Model = chain$Model,
                      Covariate = chain$Covariate,
                      Est = chain$Est,
-                     SD = chain$SD
+                     SD = chain$SD,
+                     Prop_speeds = chain$Prop_speeds
       )
   }
 }
@@ -621,6 +698,57 @@ if(num_runs == 1) {
   # plot_multirun_hist()
 }
 
+# number of counts across whole landscape for each covariate type
+u.abm.all = matrix(0, nrow = q^0.5, ncol = q^0.5)
+for(xx in 1:nrow(animalxy.all)) {
+  x.round <- ceiling(animalxy.all$x[xx]*(q^0.5/max(bounds)))
+  y.round <- ceiling(animalxy.all$y[xx]*(q^0.5/max(bounds)))
+  
+  # Transpose for converting matrix to raster
+  u.abm.all[x.round,y.round] <- u.abm.all[x.round,y.round]+1
+}
+
+slow.counts <- animal_data %>% filter(lscape_type == "Slow") %>% pull(t_spent)
+med.counts <- animal_data %>% filter(lscape_type == "Medium") %>% pull(t_spent)
+fast.counts <- animal_data %>% filter(lscape_type == "Fast") %>% pull(t_spent)
+
+Prop_all <- D.all %>% 
+  dplyr::filter(Covariate == "Covariate") %>% 
+  unnest_wider(Prop_speeds, names_sep="_") %>% 
+  rename(Slow = Prop_speeds_1,
+         Medium = Prop_speeds_2,
+         Fast = Prop_speeds_3) %>% 
+  select(Model, Slow, Medium, Fast) %>% 
+  pivot_longer(!Model, names_to = "Speed", values_to = "Proportions") %>% 
+  group_by(Model, Speed) %>% 
+  summarise(Means = mean(Proportions),
+            SDs = sd(Proportions),
+            .groups = 'drop') %>% 
+  add_row(Model = "ABM",
+          Speed = c("Slow", "Medium", "Fast"),
+          Means = c(slow.counts, med.counts, fast.counts))
+  
+
+  ggplot(Prop_all, aes(x=Speed, y = Means, fill = Model)) +
+        geom_bar(stat="identity", color="black", position=position_dodge()) +
+        geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
+                      position=position_dodge(.9), size = .7) +
+        # scale_y_continuous(limits=c(0, max(Prop_all$Means) +.01), expand = c(0, 0)) +
+        labs(x = "Landscape Type",
+             y = "Relative Distributions") +
+        scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
+        theme(text = element_text(size = 20),
+              legend.title=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              axis.line = element_line(colour = "black"),
+              panel.border = element_rect(colour = "black", fill=NA, size=1),
+              legend.position = c(0.87, 0.7),
+              legend.background = element_blank(),
+              legend.spacing.y = unit(0, "mm"),
+              legend.box.background = element_rect(colour = "black"))
+
 # plot_count_data(fill = "speed")
 # plot_encounter_data(fill = "speed")
 # plot_staytime_data(fill = "speed")
@@ -630,7 +758,6 @@ if(num_runs == 1) {
 # plot_ABM()
 # plot_space_use()
 
-# Save Results
-write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
+# # Save Results
+# write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
 
-}

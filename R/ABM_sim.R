@@ -282,7 +282,8 @@ ABM_sim <- function(bounds,
     dplyr::group_by(Animal_ID) |>
     dplyr::mutate(dist = c(sqrt((x[2:length(Animal_ID)] - x[1:(length(Animal_ID)-1)])^2 +
                          (y[2:length(Animal_ID)] - y[1:(length(Animal_ID)-1)])^2), NA),
-           speeds = dist/c(t[2:length(Animal_ID)] - t[1:(length(Animal_ID)-1)], NA))
+           speeds = dist/c(t[2:length(Animal_ID)] - t[1:(length(Animal_ID)-1)], NA),
+           .groups = 'drop')
 
   # Escapee
   if(max(animalxy.all$x)>max(bounds) || min(animalxy.all$x)<min(bounds)){

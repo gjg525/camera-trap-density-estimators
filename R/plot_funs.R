@@ -46,24 +46,24 @@ plot_ABM <- function() {
 }
 
 plot_space_use <- function() {
-  u.abm.all <- raster(, nrows = q^0.5, ncols = q^0.5, xmn = 0,
-                      xmx = q^0.5, ymn = 0, ymx = q^0.5, crs = NA)
-  u.abm.all[] <- 0
-  u.abm.all <- stack(replicate(t.steps,u.abm.all))
+  # u.abm.all <- raster(, nrows = q^0.5, ncols = q^0.5, xmn = 0,
+  #                     xmx = q^0.5, ymn = 0, ymx = q^0.5, crs = NA)
+  # u.abm.all[] <- 0
+  # u.abm.all <- stack(replicate(t.steps,u.abm.all))
 
-  u.temp = matrix(0, nrow = q^0.5, ncol = q^0.5)
+  u.abm.all = matrix(0, nrow = q^0.5, ncol = q^0.5)
 
-  animalxy.discrete <- animalxy.all |>
-    filter(t %in% 1:t.steps)
-  for(xx in 1:nrow(animalxy.discrete)) {
-    x.round <- ceiling(animalxy.discrete$x[xx]*(q^0.5/max(bounds)))
-    y.round <- ceiling(animalxy.discrete$y[xx]*(q^0.5/max(bounds)))
+  # animalxy.discrete <- animalxy.all |>
+  #   filter(t %in% 1:t.steps)
+  for(xx in 1:nrow(animalxy.all)) {
+    x.round <- ceiling(animalxy.all$x[xx]*(q^0.5/max(bounds)))
+    y.round <- ceiling(animalxy.all$y[xx]*(q^0.5/max(bounds)))
 
     # Transpose for converting matrix to raster
-    u.temp[x.round,y.round] <- u.temp[x.round,y.round]+1
+    u.abm.all[x.round,y.round] <- u.abm.all[x.round,y.round]+1
   }
 
-  u_plot <- levelplot(u.temp,
+  u_plot <- levelplot(u.abm.all,
                       layers = 1,
                       main = list(expression("Animal space-use"), cex = 1),
                       cuts = 254,
@@ -74,9 +74,6 @@ plot_space_use <- function() {
                       col.regions = colorRampPalette(rev(brewer.pal(11, "Spectral")), bias = 1))
 
   grid.arrange(u_plot, ncol = 1, nrow = 1)
-
-
-
 }
 
 
