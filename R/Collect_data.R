@@ -4,8 +4,8 @@
 # First, collect data within each grid cell to reduce calculations later on
 cell_captures <- animalxy.all |>
   dplyr::filter(lscape_index %in% cam.samps) |>
-  dplyr::ungroup() |>
-  dplyr::mutate(pass_i = cumsum(c(1, abs(ii[-length(ii)] - ii[-1]) > 1))) |>
+  dplyr::mutate(pass_i = cumsum(c(1, abs(ii[-length(ii)] - ii[-1]) > 1 +
+                                    Animal_ID[-length(Animal_ID)] - Animal_ID[-1]))) |> # 
   dplyr::group_by(pass_i) |>
   dplyr::mutate(next_i = ifelse(max(t) == t.steps,
                          max(ii),
@@ -256,12 +256,9 @@ mean_clump <- animalxy.all |>
 ########################################
 animal_data <- animalxy.all |>
   dplyr::group_by(Animal_ID) |>
-  dplyr::mutate(t_diff = c(0,t[2:length(t)] - t[1:(length(t)-1)])) |>
-  dplyr::group_by(Animal_ID, road) |>
-  dplyr::summarise(t_spent = sum(t_diff),
-            .groups = 'drop') |>
-  dplyr::mutate(area_cover = ifelse(road == "Off Trail",
-                           (sum(lscape_speeds$Road == "Off Trail", na.rm = T)),
-                           sum(lscape_speeds$Road == "On Trail", na.rm = T)))
+  dplyr::mutate(t_diff = c(t[2:length(t)] - t[1:(length(t)-1)], 0)) |>
+  dplyr::group_by(lscape_type) %>% 
+  dplyr::summarise(t_spent = sum(t_diff)/t.steps/nind,
+            .groups = 'drop') 
 
 }
