@@ -659,17 +659,19 @@ for (run in 1:num_runs) {
   # Stop cluster
   stopCluster(my_cluster)
 
-  # Is there a better way to select each element in the list?
-  for (ch in 1:8) {
-    chain <- D.chain[[ch]]
-    D.all <- D.all |>
-      dplyr::add_row(Model = chain$Model,
-                     Covariate = chain$Covariate,
-                     Est = chain$Est,
-                     SD = chain$SD,
-                     Prop_speeds = chain$Prop_speeds
-      )
-  }
+  # # Is there a better way to select each element in the list?
+  # for (ch in 1:8) {
+  #   chain <- D.chain[[ch]]
+  #   D.all <- D.all |>
+  #     dplyr::add_row(Model = chain$Model,
+  #                    Covariate = chain$Covariate,
+  #                    Est = chain$Est,
+  #                    SD = chain$SD,
+  #                    Prop_speeds = chain$Prop_speeds
+  #     )
+  # }
+  D.all <- D.all |> 
+    dplyr::add_row(dplyr::bind_rows(D.chain))
 }
 
 # Remove outlier estimates
