@@ -23,8 +23,16 @@ ABM_sim <- function(bounds,
   # corner locations of each grid cell
   grid.ints <- seq(min(bounds), max(bounds), by = max(bounds) / q ^ 0.5)
 
+  # Loop through clumps in parallel
+  # n_cores <- parallel::detectCores() $ Check number of cores available
+  my_cluster <- parallel::makeCluster(3, type = "PSOCK")
+  #register cluster to be used by %dopar%
+  doParallel::registerDoParallel(cl = my_cluster)
+  
+  animalxy.all <- foreach::foreach(nc = 1:length(clump_sizes)) %dopar% {
+    
   # Loops through all clumps
-  for (nc in 1:length(clump_sizes)) {
+  # for (nc in 1:length(clump_sizes)) {
     # Get clulmp size for current clump
     clump_size <- clump_sizes[nc]
 
@@ -271,9 +279,16 @@ ABM_sim <- function(bounds,
       theta <- theta.all[1]
     }
 
-    animalxy.all <- rbind(animalxy.all, clumpxy.all)
+    # animalxy.all <- rbind(animalxy.all, clumpxy.all)
+    animalxy.all <- clumpxy.all
   }
 
+  # Stop cluster
+  stopCluster(my_cluster)
+    
+  # Convert list to data frame
+  animalxy.all <- dplyr::bind_rows(animalxy.all)
+  
   # Convert animalxy 2D coordinates to single digit coordinates
   animalxy.all <- dplyr::mutate(animalxy.all,
                          lscape_index = ceiling(animalxy.all$x/dx) +
