@@ -112,9 +112,6 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # Calculate time spent in camera
         t_tot <- t_tot + dist_1/speed[nn]
 
-        # plot(rbind(p_viewshed, p_viewshed[1,]), type = "b", col = "black")
-        # lines(p_animal, col = "blue")
-        # lines(X.temp,Y.temp, col = "red", pch = 18)
       } else {
         # Individual remains in camera
 
@@ -125,9 +122,6 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # Calculate time spent in camera
         t_tot <- t_tot + dist_1/speed[nn]
 
-        # plot(rbind(p_viewshed, p_viewshed[1,]), type = "b", col = "black")
-        # lines(p_animal, col = "blue")
-        # lines(X.temp,Y.temp, col = "red", pch = 18)
       }
     } else{
       # Individual starts outside of camera
