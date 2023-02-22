@@ -126,7 +126,7 @@ count_data <- dplyr::add_row(count_data,
 # Change order of encounter data
 count_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                count_data,
-                               by = "lscape_index"
+                               by = c("lscape_index")
 )
 
 # Only collect other data when counts are available
@@ -166,7 +166,7 @@ if(max(count_data$count) > 0) {
   # Change order of encounter data
   encounter_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                      encounter_data,
-                                     by = "lscape_index"
+                                     by = c("lscape_index")
   )
   
   ########################################
@@ -187,7 +187,7 @@ if(max(count_data$count) > 0) {
   
   stay_time_data <- as.matrix(dplyr::left_join(data.frame(lscape_index = cam.samps),
                                                stay_time_data,
-                                               by = "lscape_index") |>
+                                               by = c("lscape_index")) |>
                                 dplyr::select(-lscape_index)
   )
   
@@ -233,7 +233,7 @@ if(max(count_data$count) > 0) {
   
   TTE_data <- as.matrix(dplyr::left_join(data.frame(lscape_index = cam.samps),
                                          TTE_data,
-                                         by = "lscape_index") |>
+                                         by = c("lscape_index")) |>
                           dplyr::select(-lscape_index)
   )
   TTE_data[TTE_data == 0] <- NA
