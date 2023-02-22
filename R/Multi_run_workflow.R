@@ -54,7 +54,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 2
+num_runs <- 1
 
 # Define number of clumps
 num.clumps <- 100

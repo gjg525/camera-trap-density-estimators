@@ -42,7 +42,7 @@ sample_roads <- function(on = 0.4, off = 0.6) {
 ###################################
 # Data collection functions
 ###################################
-# Determine if a point lies within a triangle using signs
+# Determine if a point lies within a triangle using where the point lies relative to the triangle half-planes
 calc_in_triangle <- function(p_viewshed, point) {
   
   A_1 <- calc_tri_signs(point, p_viewshed[1,], p_viewshed[2,])
