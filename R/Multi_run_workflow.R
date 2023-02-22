@@ -99,6 +99,7 @@ burn.in <- 5000
 
 # Repeat Simulations
 for (run in 1:num_runs) {
+  print(paste("Run", run, "of", num_runs))
   
   # # Create custom landscape (tag = "Random", "Homogeneous")
   lscape_speeds <- lscape_creator(tag = lscape_tag, speed_index = all_speed)
@@ -121,7 +122,6 @@ for (run in 1:num_runs) {
   med_inds <- which(lscape_speeds$Speed == "Medium")
   fast_inds <- which(lscape_speeds$Speed == "Fast")
   
-  print(paste("Run", run, "of", num_runs))
 
   # Create camera sample designs
   if(cam.dist.set == 1) {
@@ -149,14 +149,18 @@ for (run in 1:num_runs) {
     )
 
   # # Run agent-based model
-  animalxy.all <- ABM_sim(bounds,
-                          t.steps,
+  animalxy.all <- ABM_sim(bounds = bounds,
+                          t.steps = t.steps,
                           speeds = matrix(lscape_speeds$Value, q^0.5, q^0.5),
                           direction = matrix(lscape_speeds$Direction, q^0.5, q^0.5),
                           kappa = matrix(lscape_speeds$Kappa, q^0.5, q^0.5),
                           road = matrix(lscape_speeds$Road, q^0.5, q^0.5),
-                          clump_sizes,
-                          clump.rad)
+                          clump_sizes = clump_sizes,
+                          clump.rad = clump.rad,
+                          dx = dx,
+                          dy = dy,
+                          q = q,
+                          dt = dt)
 
   ################################
   # Collect data

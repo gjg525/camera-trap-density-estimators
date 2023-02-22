@@ -10,13 +10,17 @@ ABM_sim <- function(bounds,
                     road,
                     clump_sizes,
                     clump.rad,
-                    init_placement = 1) {
+                    init_placement = 1,
+                    dx,
+                    dy,
+                    q,
+                    dt) {
 
-  # Initialize movement matrices
-  animalxy.all <- data.frame(Animal_ID = double(),
-                             x = double(),
-                             y = double(),
-                             t = double())
+  # # Initialize movement matrices (for non-parallel loops)
+  # animalxy.all <- data.frame(Animal_ID = double(),
+  #                            x = double(),
+  #                            y = double(),
+  #                            t = double())
 
   clump_IDs <- c(0, cumsum(clump_sizes))
 
@@ -28,10 +32,9 @@ ABM_sim <- function(bounds,
   my_cluster <- parallel::makeCluster(3, type = "PSOCK")
   #register cluster to be used by %dopar%
   doParallel::registerDoParallel(cl = my_cluster)
-  
-  animalxy.all <- foreach::foreach(nc = 1:length(clump_sizes)) %dopar% {
     
   # Loops through all clumps
+  animalxy.par <- foreach::foreach(nc = 1:length(clump_sizes)) %dopar% {
   # for (nc in 1:length(clump_sizes)) {
     # Get clulmp size for current clump
     clump_size <- clump_sizes[nc]
@@ -45,7 +48,7 @@ ABM_sim <- function(bounds,
       # Randomly place across landscape
       clump_IC <- data.frame(IC_index = sample(which(!is.na(road)), 1)) |>
         dplyr::summarise(x = ((IC_index-1) %% q^0.5 + 1)*dx,
-                  y = (ceiling(IC_index/q^0.5))*dx)
+                         y = (ceiling(IC_index/q^0.5))*dx)
     } else {
       # Place according to inverse movement speeds
       clump_IC <- data.frame(IC_speeds = cumsum(speeds^-1/sum(speeds^-1)),
@@ -280,14 +283,14 @@ ABM_sim <- function(bounds,
     }
 
     # animalxy.all <- rbind(animalxy.all, clumpxy.all)
-    animalxy.all <- clumpxy.all
+    animalxy.par <- clumpxy.all
   }
 
   # Stop cluster
   stopCluster(my_cluster)
     
   # Convert list to data frame
-  animalxy.all <- dplyr::bind_rows(animalxy.all)
+  animalxy.all <- dplyr::bind_rows(animalxy.par)
   
   # Convert animalxy 2D coordinates to single digit coordinates
   animalxy.all <- dplyr::mutate(animalxy.all,
