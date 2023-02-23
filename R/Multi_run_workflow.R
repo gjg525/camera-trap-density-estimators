@@ -66,7 +66,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 100        # Number of time steps
+t.steps <- 1000        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
@@ -86,8 +86,8 @@ clump.rad <- dx/2 # Tightness of clumping behavior
 # Camera specs
 ncam <- 250
 cam_length <- dx*.3 # length of all viewshed sides
-# cam_length <- dx*.7 # length of all viewshed sides
-cam.A <- cam_length ^ 2 / 2
+# cam_length <- dx*.9 # length of all viewshed sides
+cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
 # MCMC parms
 n.iter <- 10000
@@ -509,8 +509,8 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # MCMC.parms.MCT <- mcmcr::as.mcmc(do.call(cbind, chain.MCT)[-c(1:burn.in), ])
-    # summary(MCMC.parms.MCT)
+    MCMC.parms.MCT <- mcmcr::as.mcmc(do.call(cbind, chain.MCT)[-c(1:burn.in), ])
+    summary(MCMC.parms.MCT)
 
     # plot(chain.MCT$tot.u[burn.in:n.iter])
     D.MCT.MCMC <- mean(chain.MCT$tot.u[burn.in:n.iter])
@@ -565,11 +565,11 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # pop.ind.MCT <- which(names(chain.MCT.cov) == "u")
-    # MCMC.parms.MCT.cov <- mcmcr::as.mcmc(do.call(cbind, chain.MCT.cov[-pop.ind.MCT])[-c(1:burn.in), ])
-    # summary(MCMC.parms.MCT.cov)
+    pop.ind.MCT <- which(names(chain.MCT.cov) == "u")
+    MCMC.parms.MCT.cov <- mcmcr::as.mcmc(do.call(cbind, chain.MCT.cov[-pop.ind.MCT])[-c(1:burn.in), ])
+    summary(MCMC.parms.MCT.cov)
 
-    # plot(chain.MCT$tot.u[burn.in:n.iter])
+    # plot(chain.MCT.cov$tot.u[burn.in:n.iter])
     D.MCT.MCMC.cov <- mean(chain.MCT.cov$tot.u[burn.in:n.iter])
     SD.MCT.MCMC.cov <- sd(chain.MCT.cov$tot.u[burn.in:n.iter])
 

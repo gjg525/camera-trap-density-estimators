@@ -205,7 +205,7 @@ if(max(count_data$count) > 0) {
     TTE_temp <- cam_captures |>
       dplyr::filter(lscape_index %in% cam.samps,
                     t >= occ.times[1],
-                    t <= occ.times[2])
+                    t < occ.times[2])
     if(nrow(TTE_temp) > 0) {
       TTE_data <- rbind(TTE_data, TTE_temp |>
                           dplyr::group_by(lscape_index) |>
