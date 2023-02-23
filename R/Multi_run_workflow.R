@@ -66,7 +66,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 500        # Number of time steps
+t.steps <- 100        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
