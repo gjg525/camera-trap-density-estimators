@@ -1,12 +1,3 @@
-calc_tri_area <- function(x,y) {
-  # Calculate area of triangle using vertices
-  tri_area <- 0.5 * abs(x[1]*(y[2] - y[3]) + x[2]*(y[3] - y[1]) + x[3] * (y[1] - y[2]))
-}
-
-calc_tri_signs <- function(p1, p2, p3) {
-  tri_sign <- (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
-}
-
 # Biased sample design (lscape_speeds)
 sample_speeds <- function(cam.dist.set) {
   ps <- ncam*c(0.1,0.1,0.1)
@@ -42,37 +33,46 @@ sample_roads <- function(on = 0.4, off = 0.6) {
 ###################################
 # Data collection functions
 ###################################
-# Determine if a point lies within a triangle using where the point lies relative to the triangle half-planes
-# calc_in_triangle <- function(p_viewshed, point) {
-#   
-#   A_1 <- calc_tri_signs(point, p_viewshed[1,], p_viewshed[2,])
-#   A_2 <- calc_tri_signs(point, p_viewshed[3,], p_viewshed[1,])
-#   A_3 <- calc_tri_signs(point, p_viewshed[2,], p_viewshed[3,])
-# 
-#   neg_vals <- (A_1 < 0) || (A_2 < 0) || (A_3 < 0)
-#   pos_vals <- (A_1 > 0) || (A_2 > 0) || (A_3 > 0)
-# 
-#   in_triangle <- ifelse(!(neg_vals && pos_vals),
-#                         TRUE,
-#                         FALSE)
-# }
+calc_tri_area <- function(x,y) {
+  # Calculate area of triangle using vertices
+  tri_area <- 0.5 * abs(x[1]*(y[2] - y[3]) + x[2]*(y[3] - y[1]) + x[3] * (y[1] - y[2]))
+}
 
-# # Determine if a point lies within a triangle using areas (slower)
+calc_tri_signs <- function(p1, p2, p3) {
+  tri_sign <- (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
+}
+
+# Determine if a point lies within a triangle using where the point lies relative to the triangle half-planes
 calc_in_triangle <- function(p_viewshed, point) {
 
-  A_1 <- calc_tri_area(t(rbind(p_viewshed[1:2,1], point[1])),
-                        t(rbind(p_viewshed[1:2,2], point[2])))
-  A_2 <- calc_tri_area(t(rbind(p_viewshed[c(1,3),1], point[1])),
-                        t(rbind(p_viewshed[c(1,3),2], point[2])))
-  A_3 <- calc_tri_area(t(rbind(p_viewshed[2:3,1], point[1])),
-                        t(rbind(p_viewshed[2:3,2], point[2])))
+  A_1 <- calc_tri_signs(point, p_viewshed[1,], p_viewshed[2,])
+  A_2 <- calc_tri_signs(point, p_viewshed[3,], p_viewshed[1,])
+  A_3 <- calc_tri_signs(point, p_viewshed[2,], p_viewshed[3,])
 
-  tri_area <- calc_tri_area(t(p_viewshed[,1]), t(p_viewshed[, 2]))
+  neg_vals <- (A_1 < 0) || (A_2 < 0) || (A_3 < 0)
+  pos_vals <- (A_1 > 0) || (A_2 > 0) || (A_3 > 0)
 
-  in_triangle <- ifelse((A_1 + A_2 + A_3 - 0.000001) > tri_area,
-                        FALSE,
-                        TRUE)
+  in_triangle <- ifelse(!(neg_vals && pos_vals),
+                        TRUE,
+                        FALSE)
 }
+
+# # Determine if a point lies within a triangle using areas (slower)
+# calc_in_triangle <- function(p_viewshed, point) {
+# 
+#   A_1 <- calc_tri_area(t(rbind(p_viewshed[1:2,1], point[1])),
+#                         t(rbind(p_viewshed[1:2,2], point[2])))
+#   A_2 <- calc_tri_area(t(rbind(p_viewshed[c(1,3),1], point[1])),
+#                         t(rbind(p_viewshed[c(1,3),2], point[2])))
+#   A_3 <- calc_tri_area(t(rbind(p_viewshed[2:3,1], point[1])),
+#                         t(rbind(p_viewshed[2:3,2], point[2])))
+# 
+#   tri_area <- calc_tri_area(t(p_viewshed[,1]), t(p_viewshed[, 2]))
+# 
+#   in_triangle <- ifelse((A_1 + A_2 + A_3 - 0.000001) > tri_area,
+#                         FALSE,
+#                         TRUE)
+# }
 
 # Calculate where an animal's trajectory intersects with a camera viewshed and the time spent within viewshed
 calc_intersects <- function(p_viewshed, p_animal, speed) {
