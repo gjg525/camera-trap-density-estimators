@@ -82,13 +82,13 @@ cam_captures <- cell_captures |>
                                                          speeds)),
                    intersect = lapply(cam_intersects, '[[', 1),
                    t_stay = sum(unique(unlist(lapply(cam_intersects, '[[', 2)))),
-                   lscape_index = lscape_index,
+                   lscape_index = lscape_index[1],
                    Animal_ID = Animal_ID,
                    t = t,
                    ii = ii,
                    x = x,
                    y = y,
-                   lscape_type = lscape_type,
+                   lscape_type = lscape_type[1],
                    road = road,
                    .groups = 'drop'
   )  |>
@@ -123,7 +123,7 @@ count_data <- dplyr::add_row(count_data,
   dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
                 road = lscape_speeds$Road[lscape_index])
 
-# Change order of encounter data
+# Change order of count data
 count_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                count_data,
                                by = c("lscape_index")
@@ -138,7 +138,7 @@ if(max(count_data$count) > 0) {
   # Track the number of times an individual encounters each camera and time spent in front of the camera
   cam_data <- cam_captures |>
     dplyr::filter(lscape_index %in% cam.samps) |>
-    dplyr::group_by(Animal_ID, pass_i) |>
+    dplyr::group_by(pass_i) |>
     dplyr::summarise(t_stay = unique(t_stay),
                      lscape_index = unique(lscape_index),
                      .groups = 'drop') |>
