@@ -74,14 +74,18 @@ if (any(cell_check$num_lscapes > 2)) {
 #   dplyr::ungroup()
 
 # Collect all camera viewshed captures
+# in_cam determines whether an individual starts within the camera viewshed
 cam_captures <- cell_captures |>
   dplyr::group_by(pass_i) |>
   dplyr::summarise(cam_samps = list(tri_cam_samps[tri_cam_samps$lscape_index %in% lscape_index[1], 3:4]),
-                   cam_intersects = list(calc_intersects(matrix(unlist(cam_samps), nrow = length(unlist(cam_samps))/2, ncol = 2),
+                   cam_intersects = list(calc_intersects(matrix(unlist(cam_samps), 
+                                                                nrow = length(unlist(cam_samps))/2, ncol = 2),
                                                          t(rbind(x, y)),
                                                          speeds)),
-                   intersect = lapply(cam_intersects, '[[', 1),
-                   t_stay = sum(unique(unlist(lapply(cam_intersects, '[[', 2)))),
+                   # intersect = c(lapply(cam_intersects, '[[', 1), NA),
+                   # t_stay = sum(unique(unlist(lapply(cam_intersects, '[[', 2)))),
+                   t_stay = c(unlist(lapply(cam_intersects, '[[', 2)), NA),
+                   in_cam = c(unlist(lapply(cam_intersects, '[[', 3)), NA),
                    lscape_index = lscape_index[1],
                    Animal_ID = Animal_ID,
                    t = t,
@@ -93,19 +97,23 @@ cam_captures <- cell_captures |>
                    .groups = 'drop'
   )  |>
   dplyr::filter(t_stay > 0) |>
-  dplyr::select(-cam_intersects)
+  dplyr::group_by(pass_i) |>
+  dplyr::mutate(pass_i = pass_i + 0.001 * (1:n()),
+                .groups = 'drop') |>
+  dplyr::select(-cam_intersects) |>
+  ungroup()
 
 ########################################
 # Snapshot count data
 ########################################
 count_data <- cam_captures |>
-  dplyr::filter(t %in% 1:t.steps) |> # Take `snapshots' of data
-  dplyr::rowwise() |>
-  dplyr::mutate(in_tri = calc_in_triangle(tri_cam_samps[tri_cam_samps$lscape_index %in% lscape_index, 3:4],
-                                          t(rbind(x, y)))) |>
-  dplyr::filter(in_tri == TRUE) |>
+  dplyr::filter(t %in% 0:(t.steps - 1) & in_cam == T) |> # Take `snapshots' of data
+  # dplyr::rowwise() |>
+  # dplyr::mutate(in_tri = calc_in_triangle(tri_cam_samps[tri_cam_samps$lscape_index %in% lscape_index, 3:4],
+  #                                         t(rbind(x, y)))) |>
+  # dplyr::filter(in_tri == TRUE) |>
   dplyr::group_by(lscape_index, t) |>
-  dplyr::summarise(clump = length(t),
+  dplyr::summarise(clump = n(),
                    x = x,
                    y = y,
                    .groups= 'drop') |>
@@ -135,51 +143,66 @@ if(max(count_data$count) > 0) {
   ########################################
   # Collect observations at each camera
   ########################################
-  # Track the number of times an individual encounters each camera and time spent in front of the camera
-  cam_data <- cam_captures |>
-    dplyr::filter(lscape_index %in% cam.samps) |>
-    dplyr::group_by(pass_i) |>
-    dplyr::summarise(t_stay = unique(t_stay),
-                     lscape_index = unique(lscape_index),
-                     .groups = 'drop') |>
-    dplyr::ungroup() |>
-    dplyr::group_by(lscape_index) |>
-    dplyr::mutate(encounter = length(unique(pass_i))) |>
-    dplyr::ungroup()
-  
-  cam_data <- dplyr::add_row(cam_data,
-                             lscape_index = cam.samps[cam.samps %notin% cam_data$lscape_index],
-                             encounter = 0) |>
-    dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
-                  road = lscape_speeds$Road[lscape_index])
+  # # Track the number of times an individual encounters each camera and time spent in front of the camera
+  # cam_data <- cam_captures |>
+  #   dplyr::filter(lscape_index %in% cam.samps) |>
+  #   dplyr::group_by(pass_i) |>
+  #   dplyr::summarise(t_stay = unique(t_stay),
+  #                    lscape_index = unique(lscape_index),
+  #                    .groups = 'drop') |>
+  #   dplyr::ungroup() |>
+  #   dplyr::group_by(lscape_index) |>
+  #   dplyr::mutate(encounter = length(unique(pass_i))) |>
+  #   dplyr::ungroup()
+  # 
+  # cam_data <- dplyr::add_row(cam_data,
+  #                            lscape_index = cam.samps[cam.samps %notin% cam_data$lscape_index],
+  #                            encounter = 0) |>
+  #   dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
+  #                 road = lscape_speeds$Road[lscape_index])
   
   ########################################
   # Collect encounter data for each camera
   ########################################
-  encounter_data <- cam_data |>
+  encounter_data <- cam_captures |>
     dplyr::group_by(lscape_index) |>
-    dplyr::summarise(encounter = unique(encounter),
-                     speed = unique(speed),
-                     road = unique(road),
-                     .groups = 'drop')
+    dplyr::summarise(encounter = length(unique(pass_i)),
+                     .groups = 'drop') |>
+    dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
+                  road = lscape_speeds$Road[lscape_index])
+  
+  encounter_data$encounter[is.na(encounter_data$encounter)] <- 0
   
   # Change order of encounter data
   encounter_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                      encounter_data,
-                                     by = c("lscape_index")
+                                     by = "lscape_index"
   )
+  
+  # encounter_data <- cam_data |>
+  #   dplyr::group_by(lscape_index) |>
+  #   dplyr::summarise(encounter = unique(encounter),
+  #                    speed = unique(speed),
+  #                    road = unique(road),
+  #                    .groups = 'drop')
+  # 
+  # # Change order of encounter data
+  # encounter_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
+  #                                    encounter_data,
+  #                                    by = "lscape_index"
+  # )
   
   ########################################
   # Collect stay time data for each encounter
   ########################################
-  stay_time_raw <- cam_data[!is.na(cam_data$t_stay), ]
-  
+  # stay_time_raw <- cam_data[!is.na(cam_data$t_stay), ]
+
   # Format staying time data
-  stay_time_data <- stay_time_raw |>
+  stay_time_data <- cam_captures |>
     dplyr::add_row(lscape_index = cam.samps[cam.samps %notin% stay_time_raw$lscape_index]) |>
-    dplyr::left_join(tri_cam_samps) |>
+    dplyr::left_join(tri_cam_samps |> dplyr::filter(vertex == 1), # need to define tri_cam_samps with lists
+                     by = "lscape_index") |>
     dplyr::select(lscape_index, t_stay) |>
-    dplyr::distinct() |>
     dplyr::group_by(lscape_index) |>
     dplyr::mutate(encounter = 1:n()) |>
     dplyr::ungroup() |>
@@ -187,7 +210,7 @@ if(max(count_data$count) > 0) {
   
   stay_time_data <- as.matrix(dplyr::left_join(data.frame(lscape_index = cam.samps),
                                                stay_time_data,
-                                               by = c("lscape_index")) |>
+                                               by = "lscape_index") |>
                                 dplyr::select(-lscape_index)
   )
   
@@ -226,14 +249,15 @@ if(max(count_data$count) > 0) {
   # Format TTE data
   TTE_data <- TTE_data |>
     dplyr::add_row(lscape_index = cam.samps[cam.samps %notin% TTE_data$lscape_index]) |>
-    dplyr::left_join(tri_cam_samps) |>
+    dplyr::left_join(tri_cam_samps,
+                     by = "lscape_index") |>
     dplyr::select(lscape_index, TTE, occasion) |>
     dplyr::distinct() |>
     pivot_wider(names_from = occasion, values_from = TTE)
   
   TTE_data <- as.matrix(dplyr::left_join(data.frame(lscape_index = cam.samps),
                                          TTE_data,
-                                         by = c("lscape_index")) |>
+                                         by = "lscape_index") |>
                           dplyr::select(-lscape_index)
   )
   TTE_data[TTE_data == 0] <- NA
@@ -242,25 +266,38 @@ if(max(count_data$count) > 0) {
   ########################################
   # Collect STE data
   ########################################
-  STE_data_long <- cell_captures |>
-    dplyr::filter(t %in% 1:t.steps & lscape_index %in% cam.samps) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(in_tri = calc_in_triangle(tri_cam_samps[tri_cam_samps$lscape_index %in% lscape_index, 3:4],
-                                            t(rbind(x, y)))) |>
-    dplyr::filter(in_tri == TRUE) |>
+  # STE_data_long <- cell_captures |>
+  #   dplyr::filter(t %in% 0:(t.steps - 1) & lscape_index %in% cam.samps) |>
+  #   dplyr::rowwise() |>
+  #   dplyr::mutate(in_tri = calc_in_triangle(tri_cam_samps[tri_cam_samps$lscape_index %in% lscape_index, 3:4],
+  #                                           t(rbind(x, y)))) |>
+  #   dplyr::filter(in_tri == TRUE) |>
+  #   dplyr::select(Animal_ID, t, lscape_index) |>
+  #   dplyr::group_by(t) |>
+  #   dplyr::summarise(cam_inds = sample(c(unique(lscape_index), rep(0, ncam - length(unique(lscape_index))))),
+  #                    .groups = 'drop')
+  # 
+  # STE_data <- STE_data_long |>
+  #   dplyr::group_by(t) |>
+  #   dplyr::summarise(STE = min(which(cam_inds > 0))*cam.A)
+  # STE_data <- dplyr::add_row(STE_data, STE = rep(NA, t.steps - nrow(STE_data)))
+  
+  STE_data <- cam_captures |>
+    dplyr::filter(t %in% 0:(t.steps - 1) & in_cam == T) |> # Take `snapshots' of data
     dplyr::select(Animal_ID, t, lscape_index) |>
     dplyr::group_by(t) |>
-    dplyr::summarise(cam_inds = sample(c(unique(lscape_index), rep(0, ncam - length(unique(lscape_index))))),
-                     .groups = 'drop')
-  
-  STE_data <- STE_data_long |>
-    dplyr::group_by(t) |>
-    dplyr::summarise(STE = min(which(cam_inds > 0))*cam.A)
-  STE_data <- dplyr::add_row(STE_data, STE = rep(NA, t.steps - nrow(STE_data)))
+    dplyr::summarise(cam_inds = list(sample(c(unique(lscape_index), rep(0, ncam - length(unique(lscape_index)))))),
+                     STE = min(which(unlist(cam_inds) > 0))*cam.A,
+                     .groups = 'drop') |>
+    dplyr::select(t, STE) 
+  STE_data <- dplyr::add_row(STE_data, 
+                             STE = rep(NA, t.steps - nrow(STE_data))) |> 
+    dplyr::arrange(t)
+    
   
   # Mean clump size for adjusted STE
   mean_clump <- animalxy.all |>
-    dplyr::filter(t %in% 1:t.steps & lscape_index %in% cam.samps) |> # Take `snapshots' of data
+    dplyr::filter(t %in% 0:(t.steps - 1) & lscape_index %in% cam.samps) |> # Take `snapshots' of data
     dplyr::group_by(lscape_index, t) |>
     dplyr::summarise(clump = length(t),
                      .groups= 'drop') |>

@@ -138,7 +138,7 @@ plot_encounter_data <- function(fill = "speed") {
 
 # # Density plot for staying time data
 plot_staytime_data <- function(fill = "speed") {
-  ggplot(stay_time_raw, aes(x=t_stay, fill = .data[[fill]])) +
+  ggplot(cam_captures, aes(x=t_stay, fill = .data[[fill]])) +
     geom_density(position = "identity", alpha = 0.4, adjust = 5) +
     labs(x = "Staying Time", y = "Frequency", fill="Landscape Type") +
     theme(axis.text=element_text(size=20),

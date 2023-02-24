@@ -78,7 +78,8 @@ calc_in_triangle <- function(p_viewshed, point) {
 calc_intersects <- function(p_viewshed, p_animal, speed) {
   X <- c()
   Y <- c()
-  t_tot <- 0 # time spent in camera
+  t_stay <- c()
+  in_cam_all <- c()
 
   # Get lengths of all edges
   r.length <- rbind(p_viewshed[2,] - p_viewshed[1,],
@@ -88,6 +89,7 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
   for (nn in 1:(nrow(p_animal)-1)) {
     X.temp <- c()
     Y.temp <- c()
+    t_tot <- 0 # time spent in camera
 
     animal.step <- p_animal[nn+1,] - p_animal[nn,]
 
@@ -128,8 +130,9 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
                          (Y.temp - p_animal[nn, 2])^2)
 
         # Calculate time spent in camera
-        t_tot <- t_tot + dist_1/speed[nn]
-
+        # t_tot <- t_tot + dist_1/speed[nn]
+        t_tot <- dist_1/speed[nn]
+        
       } else {
         # Individual remains in camera
 
@@ -138,8 +141,9 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
                          (p_animal[nn + 1, 2] - p_animal[nn, 2])^2)
 
         # Calculate time spent in camera
-        t_tot <- t_tot + dist_1/speed[nn]
-
+        # t_tot <- t_tot + dist_1/speed[nn]
+        t_tot <- dist_1/speed[nn]
+        
       }
     } else{
       # Individual starts outside of camera
@@ -157,8 +161,9 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
                          (p_animal[nn + 1, 2] - Y.temp)^2)
 
         # Calculate time spent in camera
-        t_tot <- t_tot + dist_1/speed[nn]
-
+        # t_tot <- t_tot + dist_1/speed[nn]
+        t_tot <- dist_1/speed[nn]
+        
       } else if(sum(int.check) == 2) {
         # Individual passes through camera
 
@@ -173,15 +178,18 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
                          (Y.temp[1] - Y.temp[2])^2)
 
         # Calculate time spent in camera
-        t_tot <- t_tot + dist_1/speed[nn]
+        # t_tot <- t_tot + dist_1/speed[nn]
+        t_tot <- dist_1/speed[nn]
       }
     }
-    # Accumulate all x,y coords
+    # Accumulate all values
     X <- c(X, X.temp)
     Y <- c(Y, Y.temp)
+    t_stay <- c(t_stay, t_tot)
+    in_cam_all <- c(in_cam_all, in_cam)
 
   }
-  return(list(cbind(X, Y), t_tot))
+  return(list(cbind(X, Y), t_stay, in_cam_all))
 }
 
 ###################################
