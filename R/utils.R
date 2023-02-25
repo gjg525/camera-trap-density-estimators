@@ -75,12 +75,15 @@ calc_in_triangle <- function(p_viewshed, point) {
 # }
 
 # Calculate where an animal's trajectory intersects with a camera viewshed and the time spent within viewshed
-calc_intersects <- function(p_viewshed, p_animal, speed) {
+calc_intersects <- function(p_viewshed, p_animal, speed, t) {
   X <- c()
   Y <- c()
   t_stay <- c()
   in_cam_all <- c()
-
+  # Capture encounters as an individual leaves the viewshed
+  encounter <- 0
+  num_encounters <- 0
+  
   # Get lengths of all edges
   r.length <- rbind(p_viewshed[2,] - p_viewshed[1,],
                     p_viewshed[3,] - p_viewshed[2,],
@@ -114,7 +117,7 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
 
     # Check if animal is already inside viewshed
     in_cam <- calc_in_triangle(p_viewshed, p_animal[nn,])
-
+    
     if(in_cam) {
       # Individual steps outside of camera
       if(any(int.check==T)){
@@ -133,6 +136,7 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
         
+        num_encounters <- num_encounters + 1
       } else {
         # Individual remains in camera
 
@@ -144,12 +148,16 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
         
+        # Encounter if individual remains in viewshed on final step
+        if (t[nn] == t[length(t) - 1]) {
+          num_encounters <- num_encounters + 1
+        }
+        
       }
     } else{
       # Individual starts outside of camera
       if(sum(int.check) == 1) {
         # Individual steps into and stays in camera
-
         int.ind <- which(int.check == T)
 
         # X,Y coordinates at intersection
@@ -164,6 +172,10 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
         
+        # Encounter if individual remains in viewshed on final step
+        if (t[nn] == t[length(t) - 1]) {
+          num_encounters <- num_encounters + 1
+        }
       } else if(sum(int.check) == 2) {
         # Individual passes through camera
 
@@ -180,6 +192,8 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
         # Calculate time spent in camera
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
+        
+        num_encounters <- num_encounters + 1
       }
     }
     # Accumulate all values
@@ -187,9 +201,10 @@ calc_intersects <- function(p_viewshed, p_animal, speed) {
     Y <- c(Y, Y.temp)
     t_stay <- c(t_stay, t_tot)
     in_cam_all <- c(in_cam_all, in_cam)
+    encounter <- c(encounter, num_encounters)
 
   }
-  return(list(cbind(X, Y), t_stay, in_cam_all))
+  return(list(cbind(X, Y), t_stay, in_cam_all, encounter))
 }
 
 ###################################

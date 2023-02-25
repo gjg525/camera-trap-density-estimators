@@ -81,11 +81,13 @@ cam_captures <- cell_captures |>
                    cam_intersects = list(calc_intersects(matrix(unlist(cam_samps), 
                                                                 nrow = length(unlist(cam_samps))/2, ncol = 2),
                                                          t(rbind(x, y)),
-                                                         speeds)),
+                                                         speeds,
+                                                         t)),
                    # intersect = c(lapply(cam_intersects, '[[', 1), NA),
                    # t_stay = sum(unique(unlist(lapply(cam_intersects, '[[', 2)))),
                    t_stay = c(unlist(lapply(cam_intersects, '[[', 2)), NA),
                    in_cam = c(unlist(lapply(cam_intersects, '[[', 3)), NA),
+                   encounter = unlist(lapply(cam_intersects, '[[', 4)),
                    lscape_index = lscape_index[1],
                    Animal_ID = Animal_ID,
                    t = t,
@@ -98,8 +100,7 @@ cam_captures <- cell_captures |>
   )  |>
   dplyr::filter(t_stay > 0) |>
   dplyr::group_by(pass_i) |>
-  dplyr::mutate(pass_i = pass_i + 0.001 * (1:n()),
-                .groups = 'drop') |>
+  dplyr::mutate(pass_i = pass_i + 0.001 * cumsum(c(1, abs(encounter[-length(encounter)] - encounter[-1]) > 0))) |>
   dplyr::select(-cam_intersects) |>
   ungroup()
 
@@ -171,13 +172,14 @@ if(max(count_data$count) > 0) {
     dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
                   road = lscape_speeds$Road[lscape_index])
   
-  encounter_data$encounter[is.na(encounter_data$encounter)] <- 0
   
   # Change order of encounter data
   encounter_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                      encounter_data,
                                      by = "lscape_index"
   )
+  
+  encounter_data$encounter[is.na(encounter_data$encounter)] <- 0
   
   # encounter_data <- cam_data |>
   #   dplyr::group_by(lscape_index) |>
@@ -199,8 +201,11 @@ if(max(count_data$count) > 0) {
 
   # Format staying time data
   stay_time_data <- cam_captures |>
-    dplyr::add_row(lscape_index = cam.samps[cam.samps %notin% stay_time_raw$lscape_index]) |>
-    dplyr::left_join(tri_cam_samps |> dplyr::filter(vertex == 1), # need to define tri_cam_samps with lists
+    dplyr::group_by(pass_i) |>
+    dplyr::summarise(t_stay = sum(t_stay),
+                     lscape_index = lscape_index[1]) |>
+    dplyr::add_row(lscape_index = cam.samps[cam.samps %notin% cam_captures$lscape_index]) |>
+    dplyr::left_join(tri_cam_samps |> dplyr::filter(vertex == 1), # need to define tri_cam_samps with lists...
                      by = "lscape_index") |>
     dplyr::select(lscape_index, t_stay) |>
     dplyr::group_by(lscape_index) |>
