@@ -54,7 +54,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 1
+num_runs <- 500
 
 # Define number of clumps
 num.clumps <- 100
@@ -66,7 +66,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 1000        # Number of time steps
+t.steps <- 500        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
@@ -90,8 +90,8 @@ cam_length <- dx*.3 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
 # MCMC parms
-n.iter <- 10000
-burn.in <- 5000
+n.iter <- 20000
+burn.in <- 10000
 
 ################################################################################
 # Define movement speeds for each cell across landscape
@@ -269,8 +269,8 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    MCMC.parms.REST <- mcmcr::as.mcmc(do.call(cbind, chain.REST)[-c(1:burn.in), ])
-    summary(MCMC.parms.REST)
+    # MCMC.parms.REST <- mcmcr::as.mcmc(do.call(cbind, chain.REST)[-c(1:burn.in), ])
+    # summary(MCMC.parms.REST)
 
     # plot(chain.REST$tot.u[burn.in:n.iter])
     D.REST.MCMC <- mean(chain.REST$tot.u[burn.in:n.iter])
@@ -331,9 +331,9 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    pop.ind.REST <- which(names(chain.REST.cov) == "u")
-    MCMC.parms.REST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.REST.cov[-pop.ind.REST])[-c(1:burn.in), ])
-    summary(MCMC.parms.REST.cov)
+    # pop.ind.REST <- which(names(chain.REST.cov) == "u")
+    # MCMC.parms.REST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.REST.cov[-pop.ind.REST])[-c(1:burn.in), ])
+    # summary(MCMC.parms.REST.cov)
 
     # plot(chain.REST$tot.u[burn.in:n.iter])
     D.REST.MCMC.cov <- mean(chain.REST.cov$tot.u[burn.in:n.iter])
@@ -455,9 +455,9 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    # pop.ind.TTE <- which(names(chain.TTE.cov) == "u")
-    # MCMC.parms.TTE.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TTE.cov[-pop.ind.TTE])[-c(1:burn.in), ])
-    # summary(MCMC.parms.TTE.cov)
+    pop.ind.TTE <- which(names(chain.TTE.cov) == "u")
+    MCMC.parms.TTE.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TTE.cov[-pop.ind.TTE])[-c(1:burn.in), ])
+    summary(MCMC.parms.TTE.cov)
 
     # plot(chain.TTE.cov$tot.u[burn.in:n.iter])
     D.TTE.MCMC.cov <- mean(chain.TTE.cov$tot.u[burn.in:n.iter])

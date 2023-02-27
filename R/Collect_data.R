@@ -197,7 +197,13 @@ if(max(count_data$count) > 0) {
   ########################################
   # Collect stay time data for each encounter
   ########################################
-  # stay_time_raw <- cam_data[!is.na(cam_data$t_stay), ]
+  stay_time_raw <- cam_captures |>
+    dplyr::group_by(pass_i) |>
+    dplyr::summarise(t_stay = sum(t_stay),
+                     lscape_index = lscape_index[1],
+                     speed = lscape_type[1],
+                     .groups = 'drop')
+  
 
   # Format staying time data
   stay_time_data <- cam_captures |>
