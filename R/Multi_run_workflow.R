@@ -54,7 +54,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 1
+num_runs <- 20
 
 # Define number of clumps
 num.clumps <- 100
@@ -84,7 +84,7 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- 900
+ncam <- 250
 cam_length <- dx*.3 # length of all viewshed sides
 # cam_length <- dx*.9 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
@@ -114,9 +114,9 @@ for (run in 1:num_runs) {
   
   # Define covariate speeds (There is a better way to do this)
   Z <- matrix(0, nrow = q, ncol = length(covariate_labels))
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- lscape_speeds$Value[lscape_speeds$Speed == "Slow"]
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- lscape_speeds$Value[lscape_speeds$Speed == "Medium"]
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- lscape_speeds$Value[lscape_speeds$Speed == "Fast"]
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Slow"])
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Medium"])
+  Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Fast"])
 
   slow_inds <- which(lscape_speeds$Speed == "Slow")
   med_inds <- which(lscape_speeds$Speed == "Medium")
@@ -658,10 +658,10 @@ for (run in 1:num_runs) {
 
     D.chain <- D.chain
     }
+    # Stop cluster
+    stopCluster(my_cluster)
+  
   } # End
-
-  # Stop cluster
-  stopCluster(my_cluster)
 
   # # Is there a better way to select each element in the list?
   # for (ch in 1:8) {

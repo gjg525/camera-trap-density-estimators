@@ -128,15 +128,16 @@ count_data <- cam_captures |>
 # Add zero count data for all cameras without counts
 count_data <- dplyr::add_row(count_data,
                              lscape_index = cam.samps[cam.samps %notin% count_data$lscape_index],
-                             count = 0) |>
-  dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
-                road = lscape_speeds$Road[lscape_index])
+                             count = 0)
 
 # Change order of count data
 count_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                count_data,
-                               by = c("lscape_index")
-)
+                               by = c("lscape_index")) |>
+  dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
+                road = lscape_speeds$Road[lscape_index])
+
+
 
 # Only collect other data when counts are available
 if(max(count_data$count) > 0) {
