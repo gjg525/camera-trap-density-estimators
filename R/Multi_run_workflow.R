@@ -54,7 +54,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 500
+num_runs <- 1
 
 # Define number of clumps
 num.clumps <- 100
@@ -84,7 +84,7 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- 250
+ncam <- 900
 cam_length <- dx*.3 # length of all viewshed sides
 # cam_length <- dx*.9 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
@@ -678,6 +678,8 @@ for (run in 1:num_runs) {
     dplyr::add_row(dplyr::bind_rows(D.chain))
 }
 
+D.all <- D.all[-1,]
+
 # Remove outlier estimates
 D.all$Est[D.all$Est > 5*nind] <- NA
 D.all$SD[D.all$SD > 5*nind] <- NA
@@ -704,57 +706,6 @@ if(num_runs == 1) {
   # plot_multirun_hist()
 }
 
-# number of counts across whole landscape for each covariate type
-u.abm.all = matrix(0, nrow = q^0.5, ncol = q^0.5)
-for(xx in 1:nrow(animalxy.all)) {
-  x.round <- ceiling(animalxy.all$x[xx]*(q^0.5/max(bounds)))
-  y.round <- ceiling(animalxy.all$y[xx]*(q^0.5/max(bounds)))
-  
-  # Transpose for converting matrix to raster
-  u.abm.all[x.round,y.round] <- u.abm.all[x.round,y.round]+1
-}
-
-slow.counts <- animal_data %>% filter(lscape_type == "Slow") %>% pull(t_spent)
-med.counts <- animal_data %>% filter(lscape_type == "Medium") %>% pull(t_spent)
-fast.counts <- animal_data %>% filter(lscape_type == "Fast") %>% pull(t_spent)
-
-Prop_all <- D.all %>% 
-  dplyr::filter(Covariate == "Covariate") %>% 
-  unnest_wider(Prop_speeds, names_sep="_") %>% 
-  rename(Slow = Prop_speeds_1,
-         Medium = Prop_speeds_2,
-         Fast = Prop_speeds_3) %>% 
-  select(Model, Slow, Medium, Fast) %>% 
-  pivot_longer(!Model, names_to = "Speed", values_to = "Proportions") %>% 
-  group_by(Model, Speed) %>% 
-  summarise(Means = mean(Proportions),
-            SDs = sd(Proportions),
-            .groups = 'drop') %>% 
-  add_row(Model = "ABM",
-          Speed = c("Slow", "Medium", "Fast"),
-          Means = c(slow.counts, med.counts, fast.counts))
-  
-
-  ggplot(Prop_all, aes(x=Speed, y = Means, fill = Model)) +
-        geom_bar(stat="identity", color="black", position=position_dodge()) +
-        geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
-                      position=position_dodge(.9), size = .7) +
-        # scale_y_continuous(limits=c(0, max(Prop_all$Means) +.01), expand = c(0, 0)) +
-        labs(x = "Landscape Type",
-             y = "Relative Distributions") +
-        scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
-        theme(text = element_text(size = 20),
-              legend.title=element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              panel.background = element_blank(),
-              axis.line = element_line(colour = "black"),
-              panel.border = element_rect(colour = "black", fill=NA, size=1),
-              legend.position = c(0.87, 0.7),
-              legend.background = element_blank(),
-              legend.spacing.y = unit(0, "mm"),
-              legend.box.background = element_rect(colour = "black"))
-
 # plot_count_data(fill = "speed")
 # plot_encounter_data(fill = "speed")
 # plot_staytime_data(fill = "speed")
@@ -767,3 +718,5 @@ Prop_all <- D.all %>%
 # # Save Results
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
 
+# plot_ABM_stay_proportions()
+# plot_model_proportions()

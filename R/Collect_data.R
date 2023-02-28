@@ -168,16 +168,15 @@ if(max(count_data$count) > 0) {
   encounter_data <- cam_captures |>
     dplyr::group_by(lscape_index) |>
     dplyr::summarise(encounter = length(unique(pass_i)),
-                     .groups = 'drop') |>
-    dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
-                  road = lscape_speeds$Road[lscape_index])
+                     .groups = 'drop')
   
   
   # Change order of encounter data
   encounter_data <- dplyr::left_join(data.frame(lscape_index = cam.samps),
                                      encounter_data,
-                                     by = "lscape_index"
-  )
+                                     by = "lscape_index") |>
+    dplyr::mutate(speed = lscape_speeds$Speed[lscape_index],
+                  road = lscape_speeds$Road[lscape_index])
   
   encounter_data$encounter[is.na(encounter_data$encounter)] <- 0
   

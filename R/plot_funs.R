@@ -242,6 +242,90 @@ plot_multirun_hist <- function() {
           legend.box.background = element_rect(colour = "black"))
 }
 
+plot_model_proportions <- function() {
+  # number of counts across whole landscape for each covariate type
+  slow.counts <- animal_data %>% filter(lscape_type == "Slow") %>% pull(t_spent)
+  med.counts <- animal_data %>% filter(lscape_type == "Medium") %>% pull(t_spent)
+  fast.counts <- animal_data %>% filter(lscape_type == "Fast") %>% pull(t_spent)
+  
+  Prop_all <- D.all %>% 
+    dplyr::filter(Covariate == "Covariate") %>% 
+    unnest_wider(Prop_speeds, names_sep="_") %>% 
+    rename(Slow = Prop_speeds_1,
+           Medium = Prop_speeds_2,
+           Fast = Prop_speeds_3) %>% 
+    select(Model, Slow, Medium, Fast) %>% 
+    pivot_longer(!Model, names_to = "Speed", values_to = "Proportions") %>% 
+    group_by(Model, Speed) %>% 
+    summarise(Means = mean(Proportions),
+              SDs = sd(Proportions),
+              .groups = 'drop') %>% 
+    add_row(Model = "ABM",
+            Speed = c("Slow", "Medium", "Fast"),
+            Means = c(slow.counts, med.counts, fast.counts))
+  
+  
+  ggplot(Prop_all, aes(x=Speed, y = Means, fill = Model)) +
+    geom_bar(stat="identity", color="black", position=position_dodge()) +
+    geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
+                  position=position_dodge(.9), size = .7) +
+    # scale_y_continuous(limits=c(0, max(Prop_all$Means) +.01), expand = c(0, 0)) +
+    labs(x = "Landscape Type",
+         y = "Relative Distributions") +
+    scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.87, 0.7),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+}
+
+plot_ABM_stay_proportions <- function() {
+  # number of counts across whole landscape for each covariate type
+  slow.counts <- animal_data %>% filter(lscape_type == "Slow") %>% pull(t_spent)
+  med.counts <- animal_data %>% filter(lscape_type == "Medium") %>% pull(t_spent)
+  fast.counts <- animal_data %>% filter(lscape_type == "Fast") %>% pull(t_spent)
+  
+  Prop_all <- stay_time_raw %>% 
+    dplyr::group_by(speed) |> 
+    dplyr::summarise(Model = "Stay Time", 
+                     Means = mean(t_stay),
+                     SDs = sd(t_stay),
+                     .groups = 'drop') %>% 
+    dplyr::add_row(Model = "ABM",
+                   speed = c("Slow", "Medium", "Fast"),
+                   Means = c(slow.counts, med.counts, fast.counts)) |> 
+    dplyr::group_by(Model) |> 
+    dplyr::mutate(Means = Means / sum(Means))
+    
+  
+  
+  ggplot(Prop_all, aes(x=speed, y = Means/sum(Means), fill = Model)) +
+    geom_bar(stat="identity", color="black", position=position_dodge()) +
+    # geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
+    #               position=position_dodge(.9), size = .7) +
+    labs(x = "Landscape Type",
+         y = "Relative Distributions") +
+    scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.87, 0.7),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+}
+
 # Old code. Use for color schemes
 ######################
 
