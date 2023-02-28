@@ -54,7 +54,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 20
+num_runs <- 50
 
 # Define number of clumps
 num.clumps <- 100
@@ -117,7 +117,7 @@ for (run in 1:num_runs) {
   Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Slow"])
   Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Medium"])
   Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Fast"])
-
+  
   slow_inds <- which(lscape_speeds$Speed == "Slow")
   med_inds <- which(lscape_speeds$Speed == "Medium")
   fast_inds <- which(lscape_speeds$Speed == "Fast")
