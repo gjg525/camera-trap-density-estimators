@@ -608,7 +608,7 @@ fit.model.mcmc.TTE.cov <- function(n.iter,
       eta.all.cams <- eta[cam.samps]
       eta.all.cam.rep <- matrix(rep(eta.all.cams,num.occ),nrow = ncam,ncol = num.occ)
 
-      if(all(c(eta.star.cam.rep,eta.all.cam.rep)>1e-10)){
+      if(all(c(eta.star.cam.rep,eta.all.cam.rep)>1e-10) & all(eta.star.cam.rep < 1e100)){
         mh1 <- sum(dexp(TTE.dat,eta.star.cam.rep,log=TRUE),na.rm=TRUE) +
           sum(pexp(data.censor, eta.star.cam.rep, lower.tail = F, log = TRUE)) +
           sum(dnorm(gamma.star,0,gamma.prior.var^0.5,log=TRUE))

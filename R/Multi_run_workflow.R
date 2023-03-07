@@ -46,15 +46,14 @@ cam.dist.set <- sim_vars$cam.dist.set[sim_num]
 #                     Covariate = character(),
 #                     Est = double(),
 #                     SD = double(),
-#                     Prop_speeds = double()
-# )
+#                     Prop_speeds = list())
 D.all <- data.frame(Model = NA,
                     Covariate = NA,
                     Est = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 50
+num_runs <- 1000
 
 # Define number of clumps
 num.clumps <- 100
@@ -84,9 +83,8 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- 250
+ncam <- 10
 cam_length <- dx*.3 # length of all viewshed sides
-# cam_length <- dx*.9 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
 # MCMC parms
@@ -112,17 +110,16 @@ for (run in 1:num_runs) {
   covariates.index <- c(0,rep(1,3))
   covariate_labels <- c("Slow", "Medium", "Fast")
   
-  # Define covariate speeds (There is a better way to do this)
-  Z <- matrix(0, nrow = q, ncol = length(covariate_labels))
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Slow"], 1] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Slow"])
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Medium"], 2] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Medium"])
-  Z[lscape_speeds$Index[lscape_speeds$Speed == "Fast"], 3] <- mean(lscape_speeds$Value[lscape_speeds$Speed == "Fast"])
-  
+  # Define landscape covariates
   slow_inds <- which(lscape_speeds$Speed == "Slow")
   med_inds <- which(lscape_speeds$Speed == "Medium")
   fast_inds <- which(lscape_speeds$Speed == "Fast")
+  # Covariates are either 0 or 1 for indices that represent movement speeds
+  Z <- matrix(0, nrow = q, ncol = length(covariate_labels))
+  Z[slow_inds, 1] <- 1
+  Z[med_inds, 2] <- 1
+  Z[fast_inds, 3] <- 1
   
-
   # Create camera sample designs
   if(cam.dist.set == 1) {
     # # Random camera sampling
@@ -698,14 +695,14 @@ cam.props.label <- c("Camera Bias: Random",
                      "Camera Bias: Medium",
                      "Camera Bias: Fast")
 
-if(num_runs == 1) {
-  plot_onerun_results()
-} else{
-  plot_multirun_means()
-  # plot_multirun_sds()
-  # plot_multirun_hist()
-}
-
+# if(num_runs == 1) {
+#   plot_onerun_results()
+# } else{
+#   plot_multirun_means()
+#   # plot_multirun_sds()
+#   # plot_multirun_hist()
+# }
+# 
 # plot_count_data(fill = "speed")
 # plot_encounter_data(fill = "speed")
 # plot_staytime_data(fill = "speed")
@@ -714,9 +711,10 @@ if(num_runs == 1) {
 # # Plot ABM simulations
 # plot_ABM()
 # plot_space_use()
+# plot_ABM_stay_proportions()
+# plot_model_proportions()
 
 # # Save Results
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
+saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_10cam.rds"))
 
-# plot_ABM_stay_proportions()
-# plot_model_proportions()

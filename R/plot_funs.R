@@ -183,13 +183,17 @@ plot_onerun_results <- function() {
 ################################
 
 plot_multirun_means <- function() {
-  ggplot(D.all, aes(x = Model, y = Est, fill=Covariate)) +
+  ggplot(D.all, aes(x = Model, y = Est, fill = Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
-    geom_hline(yintercept=nind, linetype="dashed", size=1) +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
+    geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
+    geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
+         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Abundance Estimates")) +
          y = "Abundance Estimates") +
-    # y = paste(cam.props.label[cam.dist.set],"\n Abundance Estimates")) +
-  theme(text = element_text(size = 20),
+    scale_fill_manual(values=c('grey40','Grey')) +
+    theme(text = element_text(size = 20),
           legend.title=element_blank(),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -203,10 +207,37 @@ plot_multirun_means <- function() {
 }
 
 plot_multirun_sds <- function() {
-  ggplot(D.all, aes(x = Model, y = SD)) +
-    geom_boxplot(lwd = .1, fatten = .1, fill = "Gray") +
+  ggplot(D.all, aes(x = Model, y = SD, fill = Covariate)) +
+    geom_boxplot(lwd = .1, fatten = .1) +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
+    geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     labs(x = "Model",
-         y = paste(cam.props.label[cam.dist.set],"\n SD Results")) +
+         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Abundance Estimates")) +
+         y = "SD") +
+    scale_fill_manual(values=c('grey40','Grey')) +
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.17, 0.84),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+}
+
+plot_multirun_CV <- function() {
+  ggplot(D.all, aes(x = Model, y = SD/Est, fill = Covariate)) +
+    geom_boxplot(lwd = .1, fatten = .1) +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
+    geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
+    labs(x = "Model",
+         y = "CV") +
+    scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(),
           panel.grid.major = element_blank(),
