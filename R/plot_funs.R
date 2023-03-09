@@ -206,6 +206,34 @@ plot_multirun_means <- function() {
           legend.box.background = element_rect(colour = "black"))
 }
 
+plot_grouped_multirun_means <- function(Unused_cov = "None", Filter_model = "None") {
+
+  # Filter with covariate labels not used
+  D.all %>% 
+    dplyr::filter(Model != Filter_model) %>% 
+    dplyr::filter(Covariate != Unused_cov) %>%
+    ggplot(aes(x = Model, y = Est, fill = Run)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    geom_hline(yintercept=100, linetype="dashed", size=1) +
+    labs(x = "Model",
+         y = "Abundance Estimates") +
+    scale_fill_manual(values=if(sim_num == 4){ 
+      c('grey40', 'grey60','grey80')} 
+      else {c('grey20', 'grey40', 'grey60','grey80')}
+    ) +
+    theme(text = element_text(size = 20),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = "none",
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+}
+
 plot_multirun_sds <- function() {
   ggplot(D.all, aes(x = Model, y = SD, fill = Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
@@ -246,6 +274,35 @@ plot_multirun_CV <- function() {
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
           legend.position = c(0.17, 0.84),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+}
+
+plot_grouped_multirun_CV <- function(Unused_cov = "None", 
+                                     Filter_model = "None",
+                                     Title) {
+  D.all %>% 
+    dplyr::filter(Model != Filter_model) %>% 
+    dplyr::filter(Covariate != Unused_cov) %>%
+    ggplot(aes(x = Model, y = SD/Est, fill = Run)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    labs(x = "Model",
+         y = "CV") +
+    guides(fill = guide_legend(title = Title)) +
+    scale_fill_manual(values=if(sim_num == 4){ 
+      c('grey40', 'grey60','grey80')} 
+      else {c('grey20', 'grey40', 'grey60','grey80')}
+    ) +
+    theme(text = element_text(size = 20),
+          legend.title=element_text(size=18),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = if(Unused_cov == "None"){c(0.856, 0.8)}
+          else{c(0.142, 0.762)},
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"),
           legend.box.background = element_rect(colour = "black"))
