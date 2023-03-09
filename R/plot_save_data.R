@@ -3,76 +3,80 @@ library(tidyverse)
 source("R/plot_funs.R")
 
 file_path <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Images/"
+fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
-for (sim_num in 1) {
-sim_vars <- data.frame(
-  sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
-  lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
-  all_speed = c(1, 1, 2, 3, rep(1, 3)),
-  cam.dist.set = c(rep(1, 4), 2, 3, 4)
-)
-
-
-D.all <- readRDS(paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
-
-nind <- 100
-
-lscape_tag <- sim_vars$lscape_tag[sim_num]
-all_speed <- sim_vars$all_speed[sim_num] # 1: Slow, 2: Medium, 3: Fast
-
-# Cam sample designs (1: random, 2-4: biased slow, medium, fast)
-cam.dist.set <- sim_vars$cam.dist.set[sim_num]
-
-cam.props.label <- c("Camera Bias: Random",
-                     "Camera Bias: Slow",
-                     "Camera Bias: Medium",
-                     "Camera Bias: Fast")
-
-
-D.all <- D.all %>% 
-  dplyr::bind_rows(tibble::tibble(
-    Model = c("TDST", "STE"),
-    Covariate = c("Non-Covariate", "Covariate"),
-    Est = c(nind, nind),
-    SD = c(mean(D.all$SD), mean(D.all$SD))
-  ))
-D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
-
-# Plot boxplots of means
-plot_multirun_means()
-
-# ggsave(
-#   paste0("Abundance_", sim_vars$sim_names[sim_num], "_", sim_vars$lscape_tag[sim_num], ".png"),
-#   plot = last_plot(),
-#   path = file_path,
-#   scale = 1,
-#   width = NA,
-#   height = NA,
-#   # units = c("in", "cm", "mm", "px"),
-#   dpi = 600,
-#   limitsize = TRUE,
-#   bg = NULL
+#########################################
+# Individual plots
+#########################################
+# for (sim_num in 1) {
+# sim_vars <- data.frame(
+#   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
+#   lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
+#   all_speed = c(1, 1, 2, 3, rep(1, 3)),
+#   cam.dist.set = c(rep(1, 4), 2, 3, 4)
 # )
-
-# Plot histograms of means?
-
-# Plot boxplots of coefficient of variation
-plot_multirun_CV()
-
-# ggsave(
-#   paste0("CV_", sim_vars$sim_names[sim_num], "_", sim_vars$lscape_tag[sim_num], ".png"),
-#   plot = last_plot(),
-#   path = file_path,
-#   scale = 1,
-#   width = NA,
-#   height = NA,
-#   # units = c("in", "cm", "mm", "px"),
-#   dpi = 600,
-#   limitsize = TRUE,
-#   bg = NULL
-# )
-
-}
+# 
+# 
+# D.all <- readRDS(paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
+# 
+# nind <- 100
+# 
+# lscape_tag <- sim_vars$lscape_tag[sim_num]
+# all_speed <- sim_vars$all_speed[sim_num] # 1: Slow, 2: Medium, 3: Fast
+# 
+# # Cam sample designs (1: random, 2-4: biased slow, medium, fast)
+# cam.dist.set <- sim_vars$cam.dist.set[sim_num]
+# 
+# cam.props.label <- c("Camera Bias: Random",
+#                      "Camera Bias: Slow",
+#                      "Camera Bias: Medium",
+#                      "Camera Bias: Fast")
+# 
+# 
+# D.all <- D.all %>% 
+#   dplyr::bind_rows(tibble::tibble(
+#     Model = c("TDST", "STE"),
+#     Covariate = c("Non-Covariate", "Covariate"),
+#     Est = c(nind, nind),
+#     SD = c(mean(D.all$SD), mean(D.all$SD))
+#   ))
+# D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
+# 
+# # Plot boxplots of means
+# plot_multirun_means()
+# 
+# # ggsave(
+# #   paste0("Abundance_", sim_vars$sim_names[sim_num], "_", sim_vars$lscape_tag[sim_num], ".png"),
+# #   plot = last_plot(),
+# #   path = file_path,
+# #   scale = 1,
+# #   width = NA,
+# #   height = NA,
+# #   # units = c("in", "cm", "mm", "px"),
+# #   dpi = 600,
+# #   limitsize = TRUE,
+# #   bg = NULL
+# # )
+# 
+# # Plot histograms of means?
+# 
+# # Plot boxplots of coefficient of variation
+# plot_multirun_CV()
+# 
+# # ggsave(
+# #   paste0("CV_", sim_vars$sim_names[sim_num], "_", sim_vars$lscape_tag[sim_num], ".png"),
+# #   plot = last_plot(),
+# #   path = file_path,
+# #   scale = 1,
+# #   width = NA,
+# #   height = NA,
+# #   # units = c("in", "cm", "mm", "px"),
+# #   dpi = 600,
+# #   limitsize = TRUE,
+# #   bg = NULL
+# # )
+# 
+# }
 
 #########################################
 # Grouped plots
@@ -216,8 +220,9 @@ if (sim_num %in% 2:4) {
   )
 }
 
-# Plot different camera efforts
-####################
+#########################################
+# Camera effort
+#########################################
 D.all <- data.frame(Model = NA,
                     Covariate = NA,
                     Est = NA,
@@ -253,14 +258,14 @@ pd <- position_dodge(width = 2)
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
-  dplyr::filter(Model != "TTE") %>% 
+  # dplyr::filter(Model != "TTE") %>% 
   ggplot(aes(x = ncam, y = Means, color = Model)) +
+  geom_hline(yintercept=nind, linetype="dashed", size=1) +
   labs(x = "Number of Cameras",
-       y = "Mean") +
+       y = paste0("Covariate \n", "Mean Abundance")) +
   geom_line() +
   geom_point() +
-  # geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
-  #               position=pd) +
+  scale_color_manual(values = fig_colors[1:4]) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -268,38 +273,31 @@ D.all.summary %>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.17, 0.84),
+        legend.position = "none",
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"),
         legend.box.background = element_rect(colour = "black"))
-
-D.all.summary %>% 
-  dplyr::filter(Covariate == "Non-Covariate") %>% 
-  dplyr::filter(Model != "TTE") %>% 
-  ggplot(aes(x = ncam, y = Means, color = Model)) +
-  labs(x = "Number of Cameras",
-       y = "Mean") +
-  geom_line() +
-  geom_point() +
-  theme(text = element_text(size = 20),
-        legend.title=element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.17, 0.84),
-        legend.background = element_blank(),
-        legend.spacing.y = unit(0, "mm"),
-        legend.box.background = element_rect(colour = "black"))
+ggsave(
+  "Multi_cam_covariate_Abundance.png",
+  plot = last_plot(),
+  path = file_path,
+  scale = 1,
+  width = NA,
+  height = NA,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
-  ggplot(aes(x = ncam, y = SDs, color = Model)) +
+  ggplot(aes(x = ncam, y = CV, color = Model)) +
   labs(x = "Number of Cameras",
        y = "CV") +
   geom_line() +
   geom_point() +
+  scale_color_manual(values = fig_colors[1:4]) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -307,16 +305,31 @@ D.all.summary %>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.17, 0.84),
+        legend.position = c(0.926, 0.803),
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"),
         legend.box.background = element_rect(colour = "black"))
+ggsave(
+  "Multi_cam_covariate_CV.png",
+  plot = last_plot(),
+  path = file_path,
+  scale = 1,
+  width = NA,
+  height = NA,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
-  ggplot(aes(x = ncam, y = SDs, color = Model)) +
+  # dplyr::filter(Model != "TTE") %>% 
+  ggplot(aes(x = ncam, y = Means, color = Model)) +
+  geom_hline(yintercept=nind, linetype="dashed", size=1) +
+  scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
-       y = "CV") +
+       y = paste0("Non-Covariate \n", "Mean Abundance")) +
   geom_line() +
   geom_point() +
   theme(text = element_text(size = 20),
@@ -326,10 +339,55 @@ D.all.summary %>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.17, 0.84),
+        legend.position = "none",
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"),
         legend.box.background = element_rect(colour = "black"))
+ggsave(
+  "Multi_cam_noncovariate_Abundance.png",
+  plot = last_plot(),
+  path = file_path,
+  scale = 1,
+  width = NA,
+  height = NA,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
+
+D.all.summary %>% 
+  dplyr::filter(Covariate == "Non-Covariate") %>% 
+  ggplot(aes(x = ncam, y = CV, color = Model)) +
+  labs(x = "Number of Cameras",
+       y = "CV") +
+  geom_line() +
+  geom_point() +
+  scale_color_manual(values = fig_colors[2:5]) +
+  scale_x_continuous(breaks = ncam_all) +
+  theme(text = element_text(size = 20),
+        legend.title=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.position = c(0.926, 0.803),
+        legend.background = element_blank(),
+        legend.spacing.y = unit(0, "mm"),
+        legend.box.background = element_rect(colour = "black"))
+ggsave(
+  "Multi_cam_noncovariate_CV.png",
+  plot = last_plot(),
+  path = file_path,
+  scale = 1,
+  width = NA,
+  height = NA,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
 
 
 

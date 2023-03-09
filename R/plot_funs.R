@@ -214,7 +214,7 @@ plot_grouped_multirun_means <- function(Unused_cov = "None", Filter_model = "Non
     dplyr::filter(Covariate != Unused_cov) %>%
     ggplot(aes(x = Model, y = Est, fill = Run)) +
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
-    geom_hline(yintercept=100, linetype="dashed", size=1) +
+    geom_hline(yintercept=nind, linetype="dashed", size=1) +
     labs(x = "Model",
          y = "Abundance Estimates") +
     scale_fill_manual(values=if(sim_num == 4){ 
