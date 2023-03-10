@@ -206,7 +206,9 @@ plot_multirun_means <- function() {
           legend.box.background = element_rect(colour = "black"))
 }
 
-plot_grouped_multirun_means <- function(Unused_cov = "None", Filter_model = "None") {
+plot_grouped_multirun_means <- function(Unused_cov = "None", 
+                                        Filter_model = "None", 
+                                        Cov = "Covariate") {
 
   # Filter with covariate labels not used
   D.all %>% 
@@ -216,7 +218,7 @@ plot_grouped_multirun_means <- function(Unused_cov = "None", Filter_model = "Non
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
     geom_hline(yintercept=nind, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = "Abundance Estimates") +
+         y = paste0(Cov,"\n", "Abundance Estimates")) +
     scale_fill_manual(values=if(sim_num == 4){ 
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
@@ -304,8 +306,7 @@ plot_grouped_multirun_CV <- function(Unused_cov = "None",
           legend.position = if(Unused_cov == "None"){c(0.856, 0.8)}
           else{c(0.142, 0.762)},
           legend.background = element_blank(),
-          legend.spacing.y = unit(0, "mm"),
-          legend.box.background = element_rect(colour = "black"))
+          legend.spacing.y = unit(0, "mm"))
 }
 
 plot_multirun_hist <- function() {

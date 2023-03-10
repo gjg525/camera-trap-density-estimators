@@ -4,7 +4,7 @@ source("R/plot_funs.R")
 
 file_path <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Images/"
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
-
+nind <- 100
 #########################################
 # Individual plots
 #########################################
@@ -158,7 +158,9 @@ if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Fast_cams"] <- "Fast Habitat"
   D.all$Run <- factor(D.all$Run, levels = c("Random", "Slow Habitat", "Medium Habitat", "Fast Habitat"))
   
-  plot_grouped_multirun_means(Unused_cov = "Non-Covariate", Filter_model = "STE")
+  plot_grouped_multirun_means(Unused_cov = "Non-Covariate", 
+                              Filter_model = "STE",
+                              Cov = "Covariate")
   ggsave(
     "Abundance_cam_speeds_covariate.png",
     plot = last_plot(),
@@ -189,7 +191,8 @@ if (sim_num %in% 2:4) {
   )
   
   plot_grouped_multirun_means(Unused_cov = "Covariate", 
-                              Filter_model = "TDST")
+                              Filter_model = "TDST",
+                              Cov = "Non-Covariate")
   ggsave(
     "Abundance_cam_speeds_no_covariate.png",
     plot = last_plot(),
@@ -259,13 +262,15 @@ pd <- position_dodge(width = 2)
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
   # dplyr::filter(Model != "TTE") %>% 
-  ggplot(aes(x = ncam, y = Means, color = Model)) +
+  ggplot(aes(x = ncam, y = Means, shape = Model)) +
   geom_hline(yintercept=nind, linetype="dashed", size=1) +
+  geom_line(size = 1) +
+  geom_point(size = 2.5, stroke = 1.5) +
+  scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
        y = paste0("Covariate \n", "Mean Abundance")) +
-  geom_line() +
-  geom_point() +
-  scale_color_manual(values = fig_colors[1:4]) +
+  scale_x_continuous(breaks = ncam_all) +
+  scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -292,12 +297,13 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
-  ggplot(aes(x = ncam, y = CV, color = Model)) +
+  ggplot(aes(x = ncam, y = CV, shape = Model)) +
+  geom_line(size = 1) +
+  geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
        y = "CV") +
-  geom_line() +
-  geom_point() +
-  scale_color_manual(values = fig_colors[1:4]) +
+  scale_x_continuous(breaks = ncam_all) +
+  scale_shape_manual(values=c(1, 2, 3, 4)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -307,8 +313,7 @@ D.all.summary %>%
         panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.position = c(0.926, 0.803),
         legend.background = element_blank(),
-        legend.spacing.y = unit(0, "mm"),
-        legend.box.background = element_rect(colour = "black"))
+        legend.spacing.y = unit(0, "mm"))
 ggsave(
   "Multi_cam_covariate_CV.png",
   plot = last_plot(),
@@ -325,13 +330,15 @@ ggsave(
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
   # dplyr::filter(Model != "TTE") %>% 
-  ggplot(aes(x = ncam, y = Means, color = Model)) +
+  ggplot(aes(x = ncam, y = Means, shape = Model)) +
   geom_hline(yintercept=nind, linetype="dashed", size=1) +
+  geom_line(size = 1) +
+  geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
        y = paste0("Non-Covariate \n", "Mean Abundance")) +
-  geom_line() +
-  geom_point() +
+  scale_x_continuous(breaks = ncam_all) +
+  scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -341,8 +348,7 @@ D.all.summary %>%
         panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.position = "none",
         legend.background = element_blank(),
-        legend.spacing.y = unit(0, "mm"),
-        legend.box.background = element_rect(colour = "black"))
+        legend.spacing.y = unit(0, "mm"))
 ggsave(
   "Multi_cam_noncovariate_Abundance.png",
   plot = last_plot(),
@@ -358,13 +364,13 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
-  ggplot(aes(x = ncam, y = CV, color = Model)) +
+  ggplot(aes(x = ncam, y = CV, shape = Model)) +
+  geom_line(size = 1) +
+  geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
        y = "CV") +
-  geom_line() +
-  geom_point() +
-  scale_color_manual(values = fig_colors[2:5]) +
   scale_x_continuous(breaks = ncam_all) +
+  scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 20),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -374,8 +380,7 @@ D.all.summary %>%
         panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.position = c(0.926, 0.803),
         legend.background = element_blank(),
-        legend.spacing.y = unit(0, "mm"),
-        legend.box.background = element_rect(colour = "black"))
+        legend.spacing.y = unit(0, "mm"))
 ggsave(
   "Multi_cam_noncovariate_CV.png",
   plot = last_plot(),

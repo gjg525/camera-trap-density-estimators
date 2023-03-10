@@ -1,8 +1,5 @@
 # Workflow for agent-based simulations for repeated simulations
 
-# TODO: CREATE one data variable for fitting models
-# Adapt covariate functions for tri viewsheds
-
 library(truncnorm)
 library(Rfast)
 library(raster)
@@ -83,7 +80,7 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- 10
+ncam <- 250
 cam_length <- dx*.3 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
@@ -716,5 +713,5 @@ cam.props.label <- c("Camera Bias: Random",
 
 # # Save Results
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
-saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_10cam.rds"))
+saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
 
