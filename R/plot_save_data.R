@@ -89,8 +89,8 @@ D.all <- data.frame(Model = NA,
                     Run = NA
 )
 nind <- 100
-for (sim_num in 2:4) {
-# for (sim_num in c(1, 5:7)) {
+# for (sim_num in 2:4) {
+for (sim_num in c(1, 5:7)) {
     sim_vars <- data.frame(
     sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
     lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
@@ -117,6 +117,7 @@ D.all <- D.all[-1,]
 D.all$Run[D.all$Run == "Original"] <- "Random"
   
 D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
+
 if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Slow_landscape"] <- "Slow"
   D.all$Run[D.all$Run == "Medium_landscape"] <- "Medium"
@@ -129,8 +130,8 @@ if (sim_num %in% 2:4) {
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -138,14 +139,14 @@ if (sim_num %in% 2:4) {
   )
   
   plot_grouped_multirun_CV(Unused_cov = "None",
-                           Title = "Movement Speed")
+                           Title = "Habitat Type")
   ggsave(
-    "CV_homogeneous_speeds.png",
+    "SD_homogeneous_speeds.png",
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -153,10 +154,10 @@ if (sim_num %in% 2:4) {
   )
   
 } else if (sim_num %in% 5:7){
-  D.all$Run[D.all$Run == "Slow_cams"] <- "Slow Habitat"
-  D.all$Run[D.all$Run == "Medium_cams"] <- "Medium Habitat"
-  D.all$Run[D.all$Run == "Fast_cams"] <- "Fast Habitat"
-  D.all$Run <- factor(D.all$Run, levels = c("Random", "Slow Habitat", "Medium Habitat", "Fast Habitat"))
+  D.all$Run[D.all$Run == "Slow_cams"] <- "80% Slow Habitat"
+  D.all$Run[D.all$Run == "Medium_cams"] <- "80% Medium Habitat"
+  D.all$Run[D.all$Run == "Fast_cams"] <- "80% Fast Habitat"
+  D.all$Run <- factor(D.all$Run, levels = c("Random", "80% Slow Habitat", "80% Medium Habitat", "80% Fast Habitat"))
   
   plot_grouped_multirun_means(Unused_cov = "Non-Covariate", 
                               Filter_model = "STE",
@@ -166,8 +167,8 @@ if (sim_num %in% 2:4) {
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -178,12 +179,12 @@ if (sim_num %in% 2:4) {
                            Filter_model = "STE",
                            Title = "Sample Design")
   ggsave(
-    "CV_cam_speeds_covariate.png",
+    "SD_cam_speeds_covariate.png",
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -198,8 +199,8 @@ if (sim_num %in% 2:4) {
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -210,12 +211,12 @@ if (sim_num %in% 2:4) {
                            Filter_model = "TDST",
                            Title = "Sample Design")
   ggsave(
-    "CV_cam_speeds_no_covariate.png",
+    "SD_cam_speeds_no_covariate.png",
     plot = last_plot(),
     path = file_path,
     scale = 1,
-    width = NA,
-    height = NA,
+    width = 5,
+    height = 3,
     # units = c("in", "cm", "mm", "px"),
     dpi = 600,
     limitsize = TRUE,
@@ -251,6 +252,7 @@ D.all <- D.all[-1,]
 D.all.summary <- D.all %>% 
   group_by(Model, Covariate, ncam) %>% 
   summarise(Means = mean(Est, na.rm = T),
+            Mean_sd = sd(Est, na.rm = T),
             SDs = mean(SD, na.rm = T),
             CV = SDs/Means,
             MPE = 1/n() * sum((Means - nind)/nind),
@@ -268,10 +270,10 @@ D.all.summary %>%
   geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
-       y = paste0("Covariate \n", "Mean Abundance")) +
+       y = paste0("Covariate Models \n", "Mean Abundance")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
-  theme(text = element_text(size = 20),
+  theme(text = element_text(size = 16),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -287,8 +289,8 @@ ggsave(
   plot = last_plot(),
   path = file_path,
   scale = 1,
-  width = NA,
-  height = NA,
+  width = 6,
+  height = 3,
   # units = c("in", "cm", "mm", "px"),
   dpi = 600,
   limitsize = TRUE,
@@ -297,30 +299,31 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
-  ggplot(aes(x = ncam, y = CV, shape = Model)) +
+  ggplot(aes(x = ncam, y = SDs, shape = Model)) +
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
-       y = "CV") +
+       y = "SD") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(1, 2, 3, 4)) +
-  theme(text = element_text(size = 20),
-        legend.title=element_blank(),
+  theme(text = element_text(size = 16),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=10),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.926, 0.803),
+        legend.position = c(0.91, 0.74),
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"))
 ggsave(
-  "Multi_cam_covariate_CV.png",
+  "Multi_cam_covariate_SD.png",
   plot = last_plot(),
   path = file_path,
   scale = 1,
-  width = NA,
-  height = NA,
+  width = 6,
+  height = 3,
   # units = c("in", "cm", "mm", "px"),
   dpi = 600,
   limitsize = TRUE,
@@ -336,10 +339,10 @@ D.all.summary %>%
   geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
-       y = paste0("Non-Covariate \n", "Mean Abundance")) +
+       y = paste0("Non-Covariate Models \n", "Mean Abundance")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
-  theme(text = element_text(size = 20),
+  theme(text = element_text(size = 16),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -354,8 +357,8 @@ ggsave(
   plot = last_plot(),
   path = file_path,
   scale = 1,
-  width = NA,
-  height = NA,
+  width = 6,
+  height = 3,
   # units = c("in", "cm", "mm", "px"),
   dpi = 600,
   limitsize = TRUE,
@@ -364,30 +367,31 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
-  ggplot(aes(x = ncam, y = CV, shape = Model)) +
+  ggplot(aes(x = ncam, y = SDs, shape = Model)) +
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
-       y = "CV") +
+       y = "SD") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
-  theme(text = element_text(size = 20),
-        legend.title=element_blank(),
+  theme(text = element_text(size = 16),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=10),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.926, 0.803),
+        legend.position = c(0.91, 0.74),
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"))
 ggsave(
-  "Multi_cam_noncovariate_CV.png",
+  "Multi_cam_noncovariate_SD.png",
   plot = last_plot(),
   path = file_path,
   scale = 1,
-  width = NA,
-  height = NA,
+  width = 6,
+  height = 3,
   # units = c("in", "cm", "mm", "px"),
   dpi = 600,
   limitsize = TRUE,

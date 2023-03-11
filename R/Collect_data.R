@@ -322,7 +322,7 @@ if(max(count_data$count) > 0) {
     dplyr::group_by(Animal_ID) |>
     dplyr::mutate(t_diff = c(t[2:length(t)] - t[1:(length(t)-1)], 0)) |>
     dplyr::group_by(lscape_type) %>% 
-    dplyr::summarise(t_spent = sum(t_diff)/t.steps/nind,
+    dplyr::summarise(t_spent = sum(t_diff)/nind,
                      .groups = 'drop') 
   
 }

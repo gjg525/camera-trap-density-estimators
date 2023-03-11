@@ -50,7 +50,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 1000
+num_runs <- 1
 
 # Define number of clumps
 num.clumps <- 100
@@ -62,7 +62,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 500        # Number of time steps
+t.steps <- 1000        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
@@ -80,7 +80,7 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- 250
+ncam <- q
 cam_length <- dx*.3 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
@@ -713,5 +713,5 @@ cam.props.label <- c("Camera Bias: Random",
 
 # # Save Results
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
-saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
+# saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
 

@@ -82,18 +82,27 @@ plot_space_use <- function() {
 ################################
 # # Density plot for count data
 plot_count_data <- function(fill = "speed") {
-  ggplot(count_data, aes(x=count, fill = .data[[fill]])) +
-    geom_density(position = "identity", alpha = 0.4, adjust = 3) +
+  count_data$speed <- factor(count_data$speed, c("Slow", "Medium", "Fast"))
+
+  ggplot(count_data, aes(x=count, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
     labs(x = "Count", y = "Frequency", fill="Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
+    scale_x_continuous(limits = c(0, max(count_data$count)),
+                       expand = expansion(mult = 0, add = 0)) +
+    scale_y_continuous(limits = c(0, NA),
+                       expand = expansion(mult = 0, add = c(0, 0.01))) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(text = element_text(size = 20),
+          legend.title=element_text(size=18),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
-
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.9, 0.8),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
+  
   # ggplot(count_data, aes(x=count, fill = .data[[fill]])) +
   #   geom_histogram(position = "identity", alpha = 0.4) +
   #   labs(x = "Count", y = "Frequency", fill="Landscape Type") +
@@ -110,18 +119,28 @@ plot_count_data <- function(fill = "speed") {
 
 # # Density plot for encounter data
 plot_encounter_data <- function(fill = "speed") {
-  ggplot(encounter_data, aes(x=encounter, fill = .data[[fill]])) +
-    geom_density(position = "identity", alpha = 0.4, adjust = 2) +
+  encounter_data$speed <- factor(encounter_data$speed, c("Slow", "Medium", "Fast"))
+  
+  ggplot(encounter_data, aes(x=encounter, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     labs(x = "Number of Encounters", y = "Frequency", fill="Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
+    scale_x_continuous(limits = c(0, max(encounter_data$encounter)),
+                       expand = expansion(mult = 0, add = c(0, 0.3))) +
+    scale_y_continuous(limits = c(0, NA),
+                       expand = expansion(mult = 0, add = c(0, 0.01))) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(text = element_text(size = 20),
+          legend.title=element_text(size=18),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
-
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.9, 0.8),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
+  
   # ggplot(encounter_data, aes(x=encounter, fill = .data[[fill]])) +
   #   geom_histogram(position = "identity", alpha = 0.4) +
   #   labs(x = "Count", y = "Frequency", fill="Landscape Type") +
@@ -138,32 +157,50 @@ plot_encounter_data <- function(fill = "speed") {
 
 # # Density plot for staying time data
 plot_staytime_data <- function(fill = "speed") {
-  ggplot(stay_time_raw, aes(x=t_stay, fill = .data[[fill]])) +
-    geom_density(position = "identity", alpha = 0.4, adjust = 5) +
+  stay_time_raw$speed <- factor(stay_time_raw$speed, c("Slow", "Medium", "Fast"))
+  
+  ggplot(stay_time_raw, aes(x=t_stay, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
     labs(x = "Staying Time", y = "Frequency", fill="Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
+    scale_x_continuous(limits = c(0, max(stay_time_raw$t_stay)),
+                       expand = expansion(mult = 0, add = 0)) +
+    scale_y_continuous(limits = c(0, NA),
+                       expand = expansion(mult = 0, add = c(0, 0.01))) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(text = element_text(size = 20),
+          legend.title=element_text(size=18),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.9, 0.8),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
 }
 
 # # Density plot for TTE data
 plot_TTE_data <- function(fill = "speed") {
-  ggplot(TTE_data_raw, aes(x=TTE, fill = .data[[fill]])) +
-    geom_density(position = "identity", alpha = 0.4, adjust = 2) +
+  TTE_data_raw$speed <- factor(TTE_data_raw$speed, c("Slow", "Medium", "Fast"))
+  
+  ggplot(TTE_data_raw, aes(x=TTE, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
     labs(x = "Time to Encounter", y = "Frequency", fill = "Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
+    scale_x_continuous(limits = c(0, max(TTE_data_raw$TTE)),
+                       expand = expansion(mult = 0, add = 0)) +
+    scale_y_continuous(limits = c(0, NA),
+                       expand = expansion(mult = 0, add = c(0, 0.01))) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(text = element_text(size = 20),
+          legend.title=element_text(size=18),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.9, 0.8),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
 }
 
 ################################
@@ -190,8 +227,8 @@ plot_multirun_means <- function() {
     geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
     labs(x = "Model",
-         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Abundance Estimates")) +
-         y = "Abundance Estimates") +
+         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Mean Abundance")) +
+         y = "Mean Abundance") +
     scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(),
@@ -208,7 +245,7 @@ plot_multirun_means <- function() {
 
 plot_grouped_multirun_means <- function(Unused_cov = "None", 
                                         Filter_model = "None", 
-                                        Cov = "Covariate") {
+                                        Cov = "None") {
 
   # Filter with covariate labels not used
   D.all %>% 
@@ -218,12 +255,14 @@ plot_grouped_multirun_means <- function(Unused_cov = "None",
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
     geom_hline(yintercept=nind, linetype="dashed", size=1) +
     labs(x = "Model",
-         y = paste0(Cov,"\n", "Abundance Estimates")) +
+         y = if_else(Unused_cov == "None", 
+                     "Mean Abundance",
+                     paste0(Cov," Models \n", "Mean Abundance"))) +
     scale_fill_manual(values=if(sim_num == 4){ 
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
     ) +
-    theme(text = element_text(size = 20),
+    theme(text = element_text(size = 16),
           legend.title=element_blank(),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
@@ -243,7 +282,7 @@ plot_multirun_sds <- function() {
     geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
     geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     labs(x = "Model",
-         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Abundance Estimates")) +
+         # y = paste(cam.props.label[lscape_var+1], " Landscape \n Mean Abundance")) +
          y = "SD") +
     scale_fill_manual(values=c('grey40','Grey')) +
     theme(text = element_text(size = 20),
@@ -287,24 +326,26 @@ plot_grouped_multirun_CV <- function(Unused_cov = "None",
   D.all %>% 
     dplyr::filter(Model != Filter_model) %>% 
     dplyr::filter(Covariate != Unused_cov) %>%
-    ggplot(aes(x = Model, y = SD/Est, fill = Run)) +
+    ggplot(aes(x = Model, y = SD, fill = Run)) +
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
     labs(x = "Model",
-         y = "CV") +
+         y = "SD") +
     guides(fill = guide_legend(title = Title)) +
+    ylim(c(0, max(D.all$SD, na.rm = T) +0.1))+
     scale_fill_manual(values=if(sim_num == 4){ 
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
     ) +
-    theme(text = element_text(size = 20),
-          legend.title=element_text(size=18),
+    theme(text = element_text(size = 16),
+          legend.title=element_text(size=12),
+          legend.text=element_text(size=10),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = if(Unused_cov == "None"){c(0.856, 0.8)}
-          else{c(0.142, 0.762)},
+          legend.position = if(Unused_cov == "None"){c(0.12, 0.77)}
+          else{c(0.22, 0.75)},
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
 }
@@ -381,27 +422,32 @@ plot_ABM_stay_proportions <- function() {
   med.counts <- animal_data %>% filter(lscape_type == "Medium") %>% pull(t_spent)
   fast.counts <- animal_data %>% filter(lscape_type == "Fast") %>% pull(t_spent)
   
+  
   Prop_all <- stay_time_raw %>% 
     dplyr::group_by(speed) |> 
-    dplyr::summarise(Model = "Stay Time", 
+    dplyr::summarise(Model = "Stay Time Data", 
                      Means = mean(t_stay),
                      SDs = sd(t_stay),
                      .groups = 'drop') %>% 
-    dplyr::add_row(Model = "ABM",
+    dplyr::add_row(Model = "Total Habitat Use",
                    speed = c("Slow", "Medium", "Fast"),
                    Means = c(slow.counts, med.counts, fast.counts)) |> 
     dplyr::group_by(Model) |> 
-    dplyr::mutate(Means = Means / sum(Means))
+    dplyr::mutate(Means = Means/sum(Means))
     
+  Prop_all$speed <- factor(Prop_all$speed, c("Slow", "Medium", "Fast"))
+  Prop_all$Model <- factor(Prop_all$Model, c("Total Habitat Use", "Stay Time Data"))
   
   
-  ggplot(Prop_all, aes(x=speed, y = Means/sum(Means), fill = Model)) +
+  ggplot(Prop_all, aes(x=speed, y = Means, fill = Model)) +
     geom_bar(stat="identity", color="black", position=position_dodge()) +
     # geom_errorbar(aes(ymin=Means-SDs, ymax=Means+SDs), width=.2,
     #               position=position_dodge(.9), size = .7) +
-    labs(x = "Landscape Type",
-         y = "Relative Distributions") +
-    scale_fill_manual(values = c("grey40",fig_colors[1:4])) +
+    labs(x = "Habitat Type",
+         y = "Proportion Occupied") +
+    scale_fill_manual(values = c("grey","grey40")) +
+    scale_y_continuous(limits = c(0, NA),
+                       expand = expansion(mult = 0, add = c(0, 0.05))) +
     theme(text = element_text(size = 20),
           legend.title=element_blank(),
           panel.grid.major = element_blank(),
@@ -409,10 +455,9 @@ plot_ABM_stay_proportions <- function() {
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.87, 0.7),
+          legend.position = c(0.85, 0.87),
           legend.background = element_blank(),
-          legend.spacing.y = unit(0, "mm"),
-          legend.box.background = element_rect(colour = "black"))
+          legend.spacing.y = unit(0, "mm"))
 }
 
 # Old code. Use for color schemes
@@ -524,7 +569,7 @@ plot_ABM_stay_proportions <- function() {
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
 #         geom_hline(yintercept=100, linetype="dashed", size=1) +
 #         labs(x = "Model",
-#              y = paste(cam.dist.labels.caps[lscape_var+1], " Landscape \n Abundance Estimates")) +
+#              y = paste(cam.dist.labels.caps[lscape_var+1], " Landscape \n Mean Abundance")) +
 #         scale_fill_manual(values=c('grey40','Grey')) +
 #         theme(text = element_text(size = 20),
 #               legend.title=element_blank(), 
@@ -548,7 +593,7 @@ plot_ABM_stay_proportions <- function() {
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
 #         geom_hline(yintercept=100, linetype="dashed", size=1) +
 #         labs(x = "Model",
-#              y = paste(cam.props.label,"\n Abundance Estimates")) +
+#              y = paste(cam.props.label,"\n Mean Abundance")) +
 #         scale_fill_manual(values=c('grey40','Grey')) +
 #         theme(text = element_text(size = 20),
 #               legend.title=element_blank(), 
