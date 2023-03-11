@@ -89,8 +89,8 @@ D.all <- data.frame(Model = NA,
                     Run = NA
 )
 nind <- 100
-# for (sim_num in 2:4) {
-for (sim_num in c(1, 5:7)) {
+for (sim_num in 2:4) {
+# for (sim_num in c(1, 5:7)) {
     sim_vars <- data.frame(
     sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
     lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
@@ -270,7 +270,7 @@ D.all.summary %>%
   geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
-       y = paste0("Covariate Models \n", "Mean Abundance")) +
+       y = paste0("Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 16),
@@ -303,7 +303,7 @@ D.all.summary %>%
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
-       y = "SD") +
+       y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(1, 2, 3, 4)) +
   theme(text = element_text(size = 16),
@@ -339,7 +339,7 @@ D.all.summary %>%
   geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
-       y = paste0("Non-Covariate Models \n", "Mean Abundance")) +
+       y = paste0("Non-Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 16),
@@ -371,7 +371,7 @@ D.all.summary %>%
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
-       y = "SD") +
+       y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
   theme(text = element_text(size = 16),

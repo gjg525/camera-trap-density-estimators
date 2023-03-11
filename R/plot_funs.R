@@ -256,8 +256,8 @@ plot_grouped_multirun_means <- function(Unused_cov = "None",
     geom_hline(yintercept=nind, linetype="dashed", size=1) +
     labs(x = "Model",
          y = if_else(Unused_cov == "None", 
-                     "Mean Abundance",
-                     paste0(Cov," Models \n", "Mean Abundance"))) +
+                     "Posterior Means",
+                     paste0(Cov," Models \n", "Posterior Means"))) +
     scale_fill_manual(values=if(sim_num == 4){ 
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
@@ -329,7 +329,7 @@ plot_grouped_multirun_CV <- function(Unused_cov = "None",
     ggplot(aes(x = Model, y = SD, fill = Run)) +
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
     labs(x = "Model",
-         y = "SD") +
+         y = "Posterior SDs") +
     guides(fill = guide_legend(title = Title)) +
     ylim(c(0, max(D.all$SD, na.rm = T) +0.1))+
     scale_fill_manual(values=if(sim_num == 4){ 
