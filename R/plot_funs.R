@@ -91,15 +91,16 @@ plot_count_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = 0)) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
     theme(text = element_text(size = 20),
-          legend.title=element_text(size=18),
+          legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.9, 0.8),
+          legend.position = c(0.85, 0.75),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
   
@@ -123,21 +124,21 @@ plot_encounter_data <- function(fill = "speed") {
   
   ggplot(encounter_data, aes(x=encounter, linetype = .data[[fill]])) +
     geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
-    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     labs(x = "Number of Encounters", y = "Frequency", fill="Landscape Type") +
     scale_x_continuous(limits = c(0, max(encounter_data$encounter)),
                        expand = expansion(mult = 0, add = c(0, 0.3))) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
     theme(text = element_text(size = 20),
-          legend.title=element_text(size=18),
+          legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.9, 0.8),
+          legend.position = c(0.85, 0.75),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
   
@@ -166,15 +167,16 @@ plot_staytime_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = 0)) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
     theme(text = element_text(size = 20),
-          legend.title=element_text(size=18),
+          legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.9, 0.8),
+          legend.position = c(0.85, 0.75),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
 }
@@ -190,15 +192,16 @@ plot_TTE_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = 0)) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
     theme(text = element_text(size = 20),
-          legend.title=element_text(size=18),
+          legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.9, 0.8),
+          legend.position = c(0.85, 0.75),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
 }
@@ -253,7 +256,7 @@ plot_grouped_multirun_means <- function(Unused_cov = "None",
     dplyr::filter(Covariate != Unused_cov) %>%
     ggplot(aes(x = Model, y = Est, fill = Run)) +
     geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
-    geom_hline(yintercept=nind, linetype="dashed", size=1) +
+    geom_hline(yintercept=nind, linetype="dashed", size = 0.7) +
     labs(x = "Model",
          y = if_else(Unused_cov == "None", 
                      "Posterior Means",
