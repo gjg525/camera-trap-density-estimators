@@ -487,14 +487,14 @@ for (run in 1:num_runs) {
     }
 
     ########################################
-    ## MCT no covariates
+    ## PR no covariates
     ########################################
     if (iter == 6) {
-    # print("Fit Mean Count model with MCMC, no covariates")
+    # print("Fit Poisson Regression model with MCMC, no covariates")
     ptm <- proc.time()
     # unpack tidyr if extract has no applicable method
     # .rs.unloadPackage("tidyr")
-    chain.MCT <-fit.model.mcmc.MCT(
+    chain.PR <-fit.model.mcmc.PR(
       n.iter = n.iter,
       gamma.start = log(mean(count_data$count)),
       gamma.prior.var = 10^6,
@@ -503,50 +503,50 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    MCMC.parms.MCT <- mcmcr::as.mcmc(do.call(cbind, chain.MCT)[-c(1:burn.in), ])
-    summary(MCMC.parms.MCT)
+    MCMC.parms.PR <- mcmcr::as.mcmc(do.call(cbind, chain.PR)[-c(1:burn.in), ])
+    summary(MCMC.parms.PR)
 
-    # plot(chain.MCT$tot.u[burn.in:n.iter])
-    D.MCT.MCMC <- mean(chain.MCT$tot.u[burn.in:n.iter])
-    SD.MCT.MCMC <- sd(chain.MCT$tot.u[burn.in:n.iter])
+    # plot(chain.PR$tot.u[burn.in:n.iter])
+    D.PR.MCMC <- mean(chain.PR$tot.u[burn.in:n.iter])
+    SD.PR.MCMC <- sd(chain.PR$tot.u[burn.in:n.iter])
 
-    Prop_speeds <- c(mean(chain.MCT$u[slow_inds]),
-                     mean(chain.MCT$u[med_inds]),
-                     mean(chain.MCT$u[fast_inds]))/
-      mean(mean(chain.MCT$u[slow_inds])+
-             mean(chain.MCT$u[med_inds])+
-             mean(chain.MCT$u[fast_inds]))
+    Prop_speeds <- c(mean(chain.PR$u[slow_inds]),
+                     mean(chain.PR$u[med_inds]),
+                     mean(chain.PR$u[fast_inds]))/
+      mean(mean(chain.PR$u[slow_inds])+
+             mean(chain.PR$u[med_inds])+
+             mean(chain.PR$u[fast_inds]))
     
-    if(mean(chain.MCT$accept[burn.in:n.iter,])< 0.2 || mean(chain.MCT$accept[burn.in:n.iter,])> 0.7){
-      warning(('Mean Count accept rate OOB'))
-      D.MCT.MCMC <- NA
-      SD.MCT.MCMC <- NA
+    if(mean(chain.PR$accept[burn.in:n.iter,])< 0.2 || mean(chain.PR$accept[burn.in:n.iter,])> 0.7){
+      warning(('Poisson Regression accept rate OOB'))
+      D.PR.MCMC <- NA
+      SD.PR.MCMC <- NA
     }
 
     # D.all<- rbind(D.all, data.frame(
-    #   Model = "MCT",
+    #   Model = "PR",
     #   Covariate = "Non-Covariate",
-    #   Est = D.MCT.MCMC,
-    #   SD = SD.MCT.MCMC))
+    #   Est = D.PR.MCMC,
+    #   SD = SD.PR.MCMC))
 
     D.chain <- tibble::tibble(
-      Model = "MCT",
+      Model = "PR",
       Covariate = "Non-Covariate",
-      Est = D.MCT.MCMC,
-      SD = SD.MCT.MCMC,
+      Est = D.PR.MCMC,
+      SD = SD.PR.MCMC,
       Prop_speeds = list(Prop_speeds)
     )
     }
 
     ########################################
-    ## MCT w/ covariates
+    ## PR w/ covariates
     ########################################
     if (iter == 7) {
-    # print("Fit Mean Count model with MCMC w/ covariates")
+    # print("Fit Poisson Regression model with MCMC w/ covariates")
     ptm <- proc.time()
     # unpack tidyr if extract has no applicable method
     # .rs.unloadPackage("tidyr")
-    chain.MCT.cov <-fit.model.mcmc.MCT.cov(
+    chain.PR.cov <-fit.model.mcmc.PR.cov(
       n.iter = n.iter,
       gamma.start = rep(log(mean(count_data$count)), 3),
       gamma.prior.var = 10^6,
@@ -559,38 +559,38 @@ for (run in 1:num_runs) {
     proc.time() - ptm
 
     # ## Posterior summaries
-    pop.ind.MCT <- which(names(chain.MCT.cov) == "u")
-    MCMC.parms.MCT.cov <- mcmcr::as.mcmc(do.call(cbind, chain.MCT.cov[-pop.ind.MCT])[-c(1:burn.in), ])
-    summary(MCMC.parms.MCT.cov)
+    pop.ind.PR <- which(names(chain.PR.cov) == "u")
+    MCMC.parms.PR.cov <- mcmcr::as.mcmc(do.call(cbind, chain.PR.cov[-pop.ind.PR])[-c(1:burn.in), ])
+    summary(MCMC.parms.PR.cov)
 
-    # plot(chain.MCT.cov$tot.u[burn.in:n.iter])
-    D.MCT.MCMC.cov <- mean(chain.MCT.cov$tot.u[burn.in:n.iter])
-    SD.MCT.MCMC.cov <- sd(chain.MCT.cov$tot.u[burn.in:n.iter])
+    # plot(chain.PR.cov$tot.u[burn.in:n.iter])
+    D.PR.MCMC.cov <- mean(chain.PR.cov$tot.u[burn.in:n.iter])
+    SD.PR.MCMC.cov <- sd(chain.PR.cov$tot.u[burn.in:n.iter])
 
-    Prop_speeds <- c(mean(chain.MCT.cov$u[slow_inds]),
-                     mean(chain.MCT.cov$u[med_inds]),
-                     mean(chain.MCT.cov$u[fast_inds]))/
-      mean(mean(chain.MCT.cov$u[slow_inds])+
-             mean(chain.MCT.cov$u[med_inds])+
-             mean(chain.MCT.cov$u[fast_inds]))
+    Prop_speeds <- c(mean(chain.PR.cov$u[slow_inds]),
+                     mean(chain.PR.cov$u[med_inds]),
+                     mean(chain.PR.cov$u[fast_inds]))/
+      mean(mean(chain.PR.cov$u[slow_inds])+
+             mean(chain.PR.cov$u[med_inds])+
+             mean(chain.PR.cov$u[fast_inds]))
     
-    if(mean(chain.MCT.cov$accept[burn.in:n.iter,])< 0.2 || mean(chain.MCT.cov$accept[burn.in:n.iter,])> 0.7){
-      warning(('Mean Count accept rate OOB'))
-      D.MCT.MCMC.cov <- NA
-      SD.MCT.MCMC.cov <- NA
+    if(mean(chain.PR.cov$accept[burn.in:n.iter,])< 0.2 || mean(chain.PR.cov$accept[burn.in:n.iter,])> 0.7){
+      warning(('Poisson Regression accept rate OOB'))
+      D.PR.MCMC.cov <- NA
+      SD.PR.MCMC.cov <- NA
     }
 
     # D.all<- rbind(D.all, data.frame(
-    #   Model = "MCT",
+    #   Model = "PR",
     #   Covariate = "Covariate",
-    #   Est = D.MCT.MCMC.cov,
-    #   SD = SD.MCT.MCMC.cov))
+    #   Est = D.PR.MCMC.cov,
+    #   SD = SD.PR.MCMC.cov))
 
     D.chain <- tibble::tibble(
-      Model = "MCT",
+      Model = "PR",
       Covariate = "Covariate",
-      Est = D.MCT.MCMC.cov,
-      SD = SD.MCT.MCMC.cov,
+      Est = D.PR.MCMC.cov,
+      SD = SD.PR.MCMC.cov,
       Prop_speeds = list(Prop_speeds)
     )
     }
@@ -678,7 +678,7 @@ D.all <- D.all[-1,]
 D.all$Est[D.all$Est > 5*nind] <- NA
 D.all$SD[D.all$SD > 5*nind] <- NA
 
-D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
+D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "PR", "STE"))
 
 D_summary <- D.all |>
   dplyr::group_by(Model) |>

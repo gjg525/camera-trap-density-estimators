@@ -40,7 +40,7 @@ nind <- 100
 #     Est = c(nind, nind),
 #     SD = c(mean(D.all$SD), mean(D.all$SD))
 #   ))
-# D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
+# D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "PR", "STE"))
 # 
 # # Plot boxplots of means
 # plot_multirun_means()
@@ -92,16 +92,18 @@ nind <- 100
 for (sim_num in 2:4) {
 # for (sim_num in c(1, 5:7)) {
     sim_vars <- data.frame(
-    sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
-    lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
-    all_speed = c(1, 1, 2, 3, rep(1, 3)),
-    cam.dist.set = c(rep(1, 4), 2, 3, 4)
-  )
+      sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
+      lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
+      all_speed = c(1, 1, 2, 3, rep(1, 3)),
+      cam.dist.set = c(rep(1, 4), 2, 3, 4)
+    )
   
   D.in <- readRDS(paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".rds"))
   
   D.all <- D.all %>% 
-    dplyr::bind_rows(c(D.in, Run = sim_vars$sim_names[sim_num]))
+    dplyr::bind_rows(c(D.in, Run = sim_vars$sim_names[sim_num])) %>% 
+    dplyr::mutate(Model = as.character(Model))
+  D.all$Model <- replace(D.all$Model, D.all$Model == "MCT", "PR") # Change old PR model name
   
   D.all <- D.all %>% 
     dplyr::bind_rows(tibble::tibble(
@@ -112,11 +114,12 @@ for (sim_num in 2:4) {
       Run = sim_vars$sim_names[sim_num])
     )
 }
+# Remove NA row
 D.all <- D.all[-1,]
 
 D.all$Run[D.all$Run == "Original"] <- "Random"
   
-D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "MCT", "STE"))
+D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "PR", "STE"))
 
 if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Slow_landscape"] <- "Slow"
@@ -245,7 +248,10 @@ for (ncams in ncam_all) {
   }
   
   D.all <- D.all %>% 
-    dplyr::bind_rows(c(D.in, ncam = ncams))
+    dplyr::bind_rows(c(D.in, ncam = ncams)) %>% 
+    dplyr::mutate(Model = as.character(Model))
+  D.all$Model <- replace(D.all$Model, D.all$Model == "MCT", "PR") # Change old PR model name
+  
 }
 D.all <- D.all[-1,]
 
@@ -258,6 +264,9 @@ D.all.summary <- D.all %>%
             MPE = 1/n() * sum((Means - nind)/nind),
             MSE = 1/n() * sum((Means - nind)^2),
             .groups = 'drop')
+
+D.all.summary$Model <- factor(D.all.summary$Model, 
+                              levels = c("TDST", "REST", "TTE", "PR", "STE"))
 
 pd <- position_dodge(width = 2)
 
@@ -272,7 +281,7 @@ D.all.summary %>%
   labs(x = "Number of Cameras",
        y = paste0("Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
-  scale_shape_manual(values=c(2, 3, 4, 5)) +
+  scale_shape_manual(values=c(1, 2, 3, 4)) +
   theme(text = element_text(size = 16),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),

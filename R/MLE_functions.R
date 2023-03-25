@@ -179,9 +179,9 @@ TTE.cov.fn <- function(TTE.dat,
 
 
 ################################
-# MCT no covariates
+# PR no covariates
 ################################
-MCT.fn <- function(cam.counts, param){
+PR.fn <- function(cam.counts, param){
   # param: beta parameter for lambda
   d <- exp(param[1])
 
@@ -191,9 +191,9 @@ MCT.fn <- function(cam.counts, param){
 
 
 ################################
-# MCT w/ covariates
+# PR w/ covariates
 ################################
-MCT.cov.fn <- function(cam.counts, param, Z, cam.samps, cov.inds){
+PR.cov.fn <- function(cam.counts, param, Z, cam.samps, cov.inds){
   # Initialize with landscape-scale covariates
   num.covs <- sum(cov.inds)
   d <- exp(Z%*%param[1:num.covs])

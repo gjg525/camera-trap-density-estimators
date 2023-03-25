@@ -225,7 +225,7 @@ plot_onerun_results <- function() {
 plot_multirun_means <- function() {
   ggplot(D.all, aes(x = Model, y = Est, fill = Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
-    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "PR")), colour = "black") +
     geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
     geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     geom_hline(yintercept=100, linetype="dashed", size=1) +
@@ -281,7 +281,7 @@ plot_grouped_multirun_means <- function(Unused_cov = "None",
 plot_multirun_sds <- function() {
   ggplot(D.all, aes(x = Model, y = SD, fill = Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
-    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "PR")), colour = "black") +
     geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
     geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     labs(x = "Model",
@@ -304,7 +304,7 @@ plot_multirun_sds <- function() {
 plot_multirun_CV <- function() {
   ggplot(D.all, aes(x = Model, y = SD/Est, fill = Covariate)) +
     geom_boxplot(lwd = .1, fatten = .1) +
-    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+    geom_boxplot(data=subset(D.all, D.all$Model %in% c("REST", "TTE", "PR")), colour = "black") +
     geom_boxplot(data=subset(D.all, D.all$Model == "TDST"), colour=c("black","white")) +
     geom_boxplot(data=subset(D.all, D.all$Model == "STE"), colour=c("white","black")) +
     labs(x = "Model",
@@ -476,8 +476,8 @@ plot_ABM_stay_proportions <- function() {
 # 
 # # Initializations
 # nind <- 100
-# leg1<-c("EEDE", "REST", "TTE", "MCT", "STE")
-# leg.props<-c("EEDE", "REST", "TTE", "MCT")
+# leg1<-c("EEDE", "REST", "TTE", "PR", "STE")
+# leg.props<-c("EEDE", "REST", "TTE", "PR")
 # 
 # # Cam sample design (1: random, 2: 80% slow, 3: 80% medium, 4: 80% fast)
 # cs.all <- 1
@@ -528,7 +528,7 @@ plot_ABM_stay_proportions <- function() {
 #       mutate(sd = all.props.sd.df$sd)
 #     
 #     all.props.df$Speed <- factor(all.props.df$Speed, levels = c("Slow", "Medium", "Fast"))
-#     all.props.df$Model <- factor(all.props.df$Model, levels = c("ABM (Truth)", "EEDE", "REST", "TTE", "MCT", "STE"))
+#     all.props.df$Model <- factor(all.props.df$Model, levels = c("ABM (Truth)", "EEDE", "REST", "TTE", "PR", "STE"))
 #     ####################################
 #     # Calculate Summaries
 #     ####################################
@@ -545,7 +545,7 @@ plot_ABM_stay_proportions <- function() {
 #     D.all.df$Model <- gsub(x = D.all.df$Model, pattern = "(.3)", replacement = "")
 #     D.all.df$Model[grepl(".3", D.all.df$Model, fixed = TRUE)] <- "Yes"
 #     D.all.df$Est[is.na(D.all.df$Est)] <- 100
-#     D.all.df$Model <- factor(D.all.df$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
+#     D.all.df$Model <- factor(D.all.df$Model, levels = c("EEDE", "REST", "TTE", "PR", "STE"))
 #     D.all.df$Covariate <- factor(D.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
 #     
 #     # Convert all data from wide to long format
@@ -561,13 +561,13 @@ plot_ABM_stay_proportions <- function() {
 #     SD.all.df$Model <- gsub(x = SD.all.df$Model, pattern = "(.3)", replacement = "")
 #     SD.all.df$Model[grepl(".3", SD.all.df$Model, fixed = TRUE)] <- "Yes"
 #     SD.all.df$Est[is.na(SD.all.df$Est)] <- 0
-#     SD.all.df$Model <- factor(SD.all.df$Model, levels = c("EEDE", "REST", "TTE", "MCT", "STE"))
+#     SD.all.df$Model <- factor(SD.all.df$Model, levels = c("EEDE", "REST", "TTE", "PR", "STE"))
 #     SD.all.df$Covariate <- factor(SD.all.df$Covariate, levels = c("Non-Covariate", "Covariate"))
 #     
 #     if (any(lv.all %in% 1:3)) {
 #       ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
 #         geom_boxplot(lwd = .1, fatten = .1) +
-#         geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+#         geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "PR")), colour = "black") +
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
 #         geom_hline(yintercept=100, linetype="dashed", size=1) +
@@ -591,7 +591,7 @@ plot_ABM_stay_proportions <- function() {
 #     } else{
 #       ggplot(D.all.df, aes(x=Model, y=Est, fill=Covariate)) +
 #         geom_boxplot(lwd = .1, fatten = .1) +
-#         geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "MCT")), colour = "black") +
+#         geom_boxplot(data=subset(D.all.df, D.all.df$Model %in% c("REST", "TTE", "PR")), colour = "black") +
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "EEDE"), colour=c("white","black")) +
 #         geom_boxplot(data=subset(D.all.df, D.all.df$Model == "STE"), colour=c("black","white")) +
 #         geom_hline(yintercept=100, linetype="dashed", size=1) +

@@ -705,9 +705,9 @@ fit.model.mcmc.TTE.cov <- function(n.iter,
 
 
 ########################################
-# MCMC for MCT no covariates
+# MCMC for PR no covariates
 ########################################
-fit.model.mcmc.MCT <- function(n.iter,
+fit.model.mcmc.PR <- function(n.iter,
                                gamma.start,
                                gamma.prior.var,
                                gamma.tune,
@@ -774,9 +774,9 @@ fit.model.mcmc.MCT <- function(n.iter,
 
 
 ########################################
-# MCMC for MCT w/ covariates
+# MCMC for PR w/ covariates
 ########################################
-fit.model.mcmc.MCT.cov <- function(n.iter,
+fit.model.mcmc.PR.cov <- function(n.iter,
                                    gamma.start,
                                    gamma.prior.var,
                                    gamma.tune,
