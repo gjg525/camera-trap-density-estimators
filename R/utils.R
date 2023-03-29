@@ -80,6 +80,8 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
   Y <- c()
   t_stay <- c()
   in_cam_all <- c()
+  t_in_all <- c()
+  t_out_all <- c()
   # Capture encounters as an individual leaves the viewshed
   encounter <- 0
   num_encounters <- 0
@@ -93,6 +95,8 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
     X.temp <- c()
     Y.temp <- c()
     t_tot <- 0 # time spent in camera
+    t_in <- NA
+    t_out <- NA
 
     animal.step <- p_animal[nn+1,] - p_animal[nn,]
 
@@ -136,6 +140,10 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
         
+        # Calculate enter/exit times
+        t_in <- NA
+        t_out <- t[nn] + t_tot
+        
         num_encounters <- num_encounters + 1
       } else {
         # Individual remains in camera
@@ -152,6 +160,10 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
         if (t[nn] == t[length(t) - 1]) {
           num_encounters <- num_encounters + 1
         }
+        
+        # # Calculate enter/exit times
+        # t_in <- NA
+        # t_out <- NA
         
       }
     } else{
@@ -171,6 +183,14 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
         # Calculate time spent in camera
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
+        
+        # Find distance from start point to intersection
+        dist_2 <- sqrt((p_animal[nn, 1] - X.temp)^2 +
+                         (p_animal[nn, 2] - Y.temp)^2)
+        
+        # Calculate enter/exit times
+        t_in <- t[nn] + dist_2/speed[nn]
+        # t_out <- NA
         
         # Encounter if individual remains in viewshed on final step
         if (t[nn] == t[length(t) - 1]) {
@@ -193,8 +213,20 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
         # t_tot <- t_tot + dist_1/speed[nn]
         t_tot <- dist_1/speed[nn]
         
+        # Find distance from start point to first intersection
+        dist_2 <- sqrt((p_animal[nn, 1] - X.temp[1])^2 +
+                         (p_animal[nn, 2] - Y.temp[1])^2)
+        
+        # Calculate enter/exit times
+        t_in <- t[nn] + dist_2/speed[nn]
+        t_out <- t_in + t_tot
+        
         num_encounters <- num_encounters + 1
       }
+    }
+    
+    if (length(t_in) > 1){
+      print(t[nn])
     }
     # Accumulate all values
     X <- c(X, X.temp)
@@ -202,9 +234,12 @@ calc_intersects <- function(p_viewshed, p_animal, speed, t) {
     t_stay <- c(t_stay, t_tot)
     in_cam_all <- c(in_cam_all, in_cam)
     encounter <- c(encounter, num_encounters)
-
+    t_in_all <- c(t_in_all, t_in)
+    t_out_all <- c(t_out_all, t_out)
+    
   }
-  return(list(cbind(X, Y), t_stay, in_cam_all, encounter))
+
+  return(list(cbind(X, Y), t_stay, in_cam_all, encounter, t_in_all, t_out_all))
 }
 
 ###################################

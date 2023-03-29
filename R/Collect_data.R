@@ -88,6 +88,8 @@ cam_captures <- cell_captures |>
                    t_stay = c(unlist(lapply(cam_intersects, '[[', 2)), NA),
                    in_cam = c(unlist(lapply(cam_intersects, '[[', 3)), NA),
                    encounter = unlist(lapply(cam_intersects, '[[', 4)),
+                   t_in = c(unlist(lapply(cam_intersects, '[[', 5)), NA),
+                   t_out = c(unlist(lapply(cam_intersects, '[[', 6)), NA),
                    lscape_index = lscape_index[1],
                    Animal_ID = Animal_ID,
                    t = t,
