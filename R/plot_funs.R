@@ -248,8 +248,15 @@ plot_multirun_means <- function() {
 
 plot_grouped_multirun_means <- function(Unused_cov = "None", 
                                         Filter_model = "None", 
+                                        subfig_label,
                                         Cov = "None") {
 
+  x_max = length(unique(D.all |> 
+                         dplyr::filter(Model != Filter_model) %>% 
+                         dplyr::pull(Model)))
+  
+  y_max = max(D.all$Est)
+  
   # Filter with covariate labels not used
   D.all %>% 
     dplyr::filter(Model != Filter_model) %>% 
@@ -265,6 +272,8 @@ plot_grouped_multirun_means <- function(Unused_cov = "None",
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
     ) +
+    # annotate("text", x = 5.4, y = 200, label = subfig_label, size = 5) +
+    annotate("text", x = x_max + 0.4, y = y_max, label = subfig_label, size = 5) +
     theme(text = element_text(size = 16),
           legend.title=element_blank(),
           panel.grid.major = element_blank(),
@@ -325,7 +334,14 @@ plot_multirun_CV <- function() {
 
 plot_grouped_multirun_CV <- function(Unused_cov = "None", 
                                      Filter_model = "None",
+                                     subfig_label,
                                      Title) {
+  x_max = length(unique(D.all |> 
+                          dplyr::filter(Model != Filter_model) %>% 
+                          dplyr::pull(Model)))
+  
+  y_max = max(D.all$SD, na.rm = T)
+  
   D.all %>% 
     dplyr::filter(Model != Filter_model) %>% 
     dplyr::filter(Covariate != Unused_cov) %>%
@@ -339,6 +355,8 @@ plot_grouped_multirun_CV <- function(Unused_cov = "None",
       c('grey40', 'grey60','grey80')} 
       else {c('grey20', 'grey40', 'grey60','grey80')}
     ) +
+    # annotate("text", x = 5.4, y = 9, label = subfig_label, size = 5) +
+    annotate("text", x = x_max + 0.4, y = y_max, label = subfig_label, size = 5) +
     theme(text = element_text(size = 16),
           legend.title=element_text(size=12),
           legend.text=element_text(size=10),

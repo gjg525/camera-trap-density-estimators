@@ -88,7 +88,6 @@ D.all <- data.frame(Model = NA,
                     Prop_speeds = NA,
                     Run = NA
 )
-nind <- 100
 for (sim_num in 2:4) {
 # for (sim_num in c(1, 5:7)) {
     sim_vars <- data.frame(
@@ -127,7 +126,8 @@ if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Fast_landscape"] <- "Fast"
   D.all$Run <- factor(D.all$Run, levels = c("Slow", "Medium", "Fast"))
   
-  plot_grouped_multirun_means(Unused_cov = "None")
+  plot_grouped_multirun_means(Unused_cov = "None",
+                              subfig_label = "a")
   ggsave(
     "Abundance_homogeneous_speeds.png",
     plot = last_plot(),
@@ -142,6 +142,7 @@ if (sim_num %in% 2:4) {
   )
   
   plot_grouped_multirun_CV(Unused_cov = "None",
+                           subfig_label = "b",
                            Title = "Habitat Type")
   ggsave(
     "SD_homogeneous_speeds.png",
@@ -164,6 +165,7 @@ if (sim_num %in% 2:4) {
   
   plot_grouped_multirun_means(Unused_cov = "Non-Covariate", 
                               Filter_model = "STE",
+                              subfig_label = "c",
                               Cov = "Covariate")
   ggsave(
     "Abundance_cam_speeds_covariate.png",
@@ -180,6 +182,7 @@ if (sim_num %in% 2:4) {
   
   plot_grouped_multirun_CV(Unused_cov = "Non-Covariate", 
                            Filter_model = "STE",
+                           subfig_label = "d",
                            Title = "Sample Design")
   ggsave(
     "SD_cam_speeds_covariate.png",
@@ -196,6 +199,7 @@ if (sim_num %in% 2:4) {
   
   plot_grouped_multirun_means(Unused_cov = "Covariate", 
                               Filter_model = "TDST",
+                              subfig_label = "a",
                               Cov = "Non-Covariate")
   ggsave(
     "Abundance_cam_speeds_no_covariate.png",
@@ -212,6 +216,7 @@ if (sim_num %in% 2:4) {
   
   plot_grouped_multirun_CV(Unused_cov = "Covariate",
                            Filter_model = "TDST",
+                           subfig_label = "b",
                            Title = "Sample Design")
   ggsave(
     "SD_cam_speeds_no_covariate.png",
@@ -282,6 +287,7 @@ D.all.summary %>%
        y = paste0("Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(1, 2, 3, 4)) +
+  annotate("text", x = 250, y = 115, label = "c", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -293,6 +299,7 @@ D.all.summary %>%
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"),
         legend.box.background = element_rect(colour = "black"))
+
 ggsave(
   "Multi_cam_covariate_Abundance.png",
   plot = last_plot(),
@@ -315,6 +322,7 @@ D.all.summary %>%
        y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(1, 2, 3, 4)) +
+  annotate("text", x = 250, y = 53, label = "c", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_text(size=12),
         legend.text=element_text(size=10),
@@ -323,7 +331,7 @@ D.all.summary %>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.91, 0.74),
+        legend.position = c(0.21, 0.74),
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"))
 ggsave(
@@ -351,6 +359,7 @@ D.all.summary %>%
        y = paste0("Non-Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
+  annotate("text", x = 250, y = 105, label = "a", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_blank(),
         panel.grid.major = element_blank(),
@@ -383,6 +392,7 @@ D.all.summary %>%
        y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(2, 3, 4, 5)) +
+  annotate("text", x = 250, y = 25, label = "b", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_text(size=12),
         legend.text=element_text(size=10),
@@ -391,7 +401,7 @@ D.all.summary %>%
         panel.background = element_blank(),
         axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.position = c(0.91, 0.74),
+        legend.position = c(0.21, 0.74),
         legend.background = element_blank(),
         legend.spacing.y = unit(0, "mm"))
 ggsave(
