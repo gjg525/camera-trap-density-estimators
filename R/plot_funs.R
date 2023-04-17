@@ -87,12 +87,14 @@ plot_count_data <- function(fill = "speed") {
   ggplot(count_data, aes(x=count, linetype = .data[[fill]])) +
     geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
     labs(x = "Count", y = "Frequency", fill="Landscape Type") +
-    scale_x_continuous(limits = c(0, max(count_data$count)),
+    # scale_x_continuous(limits = c(0, max(count_data$count)),
+  scale_x_continuous(limits = c(0, 53),
                        expand = expansion(mult = 0, add = 0)) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
+    annotate("text", x = 51, y = 0.31, label = "a", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -100,7 +102,7 @@ plot_count_data <- function(fill = "speed") {
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.85, 0.75),
+          legend.position = c(0.15, 0.75),
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
   
@@ -127,10 +129,11 @@ plot_encounter_data <- function(fill = "speed") {
     labs(x = "Number of Encounters", y = "Frequency", fill="Landscape Type") +
     scale_x_continuous(limits = c(0, max(encounter_data$encounter)),
                        expand = expansion(mult = 0, add = c(0, 0.3))) +
-    scale_y_continuous(limits = c(0, NA),
+    scale_y_continuous(limits = c(0, 0.075),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
+    annotate("text", x = 40, y = 0.074, label = "b", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -138,7 +141,7 @@ plot_encounter_data <- function(fill = "speed") {
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.85, 0.75),
+          legend.position = "none",
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
   
@@ -169,6 +172,7 @@ plot_staytime_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
+    annotate("text", x = 10.3, y = 3.2, label = "c", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -176,7 +180,7 @@ plot_staytime_data <- function(fill = "speed") {
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.85, 0.75),
+          legend.position = "none",
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
 }
@@ -194,6 +198,7 @@ plot_TTE_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
+    annotate("text", x = 19, y = 0.065, label = "d", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -201,7 +206,7 @@ plot_TTE_data <- function(fill = "speed") {
           panel.background = element_blank(),
           axis.line = element_line(colour = "black"),
           panel.border = element_rect(colour = "black", fill=NA, size=1),
-          legend.position = c(0.85, 0.75),
+          legend.position = "none",
           legend.background = element_blank(),
           legend.spacing.y = unit(0, "mm"))
 }
