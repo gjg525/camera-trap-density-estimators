@@ -90,11 +90,11 @@ plot_count_data <- function(fill = "speed") {
     # scale_x_continuous(limits = c(0, max(count_data$count)),
   scale_x_continuous(limits = c(0, 53),
                        expand = expansion(mult = 0, add = 0)) +
-    scale_y_continuous(limits = c(0, NA),
+    scale_y_continuous(limits = c(0, 0.34),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 51, y = 0.31, label = "a", size = 5) +
+    annotate("text", x = 51, y = 0.32, label = "a", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -133,7 +133,7 @@ plot_encounter_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 39, y = 0.074, label = "b", size = 5) +
+    annotate("text", x = 39, y = 0.075, label = "b", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -169,11 +169,11 @@ plot_staytime_data <- function(fill = "speed") {
     # scale_x_continuous(limits = c(0, max(stay_time_raw$t_stay)),
     scale_x_continuous(limits = c(0, 11),
                        expand = expansion(mult = 0, add = 0)) +
-    scale_y_continuous(limits = c(0, NA),
+    scale_y_continuous(limits = c(0, 3.3),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 10.7, y = 3.2, label = "c", size = 5) +
+    annotate("text", x = 10.7, y = 3.1, label = "c", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -195,11 +195,11 @@ plot_TTE_data <- function(fill = "speed") {
     labs(x = "Time to Encounter", y = "Frequency", fill = "Landscape Type") +
     scale_x_continuous(limits = c(0, max(TTE_data_raw$TTE)),
                        expand = expansion(mult = 0, add = 0)) +
-    scale_y_continuous(limits = c(0, NA),
+    scale_y_continuous(limits = c(0, 0.068),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 19, y = 0.065, label = "d", size = 5) +
+    annotate("text", x = 19, y = 0.068, label = "d", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
