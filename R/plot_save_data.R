@@ -88,8 +88,8 @@ D.all <- data.frame(Model = NA,
                     Prop_speeds = NA,
                     Run = NA
 )
-for (sim_num in 2:4) {
-# for (sim_num in c(1, 5:7)) {
+# for (sim_num in 2:4) {
+for (sim_num in c(1, 5:7)) {
     sim_vars <- data.frame(
       sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
       lscape_tag = c("Random", rep("Homogeneous", 3), rep("Random", 3)),
@@ -322,7 +322,7 @@ D.all.summary %>%
        y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
   scale_shape_manual(values=c(1, 2, 3, 4)) +
-  annotate("text", x = 250, y = 53, label = "c", size = 5) +
+  annotate("text", x = 250, y = 53, label = "d", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_text(size=12),
         legend.text=element_text(size=10),

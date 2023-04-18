@@ -133,7 +133,7 @@ plot_encounter_data <- function(fill = "speed") {
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 40, y = 0.074, label = "b", size = 5) +
+    annotate("text", x = 39, y = 0.074, label = "b", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
@@ -166,13 +166,14 @@ plot_staytime_data <- function(fill = "speed") {
   ggplot(stay_time_raw, aes(x=t_stay, linetype = .data[[fill]])) +
     geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
     labs(x = "Staying Time", y = "Frequency", fill="Landscape Type") +
-    scale_x_continuous(limits = c(0, max(stay_time_raw$t_stay)),
+    # scale_x_continuous(limits = c(0, max(stay_time_raw$t_stay)),
+    scale_x_continuous(limits = c(0, 11),
                        expand = expansion(mult = 0, add = 0)) +
     scale_y_continuous(limits = c(0, NA),
                        expand = expansion(mult = 0, add = c(0, 0.01))) +
     scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
     guides(linetype = guide_legend(title = "Habitat Type")) +
-    annotate("text", x = 10.3, y = 3.2, label = "c", size = 5) +
+    annotate("text", x = 10.7, y = 3.2, label = "c", size = 5) +
     theme(text = element_text(size = 20),
           legend.title=element_text(size=14),
           panel.grid.major = element_blank(),
