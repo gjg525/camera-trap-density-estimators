@@ -3,7 +3,10 @@ library(tidyverse)
 source("R/plot_funs.R")
 
 file_path <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Images/"
+fig_colors_darkest <- c("#00441b", "#662506", "#08306b", "#49006a", "#99d8c9", "#fed98e")
+fig_colors_dark <- c("#238b45", "#cc4c02", "#2171b5", "#ae017e", "#a50f15", "#fed98e")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
+fig_colors_light <- c("#99d8c9", "#fee391", "#c6dbef", "#fcc5c0", "#fc9272", "#fed98e")
 nind <- 100
 #########################################
 # Individual plots
@@ -126,12 +129,41 @@ if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Fast_landscape"] <- "Fast"
   D.all$Run <- factor(D.all$Run, levels = c("Slow", "Medium", "Fast"))
   
-  plot_grouped_multirun_means(Unused_cov = "None",
-                              subfig_label = "a")
+  D.all %>% 
+    dplyr::filter(Model != "None") %>% 
+    dplyr::filter(Covariate != "None") %>%
+    # ggplot(aes(x = Model, y = Est, fill = interaction(Model, Run))) +
+    ggplot(aes(x = Model, y = Est, fill = Model, color = Run)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    geom_hline(yintercept=nind, linetype="dashed", size = 0.7) +
+    labs(x = "Model",
+         y = "Posterior Means") +
+    # scale_fill_manual(values= c(fig_colors_dark[1:5], 
+    #                             fig_colors_med[1:5], 
+    #                             fig_colors_light[1:5])) +
+    scale_fill_manual(values= fig_colors[1:5]) +
+    scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+    annotate("text", x = 5.4, y = max(D.all$Est), 
+             label = "a", 
+             size = 5) +
+    theme(text = element_text(size = 16),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = "none",
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+  
+  # plot_grouped_multirun_means(Unused_cov = "None",
+  #                             subfig_label = "a")
   ggsave(
     "Abundance_homogeneous_speeds.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -141,13 +173,43 @@ if (sim_num %in% 2:4) {
     bg = NULL
   )
   
-  plot_grouped_multirun_CV(Unused_cov = "None",
-                           subfig_label = "b",
-                           Title = "Habitat Type")
+  D.all %>% 
+    dplyr::filter(Model != "None") %>% 
+    dplyr::filter(Covariate != "None") %>%
+    ggplot(aes(x = Model, y = SD, fill = Model, color = Run)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    labs(x = "Model",
+         y = "Posterior SDs") +
+    # scale_fill_manual(values= c(fig_colors_dark[1:5], 
+    #                             fig_colors_med[1:5], 
+    #                             fig_colors_light[1:5])) +
+    scale_fill_manual(values= fig_colors[1:5]) +
+    scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+    annotate("text", x = 5.4, y = max(D.all$SD, na.rm = T) - 0.1, 
+             label = "b", 
+             size = 5) +
+    # ylim(NA, 15)+
+    guides(color = guide_legend(title = "Habitat Type"),
+           fill = "none") +
+    theme(text = element_text(size = 16),
+          legend.title=element_text(size=12),
+          legend.text=element_text(size=10),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.13, 0.75),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
+  
+  # plot_grouped_multirun_CV(Unused_cov = "None",
+  #                          subfig_label = "b",
+  #                          Title = "Habitat Type")
   ggsave(
     "SD_homogeneous_speeds.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -163,14 +225,38 @@ if (sim_num %in% 2:4) {
   D.all$Run[D.all$Run == "Fast_cams"] <- "80% Fast Habitat"
   D.all$Run <- factor(D.all$Run, levels = c("Random", "80% Slow Habitat", "80% Medium Habitat", "80% Fast Habitat"))
   
-  plot_grouped_multirun_means(Unused_cov = "Non-Covariate", 
-                              Filter_model = "STE",
-                              subfig_label = "c",
-                              Cov = "Covariate")
+  D.all %>% 
+    dplyr::filter(Model != "STE") %>% 
+    dplyr::filter(Covariate != "Non-Covariate") %>%
+    ggplot(aes(x = Run, y = Est, fill = Model)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    geom_hline(yintercept=nind, linetype="dashed", size = 0.7) +
+    labs(x = "Camera Sample Design",
+         y = "Covariate Models \n Posterior Means") +
+    scale_fill_manual(values= fig_colors) +
+    scale_x_discrete(labels = c("Random", "80% Slow", "80% Medium", "80% Fast")) +
+    annotate("text", x = 4.4, y = max(D.all$Est), 
+             label = "c", 
+             size = 5) +
+    theme(text = element_text(size = 14),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = "none",
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+  # plot_grouped_multirun_means(Unused_cov = "Non-Covariate", 
+  #                             Filter_model = "STE",
+  #                             subfig_label = "c",
+  #                             Cov = "Covariate")
   ggsave(
     "Abundance_cam_speeds_covariate.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -180,14 +266,36 @@ if (sim_num %in% 2:4) {
     bg = NULL
   )
   
-  plot_grouped_multirun_CV(Unused_cov = "Non-Covariate", 
-                           Filter_model = "STE",
-                           subfig_label = "d",
-                           Title = "Sample Design")
+  D.all %>% 
+    dplyr::filter(Model != "STE") %>% 
+    dplyr::filter(Covariate != "Non-Covariate") %>%
+    ggplot(aes(x = Run, y = SD, fill = Model)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    labs(x = "Camera Sample Design",
+         y = "Covariate Models \n Posterior SDs") +
+    scale_fill_manual(values= fig_colors) +
+    scale_x_discrete(labels = c("Random", "80% Slow", "80% Medium", "80% Fast")) +
+    annotate("text", x = 4.4, y = max(D.all$SD, na.rm = T) - 0.5, 
+             label = "d", 
+             size = 5) +
+    theme(text = element_text(size = 14),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.13, 0.75),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
+  # plot_grouped_multirun_CV(Unused_cov = "Non-Covariate", 
+  #                          Filter_model = "STE",
+  #                          subfig_label = "d",
+  #                          Title = "Sample Design")
   ggsave(
     "SD_cam_speeds_covariate.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -197,14 +305,38 @@ if (sim_num %in% 2:4) {
     bg = NULL
   )
   
-  plot_grouped_multirun_means(Unused_cov = "Covariate", 
-                              Filter_model = "TDST",
-                              subfig_label = "a",
-                              Cov = "Non-Covariate")
+  D.all %>% 
+    dplyr::filter(Model != "TDST") %>% 
+    dplyr::filter(Covariate != "Covariate") %>%
+    ggplot(aes(x = Run, y = Est, fill = Model)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    geom_hline(yintercept=nind, linetype="dashed", size = 0.7) +
+    labs(x = "Camera Sample Design",
+         y = "Non-Covariate Models \n Posterior Means") +
+    scale_fill_manual(values= fig_colors[2:5]) +
+    scale_x_discrete(labels = c("Random", "80% Slow", "80% Medium", "80% Fast")) +
+    annotate("text", x = 4.4, y = max(D.all$Est), 
+             label = "a", 
+             size = 5) +
+    theme(text = element_text(size = 14),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = "none",
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"),
+          legend.box.background = element_rect(colour = "black"))
+  # plot_grouped_multirun_means(Unused_cov = "Covariate", 
+  #                             Filter_model = "TDST",
+  #                             subfig_label = "a",
+  #                             Cov = "Non-Covariate")
   ggsave(
     "Abundance_cam_speeds_no_covariate.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -213,15 +345,38 @@ if (sim_num %in% 2:4) {
     limitsize = TRUE,
     bg = NULL
   )
+ 
+  D.all %>% 
+    dplyr::filter(Model != "TDST") %>% 
+    dplyr::filter(Covariate != "Covariate") %>%
+    ggplot(aes(x = Run, y = SD, fill = Model)) +
+    geom_boxplot(lwd = 0.5, fatten = .5, outlier.size = 1) +
+    labs(x = "Camera Sample Design",
+         y = "Non-Covariate Models \n Posterior SDs") +
+    scale_fill_manual(values= fig_colors[2:5]) +
+    scale_x_discrete(labels = c("Random", "80% Slow", "80% Medium", "80% Fast")) +
+    annotate("text", x = 4.4, y = max(D.all$SD, na.rm = T) - 0.5, 
+             label = "b", 
+             size = 5) +
+    theme(text = element_text(size = 14),
+          legend.title=element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1),
+          legend.position = c(0.13, 0.75),
+          legend.background = element_blank(),
+          legend.spacing.y = unit(0, "mm"))
   
-  plot_grouped_multirun_CV(Unused_cov = "Covariate",
-                           Filter_model = "TDST",
-                           subfig_label = "b",
-                           Title = "Sample Design")
+  # plot_grouped_multirun_CV(Unused_cov = "Covariate",
+  #                          Filter_model = "TDST",
+  #                          subfig_label = "b",
+  #                          Title = "Sample Design")
   ggsave(
     "SD_cam_speeds_no_covariate.png",
     plot = last_plot(),
-    path = file_path,
+    # path = file_path,
     scale = 1,
     width = 5,
     height = 3,
@@ -278,15 +433,16 @@ pd <- position_dodge(width = 2)
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
   # dplyr::filter(Model != "TTE") %>% 
-  ggplot(aes(x = ncam, y = Means, shape = Model)) +
-  geom_hline(yintercept=nind, linetype="dashed", size=1) +
+  ggplot(aes(x = ncam, y = Means, color = Model, shape = Model)) +
   geom_line(size = 1) +
+  geom_hline(yintercept=nind, linetype="dashed", size=1) +
   geom_point(size = 2.5, stroke = 1.5) +
-  scale_color_manual(values = fig_colors[2:5]) +
+  scale_color_manual(values = fig_colors[1:4]) +
   labs(x = "Number of Cameras",
        y = paste0("Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
-  scale_shape_manual(values=c(1, 2, 3, 4)) +
+  # scale_shape_manual(values=c(1, 2, 3, 4)) +
+  scale_shape_manual(values=rep(4, 4)) +
   annotate("text", x = 250, y = 115, label = "c", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_blank(),
@@ -303,7 +459,7 @@ D.all.summary %>%
 ggsave(
   "Multi_cam_covariate_Abundance.png",
   plot = last_plot(),
-  path = file_path,
+  # path = file_path,
   scale = 1,
   width = 6,
   height = 3,
@@ -315,13 +471,14 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Covariate") %>% 
-  ggplot(aes(x = ncam, y = SDs, shape = Model)) +
+  ggplot(aes(x = ncam, y = SDs, color = Model, shape = Model)) +
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
        y = "Mean SDs") +
   scale_x_continuous(breaks = ncam_all) +
-  scale_shape_manual(values=c(1, 2, 3, 4)) +
+  scale_shape_manual(values=rep(4, 4)) +
+  scale_color_manual(values = fig_colors[1:4]) +
   annotate("text", x = 250, y = 53, label = "d", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_text(size=12),
@@ -337,7 +494,7 @@ D.all.summary %>%
 ggsave(
   "Multi_cam_covariate_SD.png",
   plot = last_plot(),
-  path = file_path,
+  # path = file_path,
   scale = 1,
   width = 6,
   height = 3,
@@ -350,15 +507,15 @@ ggsave(
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
   # dplyr::filter(Model != "TTE") %>% 
-  ggplot(aes(x = ncam, y = Means, shape = Model)) +
-  geom_hline(yintercept=nind, linetype="dashed", size=1) +
+  ggplot(aes(x = ncam, y = Means, color = Model, shape = Model)) +
   geom_line(size = 1) +
+  geom_hline(yintercept=nind, linetype="dashed", size=1) +
   geom_point(size = 2.5, stroke = 1.5) +
   scale_color_manual(values = fig_colors[2:5]) +
   labs(x = "Number of Cameras",
        y = paste0("Non-Covariate Models \n", "Mean Estimates")) +
   scale_x_continuous(breaks = ncam_all) +
-  scale_shape_manual(values=c(2, 3, 4, 5)) +
+  scale_shape_manual(values=c(4, 4, 4, 4)) +
   annotate("text", x = 250, y = 105, label = "a", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_blank(),
@@ -373,7 +530,7 @@ D.all.summary %>%
 ggsave(
   "Multi_cam_noncovariate_Abundance.png",
   plot = last_plot(),
-  path = file_path,
+  # path = file_path,
   scale = 1,
   width = 6,
   height = 3,
@@ -385,13 +542,14 @@ ggsave(
 
 D.all.summary %>% 
   dplyr::filter(Covariate == "Non-Covariate") %>% 
-  ggplot(aes(x = ncam, y = SDs, shape = Model)) +
+  ggplot(aes(x = ncam, y = SDs, color = Model, shape = Model)) +
   geom_line(size = 1) +
   geom_point(size = 2.5, stroke = 1.5) +
   labs(x = "Number of Cameras",
        y = "Mean SDs") +
+  scale_color_manual(values = fig_colors[2:5]) +
   scale_x_continuous(breaks = ncam_all) +
-  scale_shape_manual(values=c(2, 3, 4, 5)) +
+  scale_shape_manual(values=c(4, 4, 4, 4)) +
   annotate("text", x = 250, y = 25, label = "b", size = 5) +
   theme(text = element_text(size = 16),
         legend.title=element_text(size=12),
@@ -407,7 +565,7 @@ D.all.summary %>%
 ggsave(
   "Multi_cam_noncovariate_SD.png",
   plot = last_plot(),
-  path = file_path,
+  # path = file_path,
   scale = 1,
   width = 6,
   height = 3,
