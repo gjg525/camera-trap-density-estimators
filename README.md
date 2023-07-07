@@ -1,2 +1,2 @@
 # camera-trap-density-estimators
-Camera trap density estimators for unmarked individuals. Models include the equilibrium solution of the diffusion equation (EEDE), random encounter and staying time (REST) model, time to event (TTE) model, space to event (STE) model, and mean count (MCT) model.
+Camera trap density estimators for unmarked individuals. Models include the total density and staying time (TDST), random encounter and staying time (REST), time to event (TTE), space to event (STE), and Poisson regression (PR) model.
