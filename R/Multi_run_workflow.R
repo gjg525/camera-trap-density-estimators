@@ -24,7 +24,7 @@ source("./R/Create_landscape.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 1
+sim_num <- 7
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -50,7 +50,7 @@ D.all <- data.frame(Model = NA,
                     SD = NA,
                     Prop_speeds = NA
 )
-num_runs <- 1
+num_runs <- 1000
 
 # Define number of clumps
 num.clumps <- 100
@@ -62,7 +62,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 1000        # Number of time steps
+t.steps <- 500        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
@@ -80,7 +80,7 @@ default_kappa <- 0
 clump.rad <- dx/2 # Tightness of clumping behavior
 
 # Camera specs
-ncam <- q
+ncam <- 250
 cam_length <- dx*.3 # length of all viewshed sides
 cam.A <- cam_length ^ 2 / 2 # Assumes equilateral triangle viewsheds
 
@@ -678,11 +678,29 @@ D.all <- D.all[-1,]
 D.all$Est[D.all$Est > 5*nind] <- NA
 D.all$SD[D.all$SD > 5*nind] <- NA
 
+D.all <- D.all %>% 
+  dplyr::bind_rows(tibble::tibble(
+    Model = "TDST",
+    Covariate = "Non-Covariate",
+    Est = nind,
+    SD = 0,
+    Prop_speeds = NA
+  ))
+D.all <- D.all %>% 
+  dplyr::bind_rows(tibble::tibble(
+    Model = "STE",
+    Covariate = "Covariate",
+    Est = nind,
+    SD = 0,
+    Prop_speeds = NA
+  ))
+
 D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "PR", "STE"))
 
 D_summary <- D.all |>
   dplyr::group_by(Model) |>
   dplyr::summarise(num_NAs = sum(is.na(Est)))
+
 
 ####################################
 # Plot the stuff
@@ -712,6 +730,11 @@ cam.props.label <- c("Camera Bias: Random",
 # plot_model_proportions()
 
 # # Save Results
+# saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_Dall.rds"))
+# saveRDS(animalxy.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_animal.rds"))
+# saveRDS(tri_cam_samps, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_cams.rds"))
+
+save(D.all, animalxy.all, tri_cam_samps, file = paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_all_vars.RData"))
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
 # saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
 

@@ -98,7 +98,7 @@ ABM_sim <- function(bounds,
           Y.ind <- ceiling(Y[ci,i]*(q^0.5/max(bounds)))
 
           # Determine movement speed in current space
-          v <- speeds[X.ind,Y.ind]
+          v <- rnorm(1, speeds[X.ind,Y.ind], 0.01) 
           step.size <- v*t.step
 
           # Individual follows herd unless in directional cell
