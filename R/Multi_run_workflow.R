@@ -174,71 +174,123 @@ for (run in 1:num_runs) {
     #register cluster to be used by %dopar%
     doParallel::registerDoParallel(cl = my_cluster)
 
-    D.chain <- foreach::foreach(iter=1:8) %dopar% {
-    ###################################
-    # TDST
-    ###################################
-    if (iter == 1) {
-    # print("Fit TDST with MCMC")
-    ptm <- proc.time()
-    # unpack tidyr if extract has no applicable method
-    # .rs.unloadPackage("tidyr")
-    chain.TDST <- fit.model.mcmc.TDST.cov(
-      n.iter = n.iter,
-      gamma.start = log(mean(count_data$count)),
-      kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
-      gamma.prior.var = 10^6,
-      kappa.prior.var = 10^6,
-      gamma.tune = -1,
-      kappa.tune = c(-1, -1, -1),
-      cam.counts = count_data$count,
-      t.staying.dat = stay_time_data,
-      covariate_labels = covariate_labels,
-      covariates.index = covariates.index,
-      t.steps = t.steps,
-      cam.A = cam.A,
-      cell.A = dx*dy,
-      censor = t.censor)
-    proc.time() - ptm
-
-    # ## Posterior summaries
-    # pop.ind.TDST <- which(names(chain.TDST) == "u")
-    # MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
-    # summary(MCMC.parms.TDST.cov)
-
-    # plot(chain.TDST$tot.u[burn.in:n.iter])
-    D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
-    SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
-    
-    Prop_speeds <- c(mean(chain.TDST$u[slow_inds]),
-                     mean(chain.TDST$u[med_inds]),
-                     mean(chain.TDST$u[fast_inds]))/
-      mean(mean(chain.TDST$u[slow_inds])+
-             mean(chain.TDST$u[med_inds])+
-             mean(chain.TDST$u[fast_inds]))
-
-    if(any(colMeans(chain.TDST$accept[burn.in:n.iter,])< 0.2) ||
-       any(colMeans(chain.TDST$accept[burn.in:n.iter,])> 0.7)){
-      warning(('TDST accept rate OOB'))
-      D.TDST.MCMC <- NA
-      SD.TDST.MCMC <- NA
-    }
-
-    # D.all<- rbind(D.all, data.frame(
-    #   Model = "TDST",
-    #   Covariate = "Covariate",
-    #   Est = D.TDST.MCMC,
-    #   SD = SD.TDST.MCMC))
-
-    D.chain <- tibble::tibble(
-      Model = "TDST",
-      Covariate = "Covariate",
-      Est = D.TDST.MCMC,
-      SD = SD.TDST.MCMC,
-      Prop_speeds = list(Prop_speeds)
-    )
-    }
-
+    D.chain <- foreach::foreach(iter=1:9) %dopar% {
+      ###################################
+      # TDST
+      ###################################
+      if (iter == 1) {
+        # print("Fit TDST with MCMC")
+        ptm <- proc.time()
+        # unpack tidyr if extract has no applicable method
+        # .rs.unloadPackage("tidyr")
+        chain.TDST <- fit.model.mcmc.TDST.cov(
+          n.iter = n.iter,
+          gamma.start = log(mean(count_data$count)),
+          kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
+          gamma.prior.var = 10^6,
+          kappa.prior.var = 10^6,
+          gamma.tune = -1,
+          kappa.tune = c(-1, -1, -1),
+          cam.counts = count_data$count,
+          t.staying.dat = stay_time_data,
+          covariate_labels = covariate_labels,
+          covariates.index = covariates.index,
+          t.steps = t.steps,
+          cam.A = cam.A,
+          cell.A = dx*dy,
+          censor = t.censor)
+        proc.time() - ptm
+        
+        # ## Posterior summaries
+        # pop.ind.TDST <- which(names(chain.TDST) == "u")
+        # MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
+        # summary(MCMC.parms.TDST.cov)
+        
+        # plot(chain.TDST$tot.u[burn.in:n.iter])
+        D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
+        SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
+        
+        Prop_speeds <- c(mean(chain.TDST$u[slow_inds]),
+                         mean(chain.TDST$u[med_inds]),
+                         mean(chain.TDST$u[fast_inds]))/
+          mean(mean(chain.TDST$u[slow_inds])+
+                 mean(chain.TDST$u[med_inds])+
+                 mean(chain.TDST$u[fast_inds]))
+        
+        if(any(colMeans(chain.TDST$accept[burn.in:n.iter,])< 0.2) ||
+           any(colMeans(chain.TDST$accept[burn.in:n.iter,])> 0.7)){
+          warning(('TDST accept rate OOB'))
+          D.TDST.MCMC <- NA
+          SD.TDST.MCMC <- NA
+        }
+        
+        # D.all<- rbind(D.all, data.frame(
+        #   Model = "TDST",
+        #   Covariate = "Covariate",
+        #   Est = D.TDST.MCMC,
+        #   SD = SD.TDST.MCMC))
+        
+        D.chain <- tibble::tibble(
+          Model = "TDST",
+          Covariate = "Covariate",
+          Est = D.TDST.MCMC,
+          SD = SD.TDST.MCMC,
+          Prop_speeds = list(Prop_speeds)
+        )
+      }
+      
+      ###################################
+      # TDST w/ prior
+      ###################################
+      if (iter == 9) {
+        ptm <- proc.time()
+        # unpack tidyr if extract has no applicable method
+        # .rs.unloadPackage("tidyr")
+        chain.TDST.prior <- fit.model.mcmc.TDST.cov(
+          n.iter = n.iter,
+          gamma.start = log(mean(count_data$count)),
+          kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
+          gamma.prior.var = 10^6,
+          kappa.prior.mu = 0,
+          kappa.prior.var = 10^6,
+          gamma.tune = -1,
+          kappa.tune = c(-1, -1, -1),
+          cam.counts = count_data$count,
+          t.staying.dat = stay_time_data,
+          covariate_labels = covariate_labels,
+          covariates.index = covariates.index,
+          t.steps = t.steps,
+          cam.A = cam.A,
+          cell.A = dx*dy,
+          censor = t.censor)
+        proc.time() - ptm
+        
+        D.TDST.MCMC <- mean(chain.TDST.prior$tot.u[burn.in:n.iter])
+        SD.TDST.MCMC <- sd(chain.TDST.prior$tot.u[burn.in:n.iter])
+        
+        Prop_speeds <- c(mean(chain.TDST.prior$u[slow_inds]),
+                         mean(chain.TDST.prior$u[med_inds]),
+                         mean(chain.TDST.prior$u[fast_inds]))/
+          mean(mean(chain.TDST.prior$u[slow_inds])+
+                 mean(chain.TDST.prior$u[med_inds])+
+                 mean(chain.TDST.prior$u[fast_inds]))
+        
+        if(any(colMeans(chain.TDST.prior$accept[burn.in:n.iter,])< 0.2) ||
+           any(colMeans(chain.TDST.prior$accept[burn.in:n.iter,])> 0.7)){
+          warning(('TDST accept rate OOB'))
+          D.TDST.MCMC <- NA
+          SD.TDST.MCMC <- NA
+        }
+        
+        D.chain <- tibble::tibble(
+          Model = "TDST priors",
+          Covariate = "Covariate",
+          Est = D.TDST.MCMC,
+          SD = SD.TDST.MCMC,
+          Prop_speeds = list(Prop_speeds)
+        )
+      }
+      
     ###################################
     # REST no covariates
     ###################################
