@@ -24,7 +24,7 @@ source("./R/Create_landscape.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 7
+sim_num <- 1
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -39,17 +39,6 @@ all_speed <- sim_vars$all_speed[sim_num] # 1: Slow, 2: Medium, 3: Fast
 # Cam sample designs (1: random, 2-4: biased slow, medium, fast)
 cam.dist.set <- sim_vars$cam.dist.set[sim_num]
 
-# D.all <- data.frame(Model = character(),
-#                     Covariate = character(),
-#                     Est = double(),
-#                     SD = double(),
-#                     Prop_speeds = list())
-D.all <- data.frame(Model = NA,
-                    Covariate = NA,
-                    Est = NA,
-                    SD = NA,
-                    Prop_speeds = NA
-)
 num_runs <- 1000
 
 # Define number of clumps
@@ -91,6 +80,23 @@ burn.in <- 10000
 ################################################################################
 # Define movement speeds for each cell across landscape
 ################################################################################
+
+animalxy.list <- list()
+tri_cam_list <- list()
+
+# D.all <- data.frame(Model = NA,
+#                     Covariate = NA,
+#                     Est = NA,
+#                     SD = NA,
+#                     Prop_speeds = NA
+# )
+D.all <- tibble::tibble(
+  Model = rep(NA, num_runs * 9),
+  Covariate = rep(NA, num_runs * 9),
+  Est = rep(NA, num_runs * 9),
+  SD = rep(NA, num_runs * 9),
+  Prop_speeds = rep(NA, num_runs * 9)
+)
 
 # Repeat Simulations
 for (run in 1:num_runs) {
@@ -142,6 +148,7 @@ for (run in 1:num_runs) {
               .groups = 'drop'
     )
 
+  tri_cam_list[[run]] <- tri_cam_samps
   # # Run agent-based model
   animalxy.all <- ABM_sim(bounds = bounds,
                           t.steps = t.steps,
@@ -156,12 +163,26 @@ for (run in 1:num_runs) {
                           q = q,
                           dt = dt)
 
+  animalxy.list[[run]] <- animalxy.all
   ################################
   # Collect data
   ################################
   '%notin%' <- Negate('%in%')
   source("./R/Collect_data.R")
 
+  # Quick calculation of stay time priors
+  stay_time_summary <- stay_time_raw %>% 
+    dplyr::group_by(speed) %>% 
+    dplyr::summarise(mu = mean(t_stay),
+                     sd = sd(t_stay)) %>% 
+    dplyr::mutate(speed = factor(speed, levels = c("Slow", "Medium", "Fast"))) %>% 
+    dplyr::arrange(speed)
+  
+  kappa.prior.mu.tdst <- stay_time_summary %>% 
+    dplyr::pull(mu)
+  kappa.prior.var.tdst <- stay_time_summary %>% 
+    dplyr::pull(sd)
+  
   # Run models only if any data points were collected
   if(max(count_data$count) > 0 & sum(!is.na(TTE_data)) > 0) {
 
@@ -251,8 +272,8 @@ for (run in 1:num_runs) {
           gamma.start = log(mean(count_data$count)),
           kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
           gamma.prior.var = 10^6,
-          kappa.prior.mu = 0,
-          kappa.prior.var = 10^6,
+          kappa.prior.mu = kappa.prior.mu.tdst,
+          kappa.prior.var = kappa.prior.var.tdst,
           gamma.tune = -1,
           kappa.tune = c(-1, -1, -1),
           cam.counts = count_data$count,
@@ -720,11 +741,14 @@ for (run in 1:num_runs) {
   #                    Prop_speeds = chain$Prop_speeds
   #     )
   # }
-  D.all <- D.all |> 
-    dplyr::add_row(dplyr::bind_rows(D.chain))
+  
+  # D.all <- D.all |> 
+  #   dplyr::add_row(dplyr::bind_rows(D.chain))
+  
+  D.all[(9 * (run - 1) + 1):(9 * run), ] <- dplyr::bind_rows(D.chain)
 }
 
-D.all <- D.all[-1,]
+# D.all <- D.all[-1,]
 
 # Remove outlier estimates
 D.all$Est[D.all$Est > 5*nind] <- NA
@@ -786,7 +810,7 @@ cam.props.label <- c("Camera Bias: Random",
 # saveRDS(animalxy.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_animal.rds"))
 # saveRDS(tri_cam_samps, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_cams.rds"))
 
-save(D.all, animalxy.all, tri_cam_samps, file = paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_all_vars.RData"))
+save(D.all, animalxy.list, tri_cam_list, file = paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_all_vars.RData"))
 # write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
 # saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
 
