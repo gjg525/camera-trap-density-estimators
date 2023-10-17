@@ -173,8 +173,8 @@ for (run in 1:num_runs) {
   # Quick calculation of stay time priors
   stay_time_summary <- stay_time_raw %>% 
     dplyr::group_by(speed) %>% 
-    dplyr::summarise(mu = mean(t_stay),
-                     sd = sd(t_stay)) %>% 
+    dplyr::summarise(mu = mean(log(t_stay / cam.A * dx * dy)),
+                     sd = sd(log(t_stay / cam.A * dx * dy))) %>% 
     dplyr::mutate(speed = factor(speed, levels = c("Slow", "Medium", "Fast"))) %>% 
     dplyr::arrange(speed)
   
