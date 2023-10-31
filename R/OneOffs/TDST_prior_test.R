@@ -114,7 +114,153 @@ kappa.prior.mu.tdst <- stay_time_summary %>%
 kappa.prior.var.tdst <- stay_time_summary %>% 
   dplyr::pull(sd)
 
+stay_time_data <- stay_time_data + matrix(runif(prod(dim(stay_time_data)), 0, 10), nrow = dim(stay_time_data)[1], ncol = dim(stay_time_data)[2])
 # Run Original models
+fit.model.mcmc.TDST.cov <- function(n.iter,
+                                    gamma.start,
+                                    kappa.start,
+                                    gamma.prior.var,
+                                    kappa.prior.mu = 0,
+                                    kappa.prior.var,
+                                    gamma.tune,
+                                    kappa.tune,
+                                    cam.counts,
+                                    t.staying.dat,
+                                    covariate_labels,
+                                    covariates.index,
+                                    cam.A,
+                                    cell.A,
+                                    censor,
+                                    t.steps = t.steps){
+  
+  # Variables that will be saved
+  gamma <- matrix(,n.iter+1,1)
+  kappa <- matrix(,n.iter+1,sum(covariates.index==1))
+  tot.u <- matrix(,n.iter+1,1)
+  accept <- matrix(, n.iter+1, 1 + sum(covariates.index==1))
+  gamma[1] <- gamma.start
+  colnames(gamma) <- "gamma"
+  kappa[1,] <- kappa.start
+  colnames(kappa) <- paste0("kappa.", covariate_labels)
+  colnames(tot.u) <- "Total estimate"
+  colnames(accept) <- c("accept.rate.gamma",
+                        paste0("accept.rate.kappa.", covariate_labels))
+  
+  # Account for censored times
+  t.staying.dat.all <- t.staying.dat
+  t.staying.dat.all[t.staying.dat.all>=censor] <- NA
+  t.staying.dat.censor <- t.staying.dat
+  t.staying.dat.censor[t.staying.dat.censor<censor] <- NA
+  
+  # Initialize with landscape-scale covariates
+  beta <- exp(gamma[1])
+  phi <- exp(Z%*%kappa[1,])
+  u <- beta*phi/sum(phi)
+  
+  tune.check <- 100
+  batch_n <- 0
+  
+  # Begin MCMC loop
+  # prog_bar <- txtProgressBar(min = 0,max = n.iter,style = 3,width = 50,char = "=")
+  for(i in 1:n.iter){
+    # setTxtProgressBar(prog_bar, i)
+    #Sample gamma
+    gamma.star <- rnorm(1,gamma[i],exp(2*gamma.tune))
+    beta.star <- exp(gamma.star)
+    u.star <- beta.star*phi/sum(phi)
+    
+    # repeat estimated parms for fitting
+    u.star.cams <- u.star[cam.samps] * cam.A / cell.A
+    u.cams <- u[cam.samps] * cam.A / cell.A
+    
+    if(all(u.star.cams>0)& all(!is.infinite(u.star.cams)) & all(!is.null(u.star.cams))){
+      mh1 <- sum(dpois(cam.counts,u.star.cams,log=TRUE),na.rm=TRUE) +
+        sum(dnorm(gamma.star,0,gamma.prior.var^0.5,log=TRUE))
+      mh2 <- sum(dpois(cam.counts,u.cams,log=TRUE),na.rm=TRUE) +
+        sum(dnorm(gamma[i,],0,gamma.prior.var^0.5,log=TRUE))
+      mh <- exp(mh1-mh2)
+      
+      if(mh>runif(1)){gamma[i+1] <- gamma.star;
+      accept[i+1,1] <- 1;
+      u <- u.star;
+      beta <- beta.star}
+      else{
+        gamma[i+1] <- gamma[i];
+        accept[i+1,1] <- 0}
+    } else{
+      gamma[i+1] <- gamma[i];
+      accept[i+1,1] <- 0}
+    
+    beta <- exp(gamma[i+1])
+    
+    #Sample kappa
+    kappa.temp <- kappa[i,]
+    for(kk in 1:sum(covariates.index==1)){
+      kappa.star <- kappa[i,]
+      kappa.star[kk] <- rnorm(1,kappa[i,kk],exp(2*kappa.tune[kk]))
+      phi.star <- exp(Z%*%kappa.star)
+      u.star <- beta*phi.star/sum(phi.star)
+      
+      # # repeat estimated parms for fitting
+      phi.star.cams <- phi.star[cam.samps] * cam.A / cell.A
+      phi.star.cam.rep <- matrix(rep(phi.star.cams, dim(t.staying.dat.all)[2]),
+                                 nrow = ncam,ncol = dim(t.staying.dat.all)[2])
+      phi.all.cams <- phi[cam.samps] * cam.A / cell.A
+      phi.all.cam.rep <- matrix(rep(phi.all.cams,dim(t.staying.dat.all)[2]),
+                                nrow = ncam,ncol = dim(t.staying.dat.all)[2])
+      
+      
+      if(all(1/phi.star.cams>0) & all(!is.infinite(1/phi.star.cams))){
+        mh1 <- sum(dexp(t.staying.dat.all, 1/phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
+          sum(pexp(t.staying.dat.censor, 1/phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+          sum(dnorm(kappa.star,kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
+        mh2 <- sum(dexp(t.staying.dat.all, 1/phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
+          sum(pexp(t.staying.dat.censor, 1/phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+          sum(dnorm(kappa[i,],kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
+        mh <- exp(mh1-mh2)
+        # if(all(phi.star.cams>0)){
+        #   mh1 <- sum(dgamma(t.staying.dat.all, phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
+        #     sum(pgamma(t.staying.dat.censor, phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #     sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
+        #   mh2 <- sum(dgamma(t.staying.dat.all, phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
+        #     sum(pgamma(t.staying.dat.censor, phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #     sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
+        #   mh <- exp(mh1-mh2)
+        
+        if(mh>runif(1)){
+          kappa[i,] <- kappa.star;
+          accept[i+1,1+kk] <- 1;
+          u <-u.star;
+          phi <- phi.star} else{
+            kappa[i,] <- kappa[i,];
+            accept[i+1,1+kk] <- 0}
+      } else{
+        kappa[i,] <- kappa[i,];
+        accept[i+1,1+kk] <- 0}
+    }
+    kappa[i+1,] <- kappa[i,];
+    phi <- exp(Z%*%kappa[i+1,])
+    
+    tot.u[i+1] <- sum(u)/t.steps
+    
+    # Update tuning parms
+    if(i%%tune.check == 0){
+      batch_n <- batch_n+1
+      delta_n <- batch_n^-1
+      # delta_n <- min(0.01,batch_n^-1)
+      accept.gamma.check <- mean(accept[(i-tune.check+1):i,1],na.rm=T)
+      gamma.tune[which(accept.gamma.check>0.44)] <- gamma.tune[which(accept.gamma.check>0.44)] + delta_n
+      gamma.tune[which(accept.gamma.check<=0.44)] <- gamma.tune[which(accept.gamma.check<=0.44)] - delta_n
+      accept.kappa.check <- colMeans(accept[(i-tune.check+1):i,2:(1+sum(covariates.index==1))],na.rm=T)
+      kappa.tune[which(accept.kappa.check>0.44)] <- kappa.tune[which(accept.kappa.check>0.44)] + delta_n
+      kappa.tune[which(accept.kappa.check<=0.44)] <- kappa.tune[which(accept.kappa.check<=0.44)] - delta_n
+    }
+  }
+  # print("MCMC complete")
+  
+  list(accept = accept,gamma = gamma,kappa = kappa,tot.u = tot.u, u = u)
+}
+
 chain.TDST <- fit.model.mcmc.TDST.cov(
   n.iter = n.iter,
   gamma.start = log(mean(count_data$count)),
@@ -350,7 +496,7 @@ D.chain <- dplyr::bind_rows(D.chain,
                               Est = D.TDST.nodata.MCMC,
                               SD = SD.TDST.nodata.MCMC,
                               Kappa_mean = list(colMeans(chain.TDST.nodata$kappa[burn.in:n.iter,])),
-                              Kappa_sd = list(apply(chain.TDST.nodata$kappa[burn.in:n.iter,], 2, sd))
+                              Kappa_sd = list(apply(chain.TDST.nodata$kappa[burn.in:n.iter,], 2, sd) * 0)
                             )
 )
 
@@ -387,10 +533,40 @@ D.chain <- dplyr::bind_rows(D.chain,
                             )
 )
 
-D.chain %>% 
+p1 <- D.chain %>% 
   ggplot2::ggplot(ggplot2::aes(x = Model, y = Est)) +
   ggplot2::geom_point() +
   ggplot2::geom_errorbar(ggplot2::aes(ymin=Est-SD, ymax=Est+SD), width=.2, 
                          position=position_dodge(0.05))
 
+p2 <- D.chain %>% 
+  tidyr::unnest(c(Kappa_mean, Kappa_sd)) %>% 
+  dplyr::mutate(Speed = rep(c("Slow", "Medium", "Fast"), 4)) %>% 
+  ggplot2::ggplot(ggplot2::aes(x = Model, y = Kappa_mean, color = Speed)) +
+  ggplot2::geom_point(position=position_dodge(0.4)) +
+  ggplot2::ylab("Kappa") +
+  ggplot2::geom_errorbar(ggplot2::aes(ymin=Kappa_mean-Kappa_sd, ymax=Kappa_mean+Kappa_sd), width=.2, 
+                         position=position_dodge(0.4))
 
+gridExtra::grid.arrange(p1, p2, nrow=2)
+# Plot posteriors
+# par(mfrow = c(2,2))
+# plot(chain.TDST$tot.u[burn.in:n.iter], ylab = "Abundance", main = "TDST no priors")
+# plot(chain.TDST$kappa[burn.in:n.iter, 1], ylab = "Kappa Slow")
+# plot(chain.TDST$kappa[burn.in:n.iter, 2], ylab = "Kappa Medium")
+# plot(chain.TDST$kappa[burn.in:n.iter, 3], ylab = "Kappa Fast")
+# 
+# plot(chain.TDST.nodata$tot.u[burn.in:n.iter], ylab = "Abundance", main = "TDST no priors, no data")
+# plot(chain.TDST.nodata$kappa[burn.in:n.iter, 1], ylab = "Kappa Slow")
+# plot(chain.TDST.nodata$kappa[burn.in:n.iter, 2], ylab = "Kappa Medium")
+# plot(chain.TDST.nodata$kappa[burn.in:n.iter, 3], ylab = "Kappa Fast")
+# 
+# plot(chain.TDST.prior$tot.u[burn.in:n.iter], ylab = "Abundance", main = "TDST priors")
+# plot(chain.TDST.prior$kappa[burn.in:n.iter, 1], ylab = "Kappa Slow")
+# plot(chain.TDST.prior$kappa[burn.in:n.iter, 2], ylab = "Kappa Medium")
+# plot(chain.TDST.prior$kappa[burn.in:n.iter, 3], ylab = "Kappa Fast")
+# 
+# plot(chain.TDST.prior.nodata$tot.u[burn.in:n.iter], ylab = "Abundance", main = "TDST priors, no data")
+# plot(chain.TDST.prior.nodata$kappa[burn.in:n.iter, 1], ylab = "Kappa Slow")
+# plot(chain.TDST.prior.nodata$kappa[burn.in:n.iter, 2], ylab = "Kappa Medium")
+# plot(chain.TDST.prior.nodata$kappa[burn.in:n.iter, 3], ylab = "Kappa Fast")

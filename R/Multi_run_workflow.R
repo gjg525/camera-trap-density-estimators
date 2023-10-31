@@ -228,8 +228,14 @@ for (run in 1:num_runs) {
         # summary(MCMC.parms.TDST.cov)
         
         # plot(chain.TDST$tot.u[burn.in:n.iter])
-        D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
-        SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
+        ct <- chain.TDST$tot.u[burn.in:n.iter]
+        ct <- ct[!is.na(ct)]
+        ct <- ct[!is.infinite(ct)]
+        D.TDST.MCMC <- mean(ct)
+        SD.TDST.MCMC <- sd(ct)
+        
+        # D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
+        # SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
         
         Prop_speeds <- c(mean(chain.TDST$u[slow_inds]),
                          mean(chain.TDST$u[med_inds]),
@@ -771,7 +777,7 @@ D.all <- D.all %>%
     Prop_speeds = NA
   ))
 
-D.all$Model <- factor(D.all$Model, levels = c("TDST", "REST", "TTE", "PR", "STE"))
+D.all$Model <- factor(D.all$Model, levels = c("TDST", "TDST priors", "REST", "TTE", "PR", "STE"))
 
 D_summary <- D.all |>
   dplyr::group_by(Model) |>
@@ -806,11 +812,5 @@ cam.props.label <- c("Camera Bias: Random",
 # plot_model_proportions()
 
 # # Save Results
-# saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_Dall.rds"))
-# saveRDS(animalxy.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_animal.rds"))
-# saveRDS(tri_cam_samps, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_cams.rds"))
-
-save(D.all, animalxy.list, tri_cam_list, file = paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_all_vars.RData"))
-# write.csv(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], ".csv"))
-# saveRDS(D.all, paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_slower_speeds.rds"))
+# save(D.all, animalxy.list, tri_cam_list, file = paste0("Sim_results/Sim_", sim_vars$sim_names[sim_num], "_all_vars.RData"))
 
