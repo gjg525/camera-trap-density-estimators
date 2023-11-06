@@ -24,7 +24,7 @@ source("./R/Create_landscape.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 1
+sim_num <- 7
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -43,7 +43,7 @@ cam.dist.set <- sim_vars$cam.dist.set[sim_num]
 
 cam.samps <- unique(tri_cam_samps$lscape_index)
 
-num_runs <- 1000
+num_runs <- 100
 
 # Define number of clumps
 num.clumps <- 100

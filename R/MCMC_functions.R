@@ -102,15 +102,23 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
         # mh2 <- sum(dnorm(kappa[i,],kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
         # mh <- exp(mh1-mh2)
         # Data
-        if(all(phi.star.cams>0)){
-          mh1 <- sum(dgamma(t.staying.dat.all, phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
-            sum(pgamma(t.staying.dat.censor, phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-            sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
-          mh2 <- sum(dgamma(t.staying.dat.all, phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
-            sum(pgamma(t.staying.dat.censor, phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-            sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
-          mh <- exp(mh1-mh2)
-
+        # if(all(phi.star.cams>0)){
+        # mh1 <- sum(dgamma(t.staying.dat.all, phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
+        #   sum(pgamma(t.staying.dat.censor, phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #   sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
+        # mh2 <- sum(dgamma(t.staying.dat.all, phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
+        #   sum(pgamma(t.staying.dat.censor, phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #   sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
+        # mh <- exp(mh1-mh2)
+        
+        mh1 <- sum(dexp(t.staying.dat.all, 1/phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
+          sum(pexp(t.staying.dat.censor, 1/phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+          sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
+        mh2 <- sum(dexp(t.staying.dat.all, 1/phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
+          sum(pexp(t.staying.dat.censor, 1/phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+          sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
+        mh <- exp(mh1-mh2)
+        
         if(mh>runif(1)){
           kappa[i,] <- kappa.star;
           accept[i+1,1+kk] <- 1;

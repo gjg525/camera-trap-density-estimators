@@ -24,7 +24,7 @@ source("./R/Create_landscape.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 1
+sim_num <- 7
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -168,14 +168,17 @@ for (run in 1:num_runs) {
   # Collect data
   ################################
   '%notin%' <- Negate('%in%')
+  source("./R/Collect_tele_data.R")
   source("./R/Collect_data.R")
-
+  
   # Quick calculation of stay time priors
-  stay_time_summary <- stay_time_raw %>% 
+  stay_time_summary <- stay_time_raw_tele %>% 
     dplyr::group_by(speed) %>% 
-    dplyr::summarise(mu = mean(log(t_stay / cam.A * dx * dy)),
-                     sd = sd(log(t_stay / cam.A * dx * dy))) %>% 
-    dplyr::mutate(speed = factor(speed, levels = c("Slow", "Medium", "Fast"))) %>% 
+    dplyr::summarise(mu = mean(log(t_stay * cam.A / dx / dy)),
+                     sd = sd(log(t_stay * cam.A / dx / dy))) %>% 
+    dplyr::mutate(speed = factor(speed, levels = c("Slow", "Medium", "Fast")), 
+                  mu = ifelse(is.na(mu), 1, mu),
+                  sd = ifelse(is.na(sd), 0, sd)) %>%
     dplyr::arrange(speed)
   
   kappa.prior.mu.tdst <- stay_time_summary %>% 
@@ -228,14 +231,14 @@ for (run in 1:num_runs) {
         # summary(MCMC.parms.TDST.cov)
         
         # plot(chain.TDST$tot.u[burn.in:n.iter])
-        ct <- chain.TDST$tot.u[burn.in:n.iter]
-        ct <- ct[!is.na(ct)]
-        ct <- ct[!is.infinite(ct)]
-        D.TDST.MCMC <- mean(ct)
-        SD.TDST.MCMC <- sd(ct)
+        # ct <- chain.TDST$tot.u[burn.in:n.iter]
+        # ct <- ct[!is.na(ct)]
+        # ct <- ct[!is.infinite(ct)]
+        # D.TDST.MCMC <- mean(ct)
+        # SD.TDST.MCMC <- sd(ct)
         
-        # D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
-        # SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
+        D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
+        SD.TDST.MCMC <- sd(chain.TDST$tot.u[burn.in:n.iter])
         
         Prop_speeds <- c(mean(chain.TDST$u[slow_inds]),
                          mean(chain.TDST$u[med_inds]),
