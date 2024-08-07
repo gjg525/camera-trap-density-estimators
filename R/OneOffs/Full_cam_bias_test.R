@@ -47,7 +47,7 @@ sample_speeds <- function(cam.dist.set) {
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 7
+sim_num <- 1
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -146,6 +146,22 @@ for (run in 1:num_runs) {
   Z[med_inds, 2] <- 1
   Z[fast_inds, 3] <- 1
   
+  # # Run agent-based model
+  animalxy.all <- ABM_sim(bounds = bounds,
+                          t.steps = t.steps,
+                          speeds = matrix(lscape_speeds$Value, q^0.5, q^0.5),
+                          direction = matrix(lscape_speeds$Direction, q^0.5, q^0.5),
+                          kappa = matrix(lscape_speeds$Kappa, q^0.5, q^0.5),
+                          road = matrix(lscape_speeds$Road, q^0.5, q^0.5),
+                          clump_sizes = clump_sizes,
+                          clump.rad = clump.rad,
+                          dx = dx,
+                          dy = dy,
+                          q = q,
+                          dt = dt)
+  
+  animalxy.list[[run]] <- animalxy.all
+  
   # Create camera sample designs
   if(cam.dist.set == 1) {
     # # Random camera sampling
@@ -172,21 +188,7 @@ for (run in 1:num_runs) {
     )
   
   tri_cam_list[[run]] <- tri_cam_samps
-  # # Run agent-based model
-  animalxy.all <- ABM_sim(bounds = bounds,
-                          t.steps = t.steps,
-                          speeds = matrix(lscape_speeds$Value, q^0.5, q^0.5),
-                          direction = matrix(lscape_speeds$Direction, q^0.5, q^0.5),
-                          kappa = matrix(lscape_speeds$Kappa, q^0.5, q^0.5),
-                          road = matrix(lscape_speeds$Road, q^0.5, q^0.5),
-                          clump_sizes = clump_sizes,
-                          clump.rad = clump.rad,
-                          dx = dx,
-                          dy = dy,
-                          q = q,
-                          dt = dt)
   
-  animalxy.list[[run]] <- animalxy.all
   ################################
   # Collect data
   ################################
@@ -208,6 +210,61 @@ for (run in 1:num_runs) {
     dplyr::pull(mu)
   kappa.prior.var.tdst <- stay_time_summary %>% 
     dplyr::pull(sd)
+  
+  ################################################################################
+  # Quick math check for full cam bias, no density bias estimate
+  activity_proportion <- exp(kappa.prior.mu.tdst) / sum(exp(kappa.prior.mu.tdst))
+  # 
+  # lscape_n <- lscape_speeds %>% 
+  #   dplyr::group_by(Speed) %>% 
+  #   dplyr::count()
+  # 
+  # lscape_count <- count_data %>% 
+  #   dplyr::group_by(speed) %>% 
+  #   dplyr::summarise(Count = mean(count))
+  
+  n_adj <- lscape_speeds %>% 
+    dplyr::group_by(Speed) %>% 
+    dplyr::count() %>% 
+    dplyr::ungroup() %>% 
+    dplyr::mutate(
+      prop_lscape = n / sum(n)
+    ) %>% 
+    dplyr::left_join(
+      count_data %>% 
+        dplyr::group_by(speed) %>% 
+        dplyr::summarise(Count = mean(count)) %>% 
+        dplyr::rename(Speed = speed),
+      by = dplyr::join_by(Speed)
+    ) %>% 
+    dplyr::left_join(
+      stay_time_summary %>% 
+        dplyr::mutate(mu_prop = exp(mu)/ sum(exp(mu))) %>% 
+        dplyr::rename(Speed = speed) %>% 
+        dplyr::select(Speed, mu_prop),
+      by = dplyr::join_by(Speed)
+    ) %>% 
+    dplyr::mutate(
+      n_adj = Count * n / (cam.A * t.steps)
+    )
+  
+  sum(n_adj$n_adj)
+  
+  n_fast_lscape <- sum(lscape_speeds$Speed == "Fast")
+  fast_cam_n <- mean(count_data$count[count_data$speed == "Fast"]) * n_fast_lscape / (cam.A * t.steps)
+    adjusted_tot_n <- sum(exp(kappa.prior.mu.tdst)/
+                          exp(kappa.prior.mu.tdst[3]) *
+                          fast_cam_n) # Prop_speeds) #
+  
+    # adjusted_tot_n_cheat <- sum(Prop_speeds / Prop_speeds[3] * fast_cam_n)
+    
+  n_slow_lscape <- sum(lscape_speeds$Speed == "Slow")
+  slow_cam_n <- mean(count_data$count[count_data$speed == "Slow"]) * n_slow_lscape / (cam.A * t.steps)
+  adjusted_tot_n_slow <- sum(exp(kappa.prior.mu.tdst)/
+                          exp(kappa.prior.mu.tdst[1]) *
+                          slow_cam_n)
+  # adjusted_tot_n_slow_cheat <- sum(Prop_speeds / Prop_speeds[1] * slow_cam_n)
+  
   
   # Run models only if any data points were collected
   if(max(count_data$count) > 0 & sum(!is.na(TTE_data)) > 0) {
