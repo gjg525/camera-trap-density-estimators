@@ -18,26 +18,26 @@ source("./R/MCMC_functions.R")
 source("./R/Create_landscape.R")
 
 # NEW cam sample speed function
-sample_speeds <- function(cam.dist.set) {
-  ps <- ncam*c(0, 0, 0)
-  ps[cam.dist.set-1] <- ncam
-  cam.samps <- c(sample(lscape_speeds |>
-                          filter(Speed == "Slow") |>
-                          pull(Index),
-                        ps[1],
-                        replace=F),
-                 sample(lscape_speeds |>
-                          filter(Speed == "Medium") |>
-                          pull(Index),
-                        ps[2],
-                        replace=F),
-                 sample(lscape_speeds |>
-                          filter(Speed == "Fast") |>
-                          pull(Index),
-                        ps[3],
-                        replace=F))
-
-}
+# sample_speeds <- function(cam.dist.set) {
+#   ps <- ncam*c(0, 0, 0)
+#   ps[cam.dist.set-1] <- ncam
+#   cam.samps <- c(sample(lscape_speeds |>
+#                           filter(Speed == "Slow") |>
+#                           pull(Index),
+#                         ps[1],
+#                         replace=F),
+#                  sample(lscape_speeds |>
+#                           filter(Speed == "Medium") |>
+#                           pull(Index),
+#                         ps[2],
+#                         replace=F),
+#                  sample(lscape_speeds |>
+#                           filter(Speed == "Fast") |>
+#                           pull(Index),
+#                         ps[3],
+#                         replace=F))
+# 
+# }
 
 
 ################################################################################
@@ -47,7 +47,7 @@ sample_speeds <- function(cam.dist.set) {
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 1
+sim_num <- 7
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -264,20 +264,29 @@ for (run in 1:num_runs) {
     ) %>% 
     dplyr::ungroup() %>% 
     dplyr::mutate(
-      mu_prop_adj = mu_prop * ncams / sum(ncams, na.rm = T),
+      mu_prop_full = sum(mu_prop) / mu_prop,
+      mu_prop_adj = mu_prop_full * ncams / sum(ncams, na.rm = T),
       n_ltype = Count * n_lscape / (cam.A * t.steps), 
-      n_adj = n_ltype / mu_prop_adj
+      n_full = n_ltype * mu_prop_full,
+      n_adj = n_ltype * mu_prop_adj
     )
   
-  # The sum over the weighted adjustments should equal total abundance
-  sum(n_adj$n_adj, na.rm = T)
+  # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
+  # NOTE: CHECK FOR 80-10-10 PLACEMENTS
+  sum(n_adj$n_ltype, na.rm = T)
+  
+  # This method is more reliable when one or more lscape type is missing
+  sum(n_adj$n_adj)
   
   # For each adjusted n, we can get individual total abundances with full weights on a lscape type
+  n_adj$n_full
+  
+  # Manual way to calculate the above
   n_fast_lscape <- sum(lscape_speeds$Speed == "Fast")
   fast_cam_n <- mean(count_data$count[count_data$speed == "Fast"]) * n_fast_lscape / (cam.A * t.steps)
-    adjusted_tot_n <- sum(stay_time_summary_nolog$mu_prop/
+    adjusted_tot_n <- sum(stay_time_summary_nolog$mu_prop)/
                             stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Fast"] *
-                          fast_cam_n) # Prop_speeds) #
+                          fast_cam_n # Prop_speeds) #
   
     # adjusted_tot_n_cheat <- sum(Prop_speeds / Prop_speeds[3] * fast_cam_n)
     
