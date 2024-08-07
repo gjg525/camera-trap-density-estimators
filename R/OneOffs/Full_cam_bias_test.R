@@ -214,6 +214,18 @@ for (run in 1:num_runs) {
   ################################################################################
   # Quick math check for full cam bias, no density bias estimate
   activity_proportion <- exp(kappa.prior.mu.tdst) / sum(exp(kappa.prior.mu.tdst))
+  
+  # Do it without log transform
+  stay_time_summary_nolog <- stay_time_raw_tele %>% 
+    dplyr::group_by(speed) %>% 
+    dplyr::summarise(
+      mu = mean(t_stay * cam.A / dx / dy),
+      .groups = 'drop'
+      ) %>% 
+    dplyr::mutate(mu_prop = mu / sum(mu)) %>% 
+    dplyr::rename(Speed = speed) %>% 
+    dplyr::select(Speed, mu_prop) 
+  
   # 
   # lscape_n <- lscape_speeds %>% 
   #   dplyr::group_by(Speed) %>% 
@@ -225,43 +237,54 @@ for (run in 1:num_runs) {
   
   n_adj <- lscape_speeds %>% 
     dplyr::group_by(Speed) %>% 
-    dplyr::count() %>% 
+    dplyr::summarise(
+      n_lscape = dplyr::n()
+    ) %>% 
     dplyr::ungroup() %>% 
     dplyr::mutate(
-      prop_lscape = n / sum(n)
+      prop_lscape = n_lscape / sum(n_lscape)
     ) %>% 
     dplyr::left_join(
       count_data %>% 
         dplyr::group_by(speed) %>% 
-        dplyr::summarise(Count = mean(count)) %>% 
+        dplyr::summarise(
+          Count = mean(count),
+          ncams = dplyr::n()
+          ) %>% 
         dplyr::rename(Speed = speed),
       by = dplyr::join_by(Speed)
     ) %>% 
+    dplyr::mutate(
+      Count = tidyr::replace_na(Count, 0),
+      ncams = tidyr::replace_na(ncams, 0)
+    ) %>% 
     dplyr::left_join(
-      stay_time_summary %>% 
-        dplyr::mutate(mu_prop = exp(mu)/ sum(exp(mu))) %>% 
-        dplyr::rename(Speed = speed) %>% 
-        dplyr::select(Speed, mu_prop),
+      stay_time_summary_nolog,
       by = dplyr::join_by(Speed)
     ) %>% 
+    dplyr::ungroup() %>% 
     dplyr::mutate(
-      n_adj = Count * n / (cam.A * t.steps)
+      mu_prop_adj = mu_prop * ncams / sum(ncams, na.rm = T),
+      n_ltype = Count * n_lscape / (cam.A * t.steps), 
+      n_adj = n_ltype / mu_prop_adj
     )
   
-  sum(n_adj$n_adj)
+  # The sum over the weighted adjustments should equal total abundance
+  sum(n_adj$n_adj, na.rm = T)
   
+  # For each adjusted n, we can get individual total abundances with full weights on a lscape type
   n_fast_lscape <- sum(lscape_speeds$Speed == "Fast")
   fast_cam_n <- mean(count_data$count[count_data$speed == "Fast"]) * n_fast_lscape / (cam.A * t.steps)
-    adjusted_tot_n <- sum(exp(kappa.prior.mu.tdst)/
-                          exp(kappa.prior.mu.tdst[3]) *
+    adjusted_tot_n <- sum(stay_time_summary_nolog$mu_prop/
+                            stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Fast"] *
                           fast_cam_n) # Prop_speeds) #
   
     # adjusted_tot_n_cheat <- sum(Prop_speeds / Prop_speeds[3] * fast_cam_n)
     
   n_slow_lscape <- sum(lscape_speeds$Speed == "Slow")
   slow_cam_n <- mean(count_data$count[count_data$speed == "Slow"]) * n_slow_lscape / (cam.A * t.steps)
-  adjusted_tot_n_slow <- sum(exp(kappa.prior.mu.tdst)/
-                          exp(kappa.prior.mu.tdst[1]) *
+  adjusted_tot_n_slow <- sum(stay_time_summary_nolog$mu_prop/
+                               stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Slow"] *
                           slow_cam_n)
   # adjusted_tot_n_slow_cheat <- sum(Prop_speeds / Prop_speeds[1] * slow_cam_n)
   
@@ -306,9 +329,9 @@ for (run in 1:num_runs) {
         proc.time() - ptm
         
         # ## Posterior summaries
-        # pop.ind.TDST <- which(names(chain.TDST) == "u")
-        # MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
-        # summary(MCMC.parms.TDST.cov)
+        pop.ind.TDST <- which(names(chain.TDST) == "u")
+        MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
+        summary(MCMC.parms.TDST.cov)
         
         # plot(chain.TDST$tot.u[burn.in:n.iter])
         # ct <- chain.TDST$tot.u[burn.in:n.iter]
