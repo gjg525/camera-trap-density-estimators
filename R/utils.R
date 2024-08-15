@@ -1,27 +1,25 @@
 # Biased sample design (lscape_speeds)
-sample_speeds <- function(cam.dist.set) {
-  ps <- ncam*c(0.1,0.1,0.1)
-  ps[cam.dist.set-1] <- ncam*0.8
-  cam.samps <- c(sample(lscape_speeds |>
-                          filter(Speed == "Slow") |>
-                          pull(Index),
-                        ps[1],
-                        replace=F),
-                 sample(lscape_speeds |>
-                          filter(Speed == "Medium") |>
-                          pull(Index),
-                        ps[2],
-                        replace=F),
-                 sample(lscape_speeds |>
-                          filter(Speed == "Fast") |>
-                          pull(Index),
-                        ps[3],
-                        replace=F))
-
-  # cam.samps <- c(sample(which(lscape_speeds$Speed == "Slow"), ncam*slow, replace = F),
-  #                sample(which(lscape_speeds$Speed == "Medium"), ncam*medium, replace = F),
-  #                sample(which(lscape_speeds$Speed == "Fast"), ncam*fast, replace = F))
-
+sample_speeds <- function(cam.dist.prop = NULL) {
+  if (cam.dist.prop$set_ID == "Random") {
+    cam.samps <- sample(which(!is.na(lscape_speeds$Road)), ncam, replace = F)
+  } else{
+    ps <- ncam * unlist(cam.dist.prop$cam_prop)
+    cam.samps <- c(sample(lscape_speeds |>
+                            filter(Speed == "Slow") |>
+                            pull(Index),
+                          ps[1],
+                          replace=F),
+                   sample(lscape_speeds |>
+                            filter(Speed == "Medium") |>
+                            pull(Index),
+                          ps[2],
+                          replace=F),
+                   sample(lscape_speeds |>
+                            filter(Speed == "Fast") |>
+                            pull(Index),
+                          ps[3],
+                          replace=F))
+  }
 }
 
 # Biased sample design (road)
