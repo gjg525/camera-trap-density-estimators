@@ -32,21 +32,21 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
     "accept.rate.gamma",
     paste0("accept.rate.kappa.", covariate_labels)
   )
-
+  
   # Account for censored times
   t.staying.dat.all <- t.staying.dat
   t.staying.dat.all[t.staying.dat.all >= censor] <- NA
   t.staying.dat.censor <- t.staying.dat
   t.staying.dat.censor[t.staying.dat.censor < censor] <- NA
-
+  
   # Initialize with landscape-scale covariates
   beta <- exp(gamma[1])
   phi <- exp(Z %*% kappa[1, ])
   u <- beta * phi / sum(phi)
-
+  
   tune.check <- 100
   batch_n <- 0
-
+  
   # Begin MCMC loop
   # prog_bar <- txtProgressBar(min = 0,max = n.iter,style = 3,width = 50,char = "=")
   for (i in 1:n.iter) {
@@ -55,18 +55,18 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
     gamma.star <- rnorm(1, gamma[i], exp(2 * gamma.tune))
     beta.star <- exp(gamma.star)
     u.star <- beta.star * phi / sum(phi)
-
+    
     # repeat estimated parms for fitting
     u.star.cams <- u.star[cam.samps] * cam.A / cell.A
     u.cams <- u[cam.samps] * cam.A / cell.A
-
+    
     if (all(u.star.cams > 0) & all(!is.infinite(u.star.cams)) & all(!is.null(u.star.cams))) {
       mh1 <- sum(dpois(cam.counts, u.star.cams, log = TRUE), na.rm = TRUE) +
         sum(dnorm(gamma.star, 0, gamma.prior.var^0.5, log = TRUE))
       mh2 <- sum(dpois(cam.counts, u.cams, log = TRUE), na.rm = TRUE) +
         sum(dnorm(gamma[i, ], 0, gamma.prior.var^0.5, log = TRUE))
       mh <- exp(mh1 - mh2)
-
+      
       if (mh > runif(1)) {
         gamma[i + 1] <- gamma.star
         accept[i + 1, 1] <- 1
@@ -80,9 +80,9 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
       gamma[i + 1] <- gamma[i]
       accept[i + 1, 1] <- 0
     }
-
+    
     beta <- exp(gamma[i + 1])
-
+    
     # Sample kappa
     kappa.temp <- kappa[i, ]
     for (kk in 1:sum(covariates.index == 1)) {
@@ -90,50 +90,60 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
       kappa.star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa.tune[kk]))
       phi.star <- exp(Z %*% kappa.star)
       u.star <- beta * phi.star / sum(phi.star)
-
-      # # repeat estimated parms for fitting
-      phi.star.cams <- phi.star[cam.samps] * cam.A / cell.A
-      phi.star.cam.rep <- matrix(rep(phi.star.cams, dim(t.staying.dat.all)[2]),
-        nrow = ncam, ncol = dim(t.staying.dat.all)[2]
-      )
-      phi.all.cams <- phi[cam.samps] * cam.A / cell.A
-      phi.all.cam.rep <- matrix(rep(phi.all.cams, dim(t.staying.dat.all)[2]),
-        nrow = ncam, ncol = dim(t.staying.dat.all)[2]
-      )
-
-      # repeat estimated parms for fitting
-      u.star.cams <- u.star[cam.samps] * cam.A / cell.A
-      u.cams <- u[cam.samps] * cam.A / cell.A
-
-      if (all(1 / phi.star.cams > 0) &
-        all(!is.infinite(1 / phi.star.cams)) &
-        all(u.star.cams > 0) &
-        all(!is.infinite(u.star.cams)) &
-        all(!is.null(u.star.cams))) {
-        # # No data
-        # mh1 <- sum(dnorm(kappa.star,kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
-        # mh2 <- sum(dnorm(kappa[i,],kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
-        # mh <- exp(mh1-mh2)
-        # Data
-        # if(all(phi.star.cams>0)){
-        # mh1 <- sum(dgamma(t.staying.dat.all, phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
-        #   sum(pgamma(t.staying.dat.censor, phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-        #   sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
-        # mh2 <- sum(dgamma(t.staying.dat.all, phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
-        #   sum(pgamma(t.staying.dat.censor, phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-        #   sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
-        # mh <- exp(mh1-mh2)
-
-        mh1 <- sum(dexp(t.staying.dat.all, 1 / phi.star.cam.rep, log = TRUE), na.rm = TRUE) +
-          sum(pexp(t.staying.dat.censor, 1 / phi.star.cam.rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
-          sum(dpois(cam.counts, u.star.cams, log = TRUE), na.rm = TRUE) +
-          sum(dnorm(kappa.star, 0, kappa.prior.var^0.5, log = TRUE))
-        mh2 <- sum(dexp(t.staying.dat.all, 1 / phi.all.cam.rep, log = TRUE), na.rm = TRUE) +
-          sum(pexp(t.staying.dat.censor, 1 / phi.all.cam.rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
-          sum(dpois(cam.counts, u.cams, log = TRUE), na.rm = TRUE) +
-          sum(dnorm(kappa[i, ], 0, kappa.prior.var^0.5, log = TRUE))
-        mh <- exp(mh1 - mh2)
-
+      
+      if (is.null(t.staying.dat)) {
+        # No data
+        mh1 <- sum(dnorm(kappa.star,kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
+        mh2 <- sum(dnorm(kappa[i,],kappa.prior.mu,kappa.prior.var^0.5,log=TRUE))
+        mh <- exp(mh1-mh2)
+      } else{
+        
+        # # repeat estimated parms for fitting
+        phi.star.cams <- phi.star[cam.samps] * cam.A / cell.A
+        phi.star.cam.rep <- matrix(rep(phi.star.cams, dim(t.staying.dat.all)[2]),
+                                   nrow = ncam, ncol = dim(t.staying.dat.all)[2]
+        )
+        phi.all.cams <- phi[cam.samps] * cam.A / cell.A
+        phi.all.cam.rep <- matrix(rep(phi.all.cams, dim(t.staying.dat.all)[2]),
+                                  nrow = ncam, ncol = dim(t.staying.dat.all)[2]
+        )
+        
+        # repeat estimated parms for fitting
+        u.star.cams <- u.star[cam.samps] * cam.A / cell.A
+        u.cams <- u[cam.samps] * cam.A / cell.A
+        
+        if (all(1 / phi.star.cams > 0) &
+            all(!is.infinite(1 / phi.star.cams)) &
+            all(u.star.cams > 0) &
+            all(!is.infinite(u.star.cams)) &
+            all(!is.null(u.star.cams))) {
+          
+            
+            # Data w/ gamma distribution
+            # if(all(phi.star.cams>0)){
+            # mh1 <- sum(dgamma(t.staying.dat.all, phi.star.cam.rep,log=TRUE),na.rm=TRUE) +
+            #   sum(pgamma(t.staying.dat.censor, phi.star.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+            #   sum(dnorm(kappa.star,0,kappa.prior.var^0.5,log=TRUE))
+            # mh2 <- sum(dgamma(t.staying.dat.all, phi.all.cam.rep,log=TRUE),na.rm=TRUE) +
+            #   sum(pgamma(t.staying.dat.censor, phi.all.cam.rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+            #   sum(dnorm(kappa[i,],0,kappa.prior.var^0.5,log=TRUE))
+            # mh <- exp(mh1-mh2)
+            
+            # Data w/ exp distribution
+            mh1 <- sum(dexp(t.staying.dat.all, 1 / phi.star.cam.rep, log = TRUE), na.rm = TRUE) +
+              sum(pexp(t.staying.dat.censor, 1 / phi.star.cam.rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+              sum(dpois(cam.counts, u.star.cams, log = TRUE), na.rm = TRUE) +
+              sum(dnorm(kappa.star, 0, kappa.prior.var^0.5, log = TRUE))
+            mh2 <- sum(dexp(t.staying.dat.all, 1 / phi.all.cam.rep, log = TRUE), na.rm = TRUE) +
+              sum(pexp(t.staying.dat.censor, 1 / phi.all.cam.rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+              sum(dpois(cam.counts, u.cams, log = TRUE), na.rm = TRUE) +
+              sum(dnorm(kappa[i, ], 0, kappa.prior.var^0.5, log = TRUE))
+            mh <- exp(mh1 - mh2)
+          } else {
+        kappa[i, ] <- kappa[i, ]
+        accept[i + 1, 1 + kk] <- 0
+      }
+      }
         if (mh > runif(1)) {
           kappa[i, ] <- kappa.star
           accept[i + 1, 1 + kk] <- 1
@@ -143,16 +153,12 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
           kappa[i, ] <- kappa[i, ]
           accept[i + 1, 1 + kk] <- 0
         }
-      } else {
-        kappa[i, ] <- kappa[i, ]
-        accept[i + 1, 1 + kk] <- 0
-      }
     }
     kappa[i + 1, ] <- kappa[i, ]
     phi <- exp(Z %*% kappa[i + 1, ])
-
+    
     tot.u[i + 1] <- sum(u) / t.steps
-
+    
     # Update tuning parms
     if (i %% tune.check == 0) {
       batch_n <- batch_n + 1
@@ -167,10 +173,9 @@ fit.model.mcmc.TDST.cov <- function(n.iter,
     }
   }
   # print("MCMC complete")
-
+  
   list(accept = accept, gamma = gamma, kappa = kappa, tot.u = tot.u, u = u)
 }
-
 
 ########################################
 # MCMC for REST no covariates
@@ -832,7 +837,6 @@ fit.model.mcmc.PR.habitat <- function(n.iter,
                                       gamma.prior.var,
                                       gamma.tune,
                                       cam.counts,
-                                      sample_frame,
                                       cam.A,
                                       t.steps,
                                       habitat_summary,
@@ -849,32 +853,10 @@ fit.model.mcmc.PR.habitat <- function(n.iter,
     covariate_labels
   ))
 
-  # gamma <- matrix(,n.iter+1,1)
-  # tot.u <- matrix(,n.iter+1,1)
-  # accept <- matrix(,n.iter+1,1)
-
-  # gamma[1,] <- gamma.start
-  # colnames(gamma) <- "gamma"
-  # colnames(tot.u) <- "Total estimate"
-  # colnames(accept) <- "accept.rate.gamma"
-
   d <- exp(gamma[1, ])
-  u <- habitat_summary %>%
-    dplyr::left_join(
-      tibble::tibble(
-        Speed = covariate_labels,
-        d = d
-      ),
-      by = dplyr::join_by(Speed)
-    ) %>%
-    dplyr::mutate(
-      N_h = d * d_coeff
-    ) %>%
-    dplyr::pull(N_h)
+  u <- d * habitat_summary$d_coeff
 
   tot.u <- sum(u)
-
-  # d*sample_frame/(cam.A*t.steps)
 
   tune.check <- 100
   batch_n <- 0
@@ -885,16 +867,13 @@ fit.model.mcmc.PR.habitat <- function(n.iter,
     # setTxtProgressBar(prog_bar, i)
     # Sample gamma
     for (gg in 1:sum(covariates.index == 1)) {
-      h_summary <- habitat_summary %>%
-        dplyr::filter(Speed == covariate_labels[gg])
+      h_summary <- habitat_summary[habitat_summary$Speed == covariate_labels[gg],]
 
       gamma.star <- gamma[i, ]
       gamma.star[gg] <- rnorm(1, gamma[i, gg], exp(2 * gamma.tune[gg]))
       d.star <- exp(gamma.star)
 
-      cam.counts.h <- cam.counts %>%
-        dplyr::filter(speed == covariate_labels[gg]) %>%
-        dplyr::pull(count)
+      cam.counts.h <- cam.counts$count[cam.counts$speed == covariate_labels[gg]]
 
       if (all(d.star > 0)) {
         mh1 <- sum(dpois(cam.counts.h, d.star[gg], log = TRUE), na.rm = TRUE) +
@@ -918,7 +897,7 @@ fit.model.mcmc.PR.habitat <- function(n.iter,
 
       gamma[i + 1, ] <- gamma[i, ]
       d <- exp(gamma[i + 1, ])
-      u[gg] <- d[gg] * h_summary$d_coeff[gg]
+      u[gg] <- d[gg] * h_summary$d_coeff
 
       tot.u[i + 1] <- sum(u)
     }
