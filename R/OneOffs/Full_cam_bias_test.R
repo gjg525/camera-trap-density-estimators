@@ -17,27 +17,6 @@ source("./R/MLE_functions.R")
 source("./R/MCMC_functions.R")
 source("./R/Create_landscape.R")
 
-# NEW cam sample speed function
-# sample_speeds <- function(cam.dist.set) {
-#   ps <- ncam*c(0, 0, 0)
-#   ps[cam.dist.set-1] <- ncam
-#   cam.samps <- c(sample(lscape_speeds |>
-#                           filter(Speed == "Slow") |>
-#                           pull(Index),
-#                         ps[1],
-#                         replace=F),
-#                  sample(lscape_speeds |>
-#                           filter(Speed == "Medium") |>
-#                           pull(Index),
-#                         ps[2],
-#                         replace=F),
-#                  sample(lscape_speeds |>
-#                           filter(Speed == "Fast") |>
-#                           pull(Index),
-#                         ps[3],
-#                         replace=F))
-# 
-# }
 
 
 ################################################################################
@@ -222,9 +201,9 @@ for (run in 1:num_runs) {
       mu = mean(t_stay * cam.A / dx / dy),
       .groups = 'drop'
       ) %>% 
-    dplyr::mutate(mu_prop = mu / sum(mu)) %>% 
+    dplyr::mutate(stay_prop = mu / sum(mu)) %>% 
     dplyr::rename(Speed = speed) %>% 
-    dplyr::select(Speed, mu_prop) 
+    dplyr::select(Speed, stay_prop) 
   
   # 
   # lscape_n <- lscape_speeds %>% 
@@ -264,15 +243,16 @@ for (run in 1:num_runs) {
     ) %>% 
     dplyr::ungroup() %>% 
     dplyr::mutate(
-      mu_prop_full = sum(mu_prop) / mu_prop,
-      mu_prop_adj = mu_prop_full * ncams / sum(ncams, na.rm = T),
+      stay_prop_full = sum(stay_prop) / stay_prop,
+      stay_prop_adj = stay_prop_full * ncams / sum(ncams, na.rm = T),
       n_ltype = Count * n_lscape / (cam.A * t.steps), 
-      n_full = n_ltype * mu_prop_full,
-      n_adj = n_ltype * mu_prop_adj
+      n_full = n_ltype * stay_prop_full,
+      n_adj = n_full * ncams / sum(ncams, na.rm = T)
+      # big_D = Count * sum(stay_prop) / stay_prop
     )
   
   # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
-  # NOTE: CHECK FOR 80-10-10 PLACEMENTS
+  # Does not work if cameras aren't placed in every landscape type
   sum(n_adj$n_ltype, na.rm = T)
   
   # This method is more reliable when one or more lscape type is missing
@@ -283,20 +263,15 @@ for (run in 1:num_runs) {
   
   # Manual way to calculate the above
   n_fast_lscape <- sum(lscape_speeds$Speed == "Fast")
-  fast_cam_n <- mean(count_data$count[count_data$speed == "Fast"]) * n_fast_lscape / (cam.A * t.steps)
-    adjusted_tot_n <- sum(stay_time_summary_nolog$mu_prop)/
-                            stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Fast"] *
-                          fast_cam_n # Prop_speeds) #
-  
-    # adjusted_tot_n_cheat <- sum(Prop_speeds / Prop_speeds[3] * fast_cam_n)
-    
+  fast_cam_n <- mean(count_data$count[count_data$speed == "Fast"]) * 
+    n_fast_lscape / (cam.A * t.steps * stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Fast"])
+
   n_slow_lscape <- sum(lscape_speeds$Speed == "Slow")
-  slow_cam_n <- mean(count_data$count[count_data$speed == "Slow"]) * n_slow_lscape / (cam.A * t.steps)
-  adjusted_tot_n_slow <- sum(stay_time_summary_nolog$mu_prop/
-                               stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Slow"] *
-                          slow_cam_n)
-  # adjusted_tot_n_slow_cheat <- sum(Prop_speeds / Prop_speeds[1] * slow_cam_n)
-  
+  slow_cam_n <- mean(count_data$count[count_data$speed == "Slow"]) * n_slow_lscape / 
+    (cam.A * t.steps * stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Slow"])
+  adjusted_tot_n_slow <- stay_time_summary_nolog$mu_prop[stay_time_summary_nolog$Speed == "Slow"] *
+                          slow_cam_n
+
   
   # Run models only if any data points were collected
   if(max(count_data$count) > 0 & sum(!is.na(TTE_data)) > 0) {
@@ -684,6 +659,13 @@ for (run in 1:num_runs) {
       ## PR no covariates
       ########################################
       if (iter == 6) {
+        
+        # ################################################################################
+        # for full-bias sample design
+        # tot.A <- n_fast_lscape
+        # t.steps <- t.steps * .0754
+        # ################################################################################
+        
         # print("Fit Poisson Regression model with MCMC, no covariates")
         ptm <- proc.time()
         # unpack tidyr if extract has no applicable method

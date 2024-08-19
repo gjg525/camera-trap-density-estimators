@@ -16,6 +16,7 @@ source("./R/ABM_sim.R")
 source("./R/MLE_functions.R")
 source("./R/MCMC_functions.R")
 source("./R/Create_landscape.R")
+source("./R/Collect_data.R")
 
 ################################################################################
 # Initializations
@@ -24,7 +25,7 @@ source("./R/Create_landscape.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 1
+sim_num <- 7
 
 sim_vars <- data.frame(
   sim_names = c("Random", 
@@ -110,7 +111,8 @@ burn.in <- 3000
 
 animalxy.list <- list()
 tri_cam_list <- list()
-num_models <- 5
+model_nums <- c(3,5)
+num_models <- length(model_nums)
 # D.all <- data.frame(Model = NA,
 #                     Covariate = NA,
 #                     Est = NA,
@@ -153,16 +155,11 @@ for (run in 1:num_runs) {
   # # Run agent-based model
   animalxy.all <- ABM_sim(bounds = bounds,
                           t.steps = t.steps,
-                          speeds = matrix(lscape_speeds$Value, q^0.5, q^0.5),
-                          direction = matrix(lscape_speeds$Direction, q^0.5, q^0.5),
-                          kappa = matrix(lscape_speeds$Kappa, q^0.5, q^0.5),
-                          road = matrix(lscape_speeds$Road, q^0.5, q^0.5),
+                          speed_vals = matrix(lscape_speeds$Value, q^0.5, q^0.5),
+                          kappa = 0,
+                          # road = matrix(lscape_speeds$Road, q^0.5, q^0.5),
                           clump_sizes = clump_sizes,
-                          clump.rad = clump.rad,
-                          dx = dx,
-                          dy = dy,
-                          q = q,
-                          dt = dt)
+                          clump.rad = clump.rad)
   
   animalxy.list[[run]] <- animalxy.all
   
@@ -191,7 +188,6 @@ for (run in 1:num_runs) {
   ################################
   '%notin%' <- Negate('%in%')
   source("./R/Collect_tele_data.R")
-  source("./R/Collect_data.R")
   
   # # Quick calculation of stay time priors
   # stay_time_summary_log <- stay_time_raw_tele %>%
@@ -216,13 +212,13 @@ for (run in 1:num_runs) {
   stay_time_summary <- stay_time_raw_tele %>% 
     dplyr::group_by(speed) %>% 
     dplyr::summarise(
-      cam_mu = mean(t_stay),
-      cam_sd = sd(t_stay),
-      mu = mean(t_stay / cam.A * dx * dy),
-      sd = sd(t_stay / cam.A * dx * dy),
+      cell_mu = mean(t_stay),
+      cell_sd = sd(t_stay),
+      cam_mu = mean(t_stay * cam.A / (dx * dy)),
+      cam_sd = sd(t_stay * cam.A / (dx * dy)),
       .groups = 'drop'
     ) %>% 
-    dplyr::mutate(stay_prop = mu / sum(mu)) %>% 
+    dplyr::mutate(stay_prop = cam_mu / sum(cam_mu)) %>% 
     dplyr::rename(Speed = speed) %>% 
     dplyr::arrange(desc(Speed))
 
@@ -242,7 +238,7 @@ for (run in 1:num_runs) {
       count_data %>% 
         dplyr::group_by(speed) %>% 
         dplyr::summarise(
-          mean_count = mean(count),
+          mean_count = mean(count, na.rm = T),
           ncams = dplyr::n(),
           .groups = 'drop'
         ) %>% 
@@ -255,24 +251,21 @@ for (run in 1:num_runs) {
     )  %>% 
     dplyr::mutate(
       prop_cams = ncams / sum(ncams, na.rm = T),
-      stay_prop_full = sum(stay_prop) / stay_prop,
-      d_coeff = n_lscape * prop_cams * stay_prop_full / (cam.A * t.steps)
+      stay_prop_full = stay_prop / sum(stay_prop),
+      d_coeff = n_lscape * prop_cams / stay_prop_full / (cam.A * t.steps)
     ) %>% 
-    dplyr::arrange(desc(Speed))
+    dplyr::arrange(desc(Speed)) %>% 
+    replace(is.na(.), 0)
   
   # n_adj <- habitat_summary %>%
   #   dplyr::mutate(
   #     mean_count = tidyr::replace_na(mean_count, 0),
   #     ncams = tidyr::replace_na(ncams, 0)
   #   ) %>%
-  #   dplyr::left_join(
-  #     stay_time_summary,
-  #     by = dplyr::join_by(Speed)
-  #   ) %>%
   #   dplyr::ungroup() %>%
   #   dplyr::mutate(
-  #     stay_prop_full = sum(stay_prop) / stay_prop,
-  #     stay_prop_adj = stay_prop_full * ncams / sum(ncams, na.rm = T),
+  #     stay_prop_full = stay_prop / sum(stay_prop),
+  #     stay_prop_adj = 1 / stay_prop_full * ncams / sum(ncams, na.rm = T),
   #     n_ltype = mean_count * n_lscape / (cam.A * t.steps),
   #     n_full = n_ltype * stay_prop_full,
   #     n_adj = n_full * prop_cams
@@ -313,7 +306,7 @@ for (run in 1:num_runs) {
     #register cluster to be used by %dopar%
     doParallel::registerDoParallel(cl = my_cluster)
     
-    D.chain <- foreach::foreach(iter=1:num_models) %dopar% {
+    D.chain <- foreach::foreach(iter=model_nums) %dopar% {
       ###################################
       # TDST
       ###################################
@@ -327,6 +320,8 @@ for (run in 1:num_runs) {
           gamma.start = log(mean(count_data$count)),
           kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
           gamma.prior.var = 10^6,
+          # kappa.prior.mu = kappa.prior.mu.tdst,
+          # kappa.prior.var = exp(kappa.prior.var.tdst)/1000,
           kappa.prior.var = 10^6,
           gamma.tune = -1,
           kappa.tune = c(-1, -1, -1),
@@ -341,9 +336,9 @@ for (run in 1:num_runs) {
         proc.time() - ptm
         
         # ## Posterior summaries
-        pop.ind.TDST <- which(names(chain.TDST) == "u")
-        MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
-        summary(MCMC.parms.TDST.cov)
+        # pop.ind.TDST <- which(names(chain.TDST) == "u")
+        # MCMC.parms.TDST.cov <- mcmcr::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:burn.in), ])
+        # summary(MCMC.parms.TDST.cov)
         
         # plot(chain.TDST$tot.u[burn.in:n.iter])
         D.TDST.MCMC <- mean(chain.TDST$tot.u[burn.in:n.iter])
@@ -385,11 +380,11 @@ for (run in 1:num_runs) {
           kappa.start = kappa.prior.mu.tdst,#rep(log(mean(stay_time_data,na.rm=T)), 3),
           gamma.prior.var = 10^6,
           kappa.prior.mu = kappa.prior.mu.tdst,
-          kappa.prior.var = exp(kappa.prior.var.tdst)/1000,
+          kappa.prior.var = 10^-4, #exp(kappa.prior.var.tdst)/1000,
           gamma.tune = -1,
           kappa.tune = c(-1, -1, -1),
           cam.counts = count_data$count,
-          t.staying.dat = NULL, #stay_time_data,
+          t.staying.dat = NULL, #  stay_time_data, #
           covariate_labels = covariate_labels,
           covariates.index = covariates.index,
           t.steps = t.steps,
@@ -507,11 +502,11 @@ for (run in 1:num_runs) {
         SD.PR.habitat.MCMC <- sd(chain.PR.habitat$tot.u[burn.in:n.iter])
         
 
-        if(mean(chain.PR.habitat$accept[burn.in:n.iter,])< 0.2 || mean(chain.PR.habitat$accept[burn.in:n.iter,])> 0.7){
-          warning(('Poisson Regression accept rate OOB'))
-          D.PR.habitat.MCMC <- NA
-          SD.PR.habitat.MCMC <- NA
-        }
+        # if(mean(chain.PR.habitat$accept[burn.in:n.iter,])< 0.2 || mean(chain.PR.habitat$accept[burn.in:n.iter,])> 0.7){
+        #   warning(('Poisson Regression accept rate OOB'))
+        #   D.PR.habitat.MCMC <- NA
+        #   SD.PR.habitat.MCMC <- NA
+        # }
 
         Prop_speeds <- c(mean(chain.PR.habitat$u[slow_inds]),
                          mean(chain.PR.habitat$u[med_inds]),
@@ -537,7 +532,7 @@ for (run in 1:num_runs) {
         ptm <- proc.time()
         # unpack tidyr if extract has no applicable method
         # .rs.unloadPackage("tidyr")
-        chain.PR.cov <-fit.model.mcmc.PR.cov(
+        chain.PR.cov <- fit.model.mcmc.PR.cov(
           n.iter = n.iter,
           gamma.start = rep(log(mean(count_data$count)), 3),
           gamma.prior.var = 10^6,
