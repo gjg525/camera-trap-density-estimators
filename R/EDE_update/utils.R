@@ -245,9 +245,10 @@ create_covariate_mat <- function(lscape_defs, study_design, covariate_labels) {
                 nrow = study_design$q,
                 ncol = length(covariate_labels))
     for (zz in 1:length(covariate_labels)) {
-      cov_vec <- lscape_defs |> pull(study_design$cov_name)
-      cov_indices <- which(cov_vec == covariate_labels[zz])
-      Z[cov_indices, zz] <- 1
+      cov_vec <- lscape_defs |> 
+        dplyr::filter(Speed == covariate_labels[zz]) %>% 
+        dplyr::pull(Index)
+      Z[cov_vec, zz] <- 1
     }
   }
   return(Z)
@@ -488,49 +489,26 @@ Cell_bias <- function(lscape_data, Index, Dir, Kappa, Road_ID) {
 # Collect space-use for each animal
 ########################################
 ################################################################################
-#' @export
-#'
-get_animal_data <- function(animalxy.all) {
+get_animal_data <- function(animalxy.all, lscape_defs) {
   animal_data <- animalxy.all |>
     group_by(Animal_ID) |>
-    mutate(t_diff = c(0, t[2:length(t)] - t[1:(length(t) - 1)])) |>
-    group_by(Animal_ID, road) |>
-    summarise(
-      t_spent = sum(t_diff),
-      .groups = "drop"
-    ) |>
-    dplyr::group_by(road) |>
-    dplyr::summarise(tot_time = sum(t_spent)) |>
-    dplyr::left_join(
-      lscape_defs |>
-        dplyr::rename("road" = "Road") |>
-        dplyr::group_by(road) |>
-        dplyr::summarise(n_units = n()) |>
-        dplyr::filter(!is.na(road)),
-      by = "road"
-    )
-
-  # animal_data <- animalxy.all |>
-  #   group_by(Animal_ID) |>
-  #   mutate(t_diff = c(0,t[2:length(t)] - t[1:(length(t)-1)])) |>
-  #   group_by(Animal_ID, lscape_type) |>
-  #   summarise(t_spent = sum(t_diff),
-  #             .groups = 'drop') |>
-  #   dplyr::group_by(lscape_type) |>
-  #   dplyr::summarise(nn = n(),
-  #     prop_tot_time = sum(t_spent)) |>
-  # dplyr::left_join(lscape_defs |>
-  #                    dplyr::rename("lscape_type" = "Speed") |>
-  #                    dplyr::group_by(lscape_type) |>
-  #                    dplyr::summarise(n_units = n()),
-  #                  by = lscape_type)
+    mutate(t_diff = c(0,t[2:length(t)] - t[1:(length(t)-1)])) |>
+    group_by(Animal_ID, lscape_type) |>
+    summarise(t_spent = sum(t_diff),
+              .groups = 'drop') |>
+    dplyr::group_by(lscape_type) |>
+    dplyr::summarise(nn = n(),
+      prop_tot_time = sum(t_spent)) |>
+  dplyr::left_join(lscape_defs |>
+                     dplyr::rename("lscape_type" = "Speed") |>
+                     dplyr::group_by(lscape_type) |>
+                     dplyr::summarise(n_units = n()),
+                   by = dplyr::join_by(lscape_type))
 
   return(animal_data)
 }
 
 ################################################################################
-#' @export
-#'
 calc_group_size <- function(cam_captures) {
   # Mean group size for adjusted STE
   mean_group_size <- cam_captures |>
@@ -549,30 +527,6 @@ calc_group_size <- function(cam_captures) {
 }
 
 ################################################################################
-#' @export
-#'
-get_mcmc_runs <- function(study_design) {
-  iter_legend <- tibble::tibble(
-    Model = c("TDST", "REST", "REST", "TTE", "TTE", "PR", "PR", "STE"),
-    Covariate = c("Covariate", "Non-Covariate", "Covariate", "Non-Covariate",
-                  "Covariate", "Non-Covariate", "Covariate","Non-Covariate"),
-    iter = 1:8
-  )
-
-  run_iter <- study_design |>
-    tidyr::expand(Model = unlist(run_models),
-                  Covariate = unlist(run_covariates)) |>
-    dplyr::left_join(iter_legend, by = c("Model", "Covariate")) |>
-    dplyr::summarise(iter = iter[!is.na(iter)]) |>
-    dplyr::arrange(iter) |>
-    dplyr::pull(iter)
-
-  return(run_iter)
-}
-
-################################################################################
-#' @export
-#'
 summarise_data <- function(count_data,
                            encounter_data,
                            stay_time_raw
@@ -603,64 +557,3 @@ summarise_data <- function(count_data,
 
   all_summaries <- rbind(count_data_summary, encounter_data_summary, staytime_data_summary)
 }
-
-################################################################################
-#' @export
-#'
-# (SMR) ray-casting algorithm True if in false if out
-inout=function(s,vertices){
-  count=0
-  for(i in 1:(nrow(vertices)-1)){
-    if(intersect(s,vertices[i,],vertices[i+1,])){
-      count=count+1
-    }
-  }
-  if(count %% 2 != 0){
-    return(TRUE)
-  }else{
-    return(FALSE)
-  }
-}
-
-################################################################################
-#' @export
-#' (SMR)
-intersect=function(s,vertex1,vertex2){
-  if(s[2]==vertex1[2]|s[2]==vertex2[2]){
-    s[2]=s[2]+ 0.000001
-  }
-  #vertex1 must be below vertex2
-  if(vertex1[2]>vertex2[2]){
-    swap=vertex1
-    vertex1=vertex2
-    vertex2=swap
-  }
-  if(s[2]<vertex1[2]|s[2]>vertex2[2]){
-    out=FALSE
-  }else if(s[1] > max(vertex1[1], vertex2[1]) ){
-    out=FALSE
-  }else{
-    if(s[1] < min(vertex1[1], vertex2[1])){
-      out=TRUE
-    }else{
-      if(vertex1[1]!=vertex2[1]){
-        m_red=(vertex2[2]-vertex1[2])/(vertex2[1]-vertex1[1])
-      }else{
-        m_red=Inf
-      }
-      if(vertex1[1]!=s[1]){
-        m_blue=(s[2]-vertex1[2])/(s[1]-vertex1[1])
-      }else{
-        m_blue=Inf
-      }
-      if(m_blue>=m_red){
-        out=TRUE
-      }else{
-        out=FALSE
-      }
-    }
-  }
-  return(out)
-}
-
-
