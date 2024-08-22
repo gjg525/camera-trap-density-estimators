@@ -281,8 +281,6 @@ calc_tri_signs <- function(p1, p2, p3) {
 
 # Determine if a point lies within a triangle using where the point lies relative to the triangle half-planes
 ################################################################################
-#' @export
-#'
 calc_in_triangle <- function(p_viewshed, point) {
   A_1 <- calc_tri_signs(point, p_viewshed[1, ], p_viewshed[2, ])
   A_2 <- calc_tri_signs(point, p_viewshed[3, ], p_viewshed[1, ])
@@ -299,8 +297,6 @@ calc_in_triangle <- function(p_viewshed, point) {
 
 # Calculate where an animal's trajectory intersects with a camera viewshed and the time spent within viewshed
 ################################################################################
-#' @export
-#'
 calc_intersects <- function(p_viewshed, p_animal, speed, t) {
   X <- c()
   Y <- c()

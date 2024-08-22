@@ -3,8 +3,6 @@
 ########################################
 
 ################################################################################
-#' @export
-#'
     get_cam_captures <- function(animalxy) {
       t_steps <- study_design$t_steps
       dt <- study_design$dt
