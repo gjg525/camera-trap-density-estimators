@@ -10,13 +10,13 @@ library(gridExtra)
 library(AHMbook)
 library(doParallel)
 
-source("./R/utils.R")
-source("./R/plot_funs.R")
-source("./R/ABM_sim.R")
-source("./R/MLE_functions.R")
-source("./R/MCMC_functions.R")
-source("./R/Create_landscape.R")
-source("./R/Collect_data.R")
+source("./R/old/utils.R")
+source("./R/old/plot_funs.R")
+source("./R/old/ABM_sim.R")
+source("./R/old/MLE_functions.R")
+source("./R/old/MCMC_functions.R")
+source("./R/old/Create_landscape.R")
+source("./R/old/Collect_data.R")
 
 ################################################################################
 # Initializations
@@ -25,7 +25,7 @@ source("./R/Collect_data.R")
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 7
+sim_num <- 4
 
 sim_vars <- data.frame(
   sim_names = c("Random", 

@@ -10,9 +10,14 @@ create_cam_samp_design <- function(study_design,
   dy <- study_design$dy
   cam_length <- cam_design$cam_length
 
-  cam_inds <- place_cams(study_design,
-                          lscape_defs,
-                          cam_design)
+  cam_inds <- sample_speeds(
+    cam.dist.prop = cam_design,
+    lscape_speeds = lscape_defs
+    )
+  
+  # cam_inds <- place_cams(study_design,
+  #                         lscape_defs,
+  #                         cam_design)
 
   cam_locs <- tibble::tibble(
     cam_ID = 1:cam_design$ncam,
@@ -40,69 +45,62 @@ create_cam_samp_design <- function(study_design,
   return(cam_locs)
 }
 
-################################################################################
-#' @export
-#'
-place_cams <- function(study_design,
-                       lscape_defs,
-                       cam_design) {
-  # COME BACK TO CLEAN AND ALLOW FOR CUSTOM CAMERA PLACEMENT
-
-  cam_design_name <- cam_design$Design[1]
-
-  # Create camera sample designs
-  if (cam_design_name == "Random") {
-    # # Random camera sampling
-    cam_samps <- sample(which(!is.na(lscape_defs$Road)), cam_design$ncam, replace = F)
-  } else if (cam_design_name == "Speed") {
-    # # Biased sample design (lscape_defs)
-    # sample_speeds()
-  } else if (cam_design_name == "Road") {
-    cam_samps <- c(
-      sample(which(lscape_defs$Road == "On Trail"),
-        round(cam_design$ncam * cam_design$Props[1]),
-        replace = F
-      ),
-      sample(which(lscape_defs$Road == "Off Trail"),
-             cam_design$ncam - round(cam_design$ncam * cam_design$Props[1]),
-        replace = F
-      )
-    )
-  }
-
-  return(cam_samps)
-}
+#' ################################################################################
+#' #' @export
+#' #'
+#' place_cams <- function(study_design,
+#'                        lscape_defs,
+#'                        cam_design) {
+#'   # COME BACK TO CLEAN AND ALLOW FOR CUSTOM CAMERA PLACEMENT
+#' 
+#'   cam_design_name <- cam_design$Design[1]
+#' 
+#'   # Create camera sample designs
+#'   if (cam_design_name == "Random") {
+#'     # # Random camera sampling
+#'     cam_samps <- sample(which(!is.na(lscape_defs$Road)), cam_design$ncam, replace = F)
+#'   } else if (cam_design_name == "Speed") {
+#'     # Biased sample design (lscape_defs)
+#'     sample_speeds()
+#'   } else if (cam_design_name == "Road") {
+#'     cam_samps <- c(
+#'       sample(which(lscape_defs$Road == "On Trail"),
+#'         round(cam_design$ncam * cam_design$Props[1]),
+#'         replace = F
+#'       ),
+#'       sample(which(lscape_defs$Road == "Off Trail"),
+#'              cam_design$ncam - round(cam_design$ncam * cam_design$Props[1]),
+#'         replace = F
+#'       )
+#'     )
+#'   }
+#' 
+#'   return(cam_samps)
+#' }
 
 # Biased sample design (lscape_defs)
 ################################################################################
-#' @export
-#'
-sample_speeds <- function(cam.dist.set) {
-  ps <- cam_design$ncam * c(0.1, 0.1, 0.1)
-  ps[cam.dist.set - 1] <- cam_design$ncam * 0.8
-  cam_samps <- c(
-    sample(
-      lscape_defs |>
-        filter(Speed == "Slow") |>
-        pull(Index),
-      ps[1],
-      replace = F
-    ),
-    sample(
-      lscape_defs |>
-        filter(Speed == "Medium") |>
-        pull(Index),
-      ps[2],
-      replace = F
-    ),
-    sample(
-      lscape_defs |>
-        filter(Speed == "Fast") |>
-        pull(Index),
-      ps[3],
-      replace = F
-    )
-  )
+sample_speeds <- function(cam.dist.prop = NULL, lscape_speeds) {
+  if (cam.dist.prop$Design == "Random") {
+    cam.samps <- sample(lscape_speeds$Index, cam.dist.prop$ncam, replace = F)
+  } else{
+    ps <- cam.dist.prop$ncam * unlist(cam.dist.prop$Props)
+    cam.samps <- c(sample(lscape_speeds |>
+                            filter(Speed == "Slow") |>
+                            pull(Index),
+                          ps[1],
+                          replace=F),
+                   sample(lscape_speeds |>
+                            filter(Speed == "Medium") |>
+                            pull(Index),
+                          ps[2],
+                          replace=F),
+                   sample(lscape_speeds |>
+                            filter(Speed == "Fast") |>
+                            pull(Index),
+                          ps[3],
+                          replace=F))
+  }
 }
 
 ################################################################################

@@ -24,10 +24,12 @@
 
       # # Use animal's next step to capture all trajectories within cell
       cell_captures <- cell_captures |>
-        dplyr::add_row(animalxy |>
-          dplyr::ungroup() |>
-          dplyr::filter(ii %in% unique(cell_captures$next_i)) |>
-          dplyr::mutate(pass_i = unique(cell_captures$pass_i))) |>
+        dplyr::add_row(
+          animalxy |>
+            dplyr::ungroup() |>
+            dplyr::filter(ii %in% unique(cell_captures$next_i)) |>
+            dplyr::mutate(pass_i = unique(cell_captures$pass_i))
+          ) |>
         dplyr::arrange(ii) |>
         dplyr::select(-next_i)
       # Remove repeat rows (occurs for max time step)
@@ -54,6 +56,7 @@
         # in_cam determines whether an individual starts within the camera viewshed
         cam_captures <- cell_captures |>
           dplyr::group_by(pass_i) |>
+          # dplyr::mutate(pass_i = pass_i[t == min(t)]) |>
           dplyr::summarise(
             xy_index = list(cam_locs[cam_locs$lscape_index %in% lscape_index[1], 3:4]),
             cam_intersects = list(
@@ -112,7 +115,7 @@
           .groups = "drop"
         ) |>
         dplyr::full_join(cam_locs |>
-                           select(cam_ID, lscape_index, Speed, Road),
+                           select(cam_ID, lscape_index, Speed),
                          by = c("lscape_index")) |>
         dplyr::arrange(cam_ID) |>
         dplyr::mutate(count = replace(count, is.na(count), 0))
