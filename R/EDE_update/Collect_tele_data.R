@@ -6,10 +6,12 @@ Collect_tele_data = function(animalxy.all, study_design, cam_locs) {
   # Creates IDs (pass_i) for each pass through a cell and landscape indices for the cell that the individual passes into (next_i)
   cell_captures_tele <- animalxy.all |>
     ungroup() |> 
-    dplyr::mutate(pass_i = cumsum(c(1, (abs(ii[-length(ii)] - ii[-1]) > 1) +
-                                      (abs(Animal_ID[-length(Animal_ID)] - Animal_ID[-1]) > 0) +                                     (abs(lscape_index[-length(Animal_ID)] - lscape_index[-1]) > 0)))) |> 
+    dplyr::mutate(pass_i = cumsum(
+      c(1, 
+        (abs(ii[-length(ii)] - ii[-1]) > 1) +
+          (abs(Animal_ID[-length(Animal_ID)] - Animal_ID[-1]) > 0) +                              (abs(lscape_index[-length(Animal_ID)] - lscape_index[-1]) > 0)))) |> 
     dplyr::group_by(pass_i) |>
-    dplyr::mutate(next_i = ifelse(max(t) == study_design$t_steps,
+    dplyr::mutate(next_i = ifelse(max(t) == study_design$t_steps * study_design$dt,
                                   max(ii),
                                   max(ii) + 1)) |>
     dplyr::ungroup()

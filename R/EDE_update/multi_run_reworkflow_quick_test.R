@@ -23,7 +23,7 @@ study_design <- tibble::tibble(
   dx = 1,  # Grid cell lengths
   dy = 1,
   t_steps = 500, # Number of time steps (3000 * 15 min ~ 31.25 days)
-  dt = 1,     # Time step size
+  dt = 0.25,     # Time step size
   bounds = list(c(0, dx * q ^ 0.5)), # Sampling area boundaries
   num_groups = 100,
   group_sizes = list(rep(1, num_groups)),
@@ -33,7 +33,7 @@ study_design <- tibble::tibble(
   activity_sync = "sync",
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
-  num_runs = 100,
+  num_runs = 1000,
   n_iter = 5000,
   burn_in = 3000,
   # staying time censors
@@ -49,22 +49,28 @@ lscape_design <- tibble::tibble(
   default_kappa = 0, # Turning angle
   num_roads = 0,
   Speed_ID = list(c("Slow", "Medium", "Fast")),
-  Speed_mins = list(c(.05, .3, .9)),
-  Speed_maxes = list(c(.15, .5, 1.1)),
+  # Speed_maxes = list(c(.15, .5, 1.1)),
+  # Speed_mins = list(c(.04, .19, .4)),
+  # Speed_maxes = list(c(.05, .21, .6)),
+  Speed_mins = list(c(.19, .4, .7)),
+  Speed_maxes = list(c(.21, .5, .9)),
+  # Speed_mins = list(c(.19, .19, .19)),
+  # Speed_maxes = list(c(.21, .21, .21)),
   Trail_ID = list(c("On Trail", "Off Trail")),
   Trail_speed = list(c("Medium", "Medium"))
 )
 
 # Cam designs
 cam_design <- tibble::tibble(
-  ncam = 500,
-  Design = "Random",
-  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
-  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
+  ncam = 250,
+  # Design = "Random",
+  # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
+  Design = "Bias",
+  Props = list(c(0.2, 0.2, 0.6)), # proportion of cameras placed on and off roads
   # Design = "Bias",
   # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
   cam_length = study_design$dx * 0.3, # length of all viewshed sides
+  # cam_length = study_design$dx * 0.005, # length of all viewshed sides (12.5 m^2)
   cam_A = cam_length ^ 2 / 2,
   tot_snaps = ncam * study_design$t_steps
 )
@@ -130,12 +136,14 @@ study_design <- study_design %>%
       unlist(covariate_labels)))
   )
 dd_og <- c()
+dd_test <- c()
 dd <- c()
-# Multi-run simulations
+
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
   
+# Multi-run simulations
 for (run in 1:study_design$num_runs) {
   print(paste("Run", run, "of", study_design$num_runs))
   
@@ -153,7 +161,6 @@ for (run in 1:study_design$num_runs) {
   "%notin%" <- Negate("%in%")
   all_data$cam_captures[run] <- list(get_cam_captures(animalxy.all %>%
                                                         dplyr::filter(t != 0)))
-  # cam_captures <- get_cam_captures(animalxy)
 
   stay_time_tele <- Collect_tele_data(animalxy.all, study_design, cam_locs)
 
@@ -199,13 +206,15 @@ for (run in 1:study_design$num_runs) {
     dplyr::mutate(
       prop_cams = ncams / sum(ncams, na.rm = T),
       # stay_prop_full = stay_prop / sum(stay_prop),
-      d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps)
+      d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps),
+      d_test = prop_cams / prop_lscape * stay_prop
     ) %>%
     dplyr::arrange(desc(Speed)) %>%
     replace(is.na(.), 0)
   #
-  cc <- get_count_data(cam_locs, all_data$cam_captures[[run]])
-
+  cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>%
+                         dplyr::filter(t != 0))
+  # 
   n_adj <- habitat_summary %>%
     dplyr::left_join(
       cc %>%
@@ -223,7 +232,7 @@ for (run in 1:study_design$num_runs) {
     dplyr::ungroup() %>%
     dplyr::mutate(
       # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
-      n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
+      # n_hab = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
       n_habitat = mean_count * d_coeff
       # n_full = n_lscape / stay_prop
       # big_D = mean_count * sum(stay_prop) / stay_prop
@@ -234,6 +243,18 @@ for (run in 1:study_design$num_runs) {
   
   dd[run] <- sum(n_adj$n_habitat)
 
+  dd_test[run] <- dd[run] / sum(habitat_summary$d_test)
   
 }
 
+  mean(dd_og)
+  
+  median(dd_og)
+  
+  boxplot(dd_og)
+  lines(c(0,3), c(100, 100))
+
+  plot_ABM(study_design,
+           cam_design,
+           cam_locs,
+           animalxy.all)

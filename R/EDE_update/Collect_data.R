@@ -30,6 +30,7 @@
           ) |>
         dplyr::arrange(ii) |>
         dplyr::select(-next_i)
+      
       # Remove repeat rows (occurs for max time step)
       cell_captures <- dplyr::distinct(cell_captures)
 
@@ -96,9 +97,40 @@
     }
 
 ################################################################################
-#' @export
-#'
-    get_count_data <- function(cam_locs, cam_captures) {
+    get_count_data <- function(cam_locs, cam_captures, animalxy) {
+      # count_data <- animalxy |>
+      #   dplyr::select(Animal_ID, group_ID, X, Y, t, lscape_index,lscape_type) %>%
+      #   dplyr::filter(lscape_index %in% cam_locs$lscape_index &
+      #                   t %in% 1:study_design$t_steps) |>
+      #   dplyr::rowwise() %>%
+      #   dplyr::mutate(
+      #     xy_index = list(cam_locs[cam_locs$lscape_index %in% lscape_index, 3:4]),
+      #     in_cam = calc_in_triangle(
+      #       matrix(unlist(xy_index),
+      #              nrow = length(unlist(xy_index)) / 2,
+      #              ncol = 2
+      #       ),
+      #       cbind(X, Y)
+      #     )
+      #   ) %>%
+      #   dplyr::filter(in_cam == T) %>%
+      #   dplyr::group_by(lscape_index, t) |>
+      #   dplyr::summarise(
+      #     group_size = n(),
+      #     .groups = "drop"
+      #   ) |>
+      #   dplyr::group_by(lscape_index) |>
+      #   dplyr::summarise(
+      #     count = sum(group_size),
+      #     mean_group = mean(group_size),
+      #     .groups = "drop"
+      #   ) |>
+      #   dplyr::full_join(cam_locs |>
+      #                      select(cam_ID, lscape_index, Speed),
+      #                    by = c("lscape_index")) |>
+      #   dplyr::arrange(cam_ID) |>
+      #   dplyr::mutate(count = replace(count, is.na(count), 0))
+      
       count_data <- cam_captures |>
         dplyr::filter(in_cam == T) |>
         dplyr::group_by(lscape_index, t) |>
@@ -122,8 +154,6 @@
     }
 
 ################################################################################
-#' @export
-#'
     get_encounter_data <- function(cam_locs, cam_captures) {
       encounter_data <- cam_captures |>
         dplyr::group_by(lscape_index) |>
@@ -142,8 +172,6 @@
 
 
 ################################################################################
-#' @export
-#'
     get_stay_time_data <- function(cam_locs, cam_captures) {
       stay_time_raw <- cam_captures |>
         dplyr::group_by(pass_i) |>
@@ -178,8 +206,6 @@
 }
 
 ################################################################################
-#' @export
-#'
     get_TTE_data <- function(study_design, cam_locs, cam_captures) {
       num_occ <- study_design$num_occ
       t_steps<- study_design$t_steps
@@ -243,8 +269,6 @@
     }
 
 ################################################################################
-#' @export
-#'
     get_STE_data <- function(study_design, cam_locs, cam_captures) {
       cam_A <- cam_locs$cam_area[1]
       ncam <- dim(cam_locs)[1]

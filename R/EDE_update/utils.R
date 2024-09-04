@@ -1,7 +1,5 @@
 
 ################################################################################
-#' @export
-#'
 create_cam_samp_design <- function(study_design,
                                    lscape_defs,
                                    cam_design) {
@@ -104,8 +102,6 @@ sample_speeds <- function(cam.dist.prop = NULL, lscape_speeds) {
 }
 
 ################################################################################
-#' @export
-#'
 place_animals <- function(study_design, lscape_defs) {
   # Randomly place across landscape
   q <- study_design$q
