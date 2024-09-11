@@ -47,7 +47,7 @@ sample_speeds <- function(cam.dist.set) {
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 
 # Simulation variations
-sim_num <- 7
+sim_num <- 5
 
 sim_vars <- data.frame(
   sim_names = c("Original", "Slow_landscape", "Medium_landscape", "Fast_landscape", "Slow_cams", "Medium_cams", "Fast_cams"),
@@ -74,7 +74,7 @@ nind <- sum(clump_sizes)
 # Landscape parms
 q <- 30^2             # Number grid cells
 bounds <- c(0, q^0.5) # Sampling area boundaries
-t.steps <- 500        # Number of time steps
+t.steps <- 1000        # Number of time steps
 dt <- 1               # Time step size
 
 # Grid cell lengths
@@ -171,7 +171,7 @@ for (run in 1:num_runs) {
                      .groups = 'drop'
     )
   
-  tri_cam_list[[run]] <- tri_cam_samps
+  # tri_cam_list[[run]] <- tri_cam_samps
   # # Run agent-based model
   animalxy.all <- ABM_sim(bounds = bounds,
                           t.steps = t.steps,
@@ -186,7 +186,7 @@ for (run in 1:num_runs) {
                           q = q,
                           dt = dt)
   
-  animalxy.list[[run]] <- animalxy.all
+  # animalxy.list[[run]] <- animalxy.all
   ################################
   # Collect data
   ################################
@@ -299,13 +299,13 @@ for (run in 1:num_runs) {
         ptm <- proc.time()
         # unpack tidyr if extract has no applicable method
         # .rs.unloadPackage("tidyr")
-        chain.TDST.prior <- fit.model.mcmc.TDST.cov(
+        chain.TDST.prior <- fit.model.mcmc.TDST.nodata(
           n.iter = n.iter,
           gamma.start = log(mean(count_data$count)),
           kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
           gamma.prior.var = 10^6,
           kappa.prior.mu = kappa.prior.mu.tdst,
-          kappa.prior.var = kappa.prior.var.tdst,
+          kappa.prior.var = kappa.prior.var.tdst*.1,
           gamma.tune = -1,
           kappa.tune = c(-1, -1, -1),
           cam.counts = count_data$count,

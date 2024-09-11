@@ -290,7 +290,7 @@ for (run in 1:num_runs) {
           kappa.start = rep(log(mean(stay_time_data,na.rm=T)), 3),
           gamma.prior.var = 10^6,
           kappa.prior.mu = kappa.prior.mu.tdst,
-          kappa.prior.var = kappa.prior.var.tdst,
+          kappa.prior.var = kappa.prior.var.tdst * .1,
           gamma.tune = -1,
           kappa.tune = c(-1, -1, -1),
           cam.counts = count_data$count,
