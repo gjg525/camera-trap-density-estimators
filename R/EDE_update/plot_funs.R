@@ -476,7 +476,7 @@ plot_multirun_means <- function(study_design,
       panel.background = element_blank(),
       axis.line = element_line(colour = "black"),
       panel.border = element_rect(colour = "black", fill = NA, size = 1),
-      legend.position = c(0.17, 0.84),
+      legend.position = c(0.85, 0.84),
       legend.background = element_blank(),
       legend.spacing.y = unit(0, "mm"),
       legend.box.background = element_rect(colour = "black")
@@ -540,7 +540,7 @@ plot_multirun_sds <- function(D.all) {
       panel.background = element_blank(),
       axis.line = element_line(colour = "black"),
       panel.border = element_rect(colour = "black", fill = NA, size = 1),
-      legend.position = c(0.17, 0.84),
+      legend.position = c(0.85, 0.84),
       legend.background = element_blank(),
       legend.spacing.y = unit(0, "mm"),
       legend.box.background = element_rect(colour = "black")
