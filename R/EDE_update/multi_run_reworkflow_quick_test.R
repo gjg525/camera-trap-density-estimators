@@ -23,7 +23,7 @@ study_design <- tibble::tibble(
   dx = 1,  # Grid cell lengths
   dy = 1,
   t_steps = 500, # Number of time steps (3000 * 15 min ~ 31.25 days)
-  dt = 0.25,     # Time step size
+  dt = 1,     # Time step size
   bounds = list(c(0, dx * q ^ 0.5)), # Sampling area boundaries
   num_groups = 100,
   group_sizes = list(rep(1, num_groups)),
@@ -137,15 +137,18 @@ study_design <- study_design %>%
   )
 dd_og <- c()
 dd_test <- c()
+dd_multi_N <-
 dd <- c()
 
+# Multi-run simulations
+for (run in 1:study_design$num_runs) {
+  print(paste("Run", run, "of", study_design$num_runs))
+  
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
   
-# Multi-run simulations
-for (run in 1:study_design$num_runs) {
-  print(paste("Run", run, "of", study_design$num_runs))
+  stay_time_tele <- Collect_tele_data(animalxy.all, study_design)
   
   # If running new ABM simulation on each run, save
   # save_animal_data$data[run] <- list(animalxy.all)  
@@ -162,7 +165,6 @@ for (run in 1:study_design$num_runs) {
   all_data$cam_captures[run] <- list(get_cam_captures(animalxy.all %>%
                                                         dplyr::filter(t != 0)))
 
-  stay_time_tele <- Collect_tele_data(animalxy.all, study_design, cam_locs)
 
   stay_time_summary <- stay_time_tele %>%
     dplyr::group_by(speed) %>%
@@ -232,17 +234,19 @@ for (run in 1:study_design$num_runs) {
     dplyr::ungroup() %>%
     dplyr::mutate(
       # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
-      # n_hab = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
-      n_habitat = mean_count * d_coeff
-      # n_full = n_lscape / stay_prop
+      n_hab = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
+      n_habitat = mean_count * d_coeff,
+      n_full = n_hab / stay_prop,
       # big_D = mean_count * sum(stay_prop) / stay_prop
-    ) %>%
-    dplyr::select(Speed, prop_lscape, mean_count, ncams, cam_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
+    ) #%>%
+    # dplyr::select(Speed, prop_lscape, mean_count, ncams, cam_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
 
   dd_og[run] <- mean(cc$count)  * study_design$tot_A / (cam_design$cam_A * study_design$t_steps)
   
   dd[run] <- sum(n_adj$n_habitat)
 
+  dd_multi_N[run] <- mean(n_adj$n_full) 
+  
   dd_test[run] <- dd[run] / sum(habitat_summary$d_test)
   
 }
