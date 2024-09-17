@@ -1,7 +1,7 @@
 ########################################
 # Collect data for triangle viewshed cameras
 ########################################
-Collect_tele_data = function(animalxy.all, study_design, cam_locs) {
+Collect_tele_data = function(animalxy.all, study_design) {
   # First, collect data within each grid cell to reduce subsequent calculations
   # Creates IDs (pass_i) for each pass through a cell and landscape indices for the cell that the individual passes into (next_i)
   cell_captures_tele <- animalxy.all |>
@@ -50,24 +50,6 @@ Collect_tele_data = function(animalxy.all, study_design, cam_locs) {
                      speed = lscape_type[1],
                      .groups = 'drop')
   
-  
-  # # Format staying time data
-  # stay_time_tele <- cell_captures_tele |>
-  #   dplyr::group_by(pass_i) |>
-  #   dplyr::summarise(t_stay = max(t) - min(t),
-  #                    lscape_index = lscape_index[1]) |>
-  #   dplyr::select(lscape_index, t_stay) |>
-  #   dplyr::group_by(lscape_index) |>
-  #   dplyr::mutate(encounter = 1:n()) |>
-  #   dplyr::ungroup() |>
-  #   pivot_wider(names_from = encounter, values_from = t_stay)
-  # 
-  # stay_time_tele <- as.matrix(dplyr::left_join(
-  #   data.frame(lscape_index = cam_locs$lscape_index),
-  #   stay_time_tele,
-  #   by = "lscape_index") |>
-  #                               dplyr::select(-lscape_index)
-  # )
   
   return(stay_time_raw_tele)
 }   
