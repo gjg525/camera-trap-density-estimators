@@ -11,7 +11,7 @@ We generalize the EDE by defining densities and staying time by habitat type rat
 
 #### TDST Model
 
-The TDST model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$) with camera trap data, $$\sum{d_q} = \frac{\sum{\phi_q}}{\phi_q} d_q.$$ Total abundances can then calculated with the formula above, $N = \frac{\sum_{d_q} A}{V T}$. Note that the TDST model requires covariate information to inform location-specific staying time and density estimates.
+The TDST model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$) with camera trap data, $$\sum{d_q} = \frac{\sum{\phi_q}}{\phi_q} d_q.$$ Total abundances can then calculated with the formula above, $N = \frac{A \sum{d_q}}{V T}$. Note that the TDST model requires covariate information to inform location-specific staying time and density estimates.
 
 #### PR model
 
@@ -26,6 +26,25 @@ The habitat PR model can also be explicitly defined for single-habitat sample de
 #### Results
 
 To test these models, we ran simulations where animals move with three different speeds depending on habitat type (slow, medium, fast), and place cameras under three sample designs; randomly, non-randomly (80% in slow habitat, 10% each in medium and fast habitats), and single-habitat (100% in slow habitat). We then estimated total abundances with the TDST model without priors, TDST model with stay-time priors defined by telemetry data but omitting camera stay time data (TDST no-data), PR model with and without covariates, and habitat PR models.
+
+The following boxplots represent summaries of model runs over 1000 iterations. The habitat PR model seems off since it is overestimating abundances in the random sample design but is accurate in th 80% sample design. When placing all cameras in one habitat type, none of the models can accurately estimate abundances but the PR habitat model and TDST no data are the most accurate.
+
+##### Random Sample Design \
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_est.png){#id .class width=50% height=50%}
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_sd.png){#id .class width=50% height=50%}
+
+##### 80% Slow, 10% Medium, 10% Fast Sample Design \
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_est.png){#id .class width=50% height=50%}
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_sd.png){#id .class width=50% height=50%}
+
+##### All Cameras in Slow Habitat \
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_est.png){#id .class width=50% height=50%}
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_sd.png){#id .class width=50% height=50%}
+
+##### All Cameras in Fast Habitat \
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_est.png){#id .class width=50% height=50%}
+![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_sd.png){#id .class width=50% height=50%}
+
 
 #### Model Summaries\
 
