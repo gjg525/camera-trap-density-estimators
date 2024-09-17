@@ -276,43 +276,43 @@ plot_count_data <- function(count_data_in,
                             fill = "Speed") {
   count_data_in$Speed <- factor(count_data_in$Speed, c("Slow", "Medium", "Fast"))
 
-  # ggplot(count_data_in, aes(x = count, linetype = .data[[fill]])) +
-  #   geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
-  #   labs(x = "Count", y = "Frequency", fill = "Landscape Type") +
-  #   scale_x_continuous(
-  #     limits = c(0, max(count_data_in$count)),
-  #     expand = expansion(mult = 0, add = 0)
-  #   ) +
-  #   scale_y_continuous(
-  #     limits = c(0, NA),
-  #     expand = expansion(mult = 0, add = c(0, 0.01))
-  #   ) +
-  #   scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
-  #   guides(linetype = guide_legend(title = "Habitat Type")) +
-  #   theme(
-  #     text = element_text(size = 20),
-  #     legend.title = element_text(size = 14),
-  #     panel.grid.major = element_blank(),
-  #     panel.grid.minor = element_blank(),
-  #     panel.background = element_blank(),
-  #     axis.line = element_line(colour = "black"),
-  #     panel.border = element_rect(colour = "black", fill = NA, size = 1),
-  #     legend.position = c(0.85, 0.75),
-  #     legend.background = element_blank(),
-  #     legend.spacing.y = unit(0, "mm")
-  #   )
+  ggplot(count_data_in, aes(x = count, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
+    labs(x = "Count", y = "Frequency", fill = "Landscape Type") +
+    scale_x_continuous(
+      limits = c(0, max(count_data_in$count)),
+      expand = expansion(mult = 0, add = 0)
+    ) +
+    scale_y_continuous(
+      limits = c(0, NA),
+      expand = expansion(mult = 0, add = c(0, 0.01))
+    ) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(
+      text = element_text(size = 20),
+      legend.title = element_text(size = 14),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = "black"),
+      panel.border = element_rect(colour = "black", fill = NA, size = 1),
+      legend.position = c(0.85, 0.75),
+      legend.background = element_blank(),
+      legend.spacing.y = unit(0, "mm")
+    )
 
-  ggplot(count_data_in, aes(x=count, fill = .data[[fill]])) +
-    geom_histogram(position = "identity", alpha = 0.4) +
-    labs(x = "Count", y = "Frequency", fill="Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
+  # ggplot(count_data_in, aes(x=count, fill = .data[[fill]])) +
+  #   geom_histogram(position = "identity", alpha = 0.4) +
+  #   labs(x = "Count", y = "Frequency", fill="Landscape Type") +
+  #   theme(axis.text=element_text(size=20),
+  #         axis.title=element_text(size=22),
+  #         legend.text=element_text(size=20),
+  #         legend.title = element_text(size=20),
+  #         panel.grid.major = element_blank(),
+  #         panel.grid.minor = element_blank(),
+  #         panel.background = element_blank(),
+  #         panel.border = element_rect(colour = "black", fill=NA, size=1))
 }
 
 # # Density plot for encounter data
@@ -323,43 +323,43 @@ plot_encounter_data <- function(encounter_data_in,
                                 fill = "Speed") {
   encounter_data_in$Speed <- factor(encounter_data_in$Speed, c("Slow", "Medium", "Fast"))
 
-  # ggplot(encounter_data_in, aes(x = encounter, linetype = .data[[fill]])) +
-  #   geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
-  #   labs(x = "Number of Encounters", y = "Frequency", fill = "Landscape Type") +
-  #   scale_x_continuous(
-  #     limits = c(0, max(encounter_data_in$encounter)),
-  #     expand = expansion(mult = 0, add = c(0, 0.3))
-  #   ) +
-  #   scale_y_continuous(
-  #     limits = c(0, NA),
-  #     expand = expansion(mult = 0, add = c(0, 0.01))
-  #   ) +
-  #   scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
-  #   guides(linetype = guide_legend(title = "Habitat Type")) +
-  #   theme(
-  #     text = element_text(size = 20),
-  #     legend.title = element_text(size = 14),
-  #     panel.grid.major = element_blank(),
-  #     panel.grid.minor = element_blank(),
-  #     panel.background = element_blank(),
-  #     axis.line = element_line(colour = "black"),
-  #     panel.border = element_rect(colour = "black", fill = NA, size = 1),
-  #     legend.position = c(0.85, 0.75),
-  #     legend.background = element_blank(),
-  #     legend.spacing.y = unit(0, "mm")
-  #   )
+  ggplot(encounter_data_in, aes(x = encounter, linetype = .data[[fill]])) +
+    geom_density(fill = "grey", position = "identity", alpha = 0.4, adjust = 2, size = 1.5) +
+    labs(x = "Number of Encounters", y = "Frequency", fill = "Landscape Type") +
+    scale_x_continuous(
+      limits = c(0, max(encounter_data_in$encounter)),
+      expand = expansion(mult = 0, add = c(0, 0.3))
+    ) +
+    scale_y_continuous(
+      limits = c(0, NA),
+      expand = expansion(mult = 0, add = c(0, 0.01))
+    ) +
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
+    guides(linetype = guide_legend(title = "Habitat Type")) +
+    theme(
+      text = element_text(size = 20),
+      legend.title = element_text(size = 14),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = "black"),
+      panel.border = element_rect(colour = "black", fill = NA, size = 1),
+      legend.position = c(0.85, 0.75),
+      legend.background = element_blank(),
+      legend.spacing.y = unit(0, "mm")
+    )
 
-  ggplot(encounter_data_in, aes(x=encounter, fill = .data[[fill]])) +
-    geom_histogram(position = "identity", alpha = 0.4) +
-    labs(x = "Count", y = "Frequency", fill="Landscape Type") +
-    theme(axis.text=element_text(size=20),
-          axis.title=element_text(size=22),
-          legend.text=element_text(size=20),
-          legend.title = element_text(size=20),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_rect(colour = "black", fill=NA, size=1))
+  # ggplot(encounter_data_in, aes(x=encounter, fill = .data[[fill]])) +
+  #   geom_histogram(position = "identity", alpha = 0.4) +
+  #   labs(x = "Count", y = "Frequency", fill="Landscape Type") +
+  #   theme(axis.text=element_text(size=20),
+  #         axis.title=element_text(size=22),
+  #         legend.text=element_text(size=20),
+  #         legend.title = element_text(size=20),
+  #         panel.grid.major = element_blank(),
+  #         panel.grid.minor = element_blank(),
+  #         panel.background = element_blank(),
+  #         panel.border = element_rect(colour = "black", fill=NA, size=1))
 }
 
 # # Density plot for staying time data
