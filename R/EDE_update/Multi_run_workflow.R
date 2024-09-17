@@ -34,8 +34,8 @@ study_design <- tibble::tibble(
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
   num_runs = 1000,
-  n_iter = 5000,
-  burn_in = 3000,
+  n_iter = 20000,
+  burn_in = 10000,
   # staying time censors
   t_censor = 10, 
   # num_occ = t_steps / TTE_censor,
@@ -64,8 +64,10 @@ cam_design <- tibble::tibble(
   ncam = 250,
   # Design = "Random",
   # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
+  # Design = "Bias",
+  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
   Design = "Bias",
-  Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
+  Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
   # Design = "Bias",
   # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
   cam_length = study_design$dx * 0.3, # length of all viewshed sides
@@ -138,6 +140,24 @@ study_design <- study_design %>%
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
 
+  stay_time_tele <- Collect_tele_data(animalxy.all, study_design)
+  
+  stay_time_summary <- stay_time_tele %>% 
+    dplyr::group_by(speed) %>% 
+    dplyr::summarise(
+      # cell_mu = mean(t_stay),
+      # cell_sd = sd(t_stay),
+      cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+      cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+      .groups = 'drop'
+    ) %>% 
+    dplyr::mutate(stay_prop = cam_mu / sum(cam_mu)) %>% 
+    dplyr::rename(Speed = speed) %>% 
+    dplyr::arrange(desc(Speed))
+  
+  kappa.prior.mu.tdst <- log(stay_time_summary$cam_mu)
+  kappa.prior.var.tdst <- log(stay_time_summary$cam_sd)
+  
 # Multi-run simulations
 for (run in 1:study_design$num_runs) {
   print(paste("Run", run, "of", study_design$num_runs))
@@ -158,81 +178,63 @@ for (run in 1:study_design$num_runs) {
                                       dplyr::filter(t != 0)))
   # cam_captures <- get_cam_captures(animalxy)
   
-  stay_time_tele <- Collect_tele_data(animalxy.all, study_design, cam_locs)
-
-  stay_time_summary <- stay_time_tele %>% 
-    dplyr::group_by(speed) %>% 
+  habitat_summary <- lscape_defs %>%
+    dplyr::group_by(Speed) %>%
     dplyr::summarise(
-      # cell_mu = mean(t_stay),
-      # cell_sd = sd(t_stay),
-      cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-      cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-      .groups = 'drop'
-    ) %>% 
-    dplyr::mutate(stay_prop = cam_mu / sum(cam_mu)) %>% 
-    dplyr::rename(Speed = speed) %>% 
-    dplyr::arrange(desc(Speed))
-  
-  kappa.prior.mu.tdst <- log(stay_time_summary$cam_mu)
-  kappa.prior.var.tdst <- log(stay_time_summary$cam_sd)
-  
-  # habitat_summary <- lscape_defs %>% 
-  #   dplyr::group_by(Speed) %>% 
-  #   dplyr::summarise(
-  #     n_lscape = dplyr::n()
-  #   ) %>% 
-  #   dplyr::ungroup() %>% 
-  #   dplyr::mutate(
-  #     prop_lscape = n_lscape / sum(n_lscape)
-  #   ) %>% 
-  #   dplyr::left_join(
-  #     cam_locs %>% 
-  #       dplyr::group_by(Speed) %>% 
-  #       dplyr::summarise(
-  #         # mean_count = mean(count, na.rm = T),
-  #         ncams = dplyr::n(),
-  #         .groups = 'drop'
-  #       ),
-  #     by = dplyr::join_by(Speed)
-  #   ) %>%
-  #   dplyr::left_join(
-  #     stay_time_summary,
-  #     by = dplyr::join_by(Speed)
-  #   )  %>% 
-  #   dplyr::mutate(
-  #     prop_cams = ncams / sum(ncams, na.rm = T),
-  #     # stay_prop_full = stay_prop / sum(stay_prop),
-  #     d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps)
-  #   ) %>% 
-  #   dplyr::arrange(desc(Speed)) %>% 
-  #   replace(is.na(.), 0)
+      n_lscape = dplyr::n()
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      prop_lscape = n_lscape / sum(n_lscape)
+    ) %>%
+    dplyr::left_join(
+      cam_locs %>%
+        dplyr::group_by(Speed) %>%
+        dplyr::summarise(
+          # mean_count = mean(count, na.rm = T),
+          ncams = dplyr::n(),
+          .groups = 'drop'
+        ),
+      by = dplyr::join_by(Speed)
+    ) %>%
+    dplyr::left_join(
+      stay_time_summary,
+      by = dplyr::join_by(Speed)
+    )  %>%
+    dplyr::mutate(
+      prop_cams = ncams / sum(ncams, na.rm = T),
+      # stay_prop_full = stay_prop / sum(stay_prop),
+      d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps)
+    ) %>%
+    dplyr::arrange(desc(Speed)) %>%
+    replace(is.na(.), 0)
   # 
-  # cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>% 
-  #                        dplyr::filter(t != 0))
-  # 
-  # n_adj <- habitat_summary %>%
-  #   dplyr::left_join(
-  #     cc %>%
-  #       dplyr::group_by(Speed) %>%
-  #       dplyr::summarise(
-  #         mean_count = mean(count, na.rm = T),
-  #         .groups = 'drop'
-  #       ),
-  #     by = dplyr::join_by(Speed)
-  #   ) %>%
-  #   dplyr::mutate(
-  #     mean_count = tidyr::replace_na(mean_count, 0),
-  #     ncams = tidyr::replace_na(ncams, 0)
-  #   ) %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::mutate(
-  #     # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
-  #     n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
-  #     n_habitat = mean_count * d_coeff
-  #     # n_full = n_lscape / stay_prop
-  #     # big_D = mean_count * sum(stay_prop) / stay_prop
-  #   ) %>%
-  #   dplyr::select(Speed, prop_lscape, mean_count, ncams, cam_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
+  cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>%
+                         dplyr::filter(t != 0))
+
+  n_adj <- habitat_summary %>%
+    dplyr::left_join(
+      cc %>%
+        dplyr::group_by(Speed) %>%
+        dplyr::summarise(
+          mean_count = mean(count, na.rm = T),
+          .groups = 'drop'
+        ),
+      by = dplyr::join_by(Speed)
+    ) %>%
+    dplyr::mutate(
+      mean_count = tidyr::replace_na(mean_count, 0),
+      ncams = tidyr::replace_na(ncams, 0)
+    ) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
+      n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
+      n_habitat = mean_count * d_coeff
+      # n_full = n_lscape / stay_prop
+      # big_D = mean_count * sum(stay_prop) / stay_prop
+    ) %>%
+    dplyr::select(Speed, prop_lscape, mean_count, ncams, cam_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
 
   # # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
   # # Does not work if cameras aren't placed in every landscape type
