@@ -25,6 +25,7 @@ study_design <- tibble::tibble(
   t_steps = 500, # Number of time steps (3000 * 15 min ~ 31.25 days)
   dt = 1,     # Time step size
   bounds = list(c(0, dx * q ^ 0.5)), # Sampling area boundaries
+  tot_A = (bounds[[1]][2] - bounds[[1]][1])^2,
   num_groups = 100,
   group_sizes = list(rep(1, num_groups)),
   group_spread = 0, # Tightness of grouping behavior (relative to grid size)
@@ -106,40 +107,44 @@ all_data <- tibble::tibble(
   STE_data = NA
 )
 
-# # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
-lscape_defs <- lscape_creator(study_design, lscape_design)
-
-# Calculate total area using available space
-study_design <- study_design %>%
-  dplyr::mutate(
-    tot_A = unique(
-      study_design %>%
-        dplyr::reframe(
-          bounds = unlist(bounds),
-          tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
-          ) %>%
-        pull(tot_A)
-    )
-  )
+# # Calculate total area using available space
+# study_design <- study_design %>%
+#   dplyr::mutate(
+#     tot_A = unique(
+#       study_design %>%
+#         dplyr::reframe(
+#           bounds = unlist(bounds),
+#           tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
+#           ) %>%
+#         pull(tot_A)
+#     )
+#   )
 
 # # camera data summaries
 cam_design <- cam_design %>%
   dplyr::mutate(percent_cam_coverage = ncam * cam_A / study_design$tot_A)
 
-# Create covariate matrix with 0, 1 values
-study_design <- study_design %>% 
-  dplyr::mutate(
-    num_covariates = length(unlist(covariate_labels)),
-    Z = list(create_covariate_mat(
-      lscape_defs,
-      study_design,
-      unlist(covariate_labels)))
-  )
+# Multi-run simulations
+for (run in 1:study_design$num_runs) {
+  print(paste("Run", run, "of", study_design$num_runs))
 
+  # # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
+  lscape_defs <- lscape_creator(study_design, lscape_design)
+  
+  # Create covariate matrix with 0, 1 values
+  study_design <- study_design %>% 
+    dplyr::mutate(
+      num_covariates = length(unlist(covariate_labels)),
+      Z = list(create_covariate_mat(
+        lscape_defs,
+        study_design,
+        unlist(covariate_labels)))
+    )
+  
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
-
+  
   stay_time_tele <- Collect_tele_data(animalxy.all, study_design)
   
   stay_time_summary <- stay_time_tele %>% 
@@ -158,10 +163,6 @@ study_design <- study_design %>%
   kappa.prior.mu.tdst <- log(stay_time_summary$cam_mu)
   kappa.prior.var.tdst <- log(stay_time_summary$cam_sd)
   
-# Multi-run simulations
-for (run in 1:study_design$num_runs) {
-  print(paste("Run", run, "of", study_design$num_runs))
-
   # If running new ABM simulation on each run, save
   # save_animal_data$data[run] <- list(animalxy.all)  
   

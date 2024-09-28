@@ -1,3 +1,15 @@
+# NOTES
+# All cams on slow or all cams on fast with abm in for loop: pr habitat works perfectly
+# 60% fast cams overestimates (mean = 103)
+# 60% slow cams slight underestimate (mean = 99.5)
+# random cams slight overestimate (mean = 102.7), and slight underestimate? (mean = 98.9)
+# random cams with 500 cams slight underestimate (mean = 99.1)
+
+# # PUT LSCAPE_DESIGN IN FOR LOOP
+# No bias in random sample design
+# median = 100.8 and mean = 101.2 for 80% fast
+# median = 99.7 and mean = 99.5 for 80% slow
+
 library(tidyverse)
 library(RColorBrewer)
 library(lattice)
@@ -25,6 +37,7 @@ study_design <- tibble::tibble(
   t_steps = 500, # Number of time steps (3000 * 15 min ~ 31.25 days)
   dt = 1,     # Time step size
   bounds = list(c(0, dx * q ^ 0.5)), # Sampling area boundaries
+  tot_A = (bounds[[1]][2] - bounds[[1]][1])^2,
   num_groups = 100,
   group_sizes = list(rep(1, num_groups)),
   group_spread = 0, # Tightness of grouping behavior (relative to grid size)
@@ -66,7 +79,7 @@ cam_design <- tibble::tibble(
   # Design = "Random",
   # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
   Design = "Bias",
-  Props = list(c(0.2, 0.2, 0.6)), # proportion of cameras placed on and off roads
+  Props = list(c(0.6, 0.2, 0.2)), # proportion of cameras placed on and off roads
   # Design = "Bias",
   # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
   cam_length = study_design$dx * 0.3, # length of all viewshed sides
@@ -106,43 +119,44 @@ all_data <- tibble::tibble(
   STE_data = NA
 )
 
-# # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
-lscape_defs <- lscape_creator(study_design, lscape_design)
-
-# Calculate total area using available space
-study_design <- study_design %>%
-  dplyr::mutate(
-    tot_A = unique(
-      study_design %>%
-        dplyr::reframe(
-          bounds = unlist(bounds),
-          tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
-        ) %>%
-        pull(tot_A)
-    )
-  )
+# # Calculate total area using available space
+# study_design <- study_design %>%
+#   dplyr::mutate(
+#     tot_A = unique(
+#       study_design %>%
+#         dplyr::reframe(
+#           bounds = unlist(bounds),
+#           tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
+#         ) %>%
+#         pull(tot_A)
+#     )
+#   )
 
 # # camera data summaries
 cam_design <- cam_design %>%
   dplyr::mutate(percent_cam_coverage = ncam * cam_A / study_design$tot_A)
 
-# Create covariate matrix with 0, 1 values
-study_design <- study_design %>% 
-  dplyr::mutate(
-    num_covariates = length(unlist(covariate_labels)),
-    Z = list(create_covariate_mat(
-      lscape_defs,
-      study_design,
-      unlist(covariate_labels)))
-  )
 dd_og <- c()
 dd_test <- c()
-dd_multi_N <-
+dd_multi_N <- c()
 dd <- c()
 
 # Multi-run simulations
 for (run in 1:study_design$num_runs) {
   print(paste("Run", run, "of", study_design$num_runs))
+  
+  # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
+  lscape_defs <- lscape_creator(study_design, lscape_design)
+  
+  # Create covariate matrix with 0, 1 values
+  study_design <- study_design %>% 
+    dplyr::mutate(
+      num_covariates = length(unlist(covariate_labels)),
+      Z = list(create_covariate_mat(
+        lscape_defs,
+        study_design,
+        unlist(covariate_labels)))
+    )
   
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
@@ -251,14 +265,14 @@ for (run in 1:study_design$num_runs) {
   
 }
 
-  mean(dd_og)
+  mean(dd)
   
-  median(dd_og)
+  median(dd)
   
-  boxplot(dd_og)
+  boxplot(dd)
   lines(c(0,3), c(100, 100))
 
-  plot_ABM(study_design,
-           cam_design,
-           cam_locs,
-           animalxy.all)
+  # plot_ABM(study_design,
+  #          cam_design,
+  #          cam_locs,
+  #          animalxy.all)
