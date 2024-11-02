@@ -102,7 +102,6 @@ fit.model.mcmc.TDST.cov <- function(study_design,
     beta <- exp(gamma[i + 1])
 
     # Sample kappa
-    kappa_temp <- kappa[i, ]
     for (kk in 1:num_covariates) {
       kappa_star <- kappa[i, ]
       kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
@@ -115,7 +114,7 @@ fit.model.mcmc.TDST.cov <- function(study_design,
       }
 
       if (is.null(stay_time_data_in)) {
-        # No data
+        # No stay time data from cameras
         mh1 <- sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
           sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
         mh2 <- sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
@@ -397,6 +396,10 @@ fit.model.mcmc.PR.habitat <- function(study_design,
                                       gamma_start,
                                       gamma_prior_var = 10^6,
                                       gamma_tune,
+                                      kappa_start,
+                                      kappa_prior_mu,
+                                      kappa_prior_var,
+                                      kappa_tune,
                                       count_data_in,
                                       habitat_summary) {
   
@@ -410,18 +413,22 @@ fit.model.mcmc.PR.habitat <- function(study_design,
   
   # Variables that will be saved
   gamma <- matrix(, n_iter + 1, num_covariates)
+  kappa <- matrix(, n_iter + 1, num_covariates)
   tot_u <- matrix(, n_iter + 1, 1)
-  accept <- matrix(, n_iter + 1, num_covariates)
+  accept <- matrix(, n_iter + 1, 2 * num_covariates)
   gamma[1, ] <- gamma_start
   colnames(gamma) <- paste0("gamma.", covariate_labels)
+  kappa[1, ] <- kappa_start
+  colnames(kappa) <- paste0("kappa.", covariate_labels)
   colnames(tot_u) <- "Total estimate"
-  colnames(accept) <- c(paste0(
-    "accept.rate.gamma.",
-    covariate_labels
-  ))
+  colnames(accept) <- c(
+    paste0("accept.rate.gamma.", covariate_labels),
+    paste0("accept.rate.kappa.", covariate_labels)
+  )
   
   d <- exp(gamma[1, ])
-  u <- d * habitat_summary$d_coeff
+  u <- d * habitat_summary$n_lscape / exp(kappa[1, ]) * 
+    habitat_summary$prop_cams / (cam_design$cam_A * study_design$t_steps)
   
   tot_u <- sum(u)
   
@@ -434,12 +441,10 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     # setTxtProgressBar(prog_bar, i)
     # Sample gamma
     for (gg in 1:num_covariates) {
-      h_summary <- habitat_summary[habitat_summary$Speed == covariate_labels[gg],]
-      
       gamma_star <- gamma[i, ]
       gamma_star[gg] <- rnorm(1, gamma[i, gg], exp(2 * gamma_tune[gg]))
       d_star <- exp(gamma_star)
-      
+     
       count_data_in_h <- count_data_in$count[count_data_in$Speed == covariate_labels[gg]]
       
       if (length(count_data_in_h) == 0) {
@@ -466,12 +471,40 @@ fit.model.mcmc.PR.habitat <- function(study_design,
         accept[i + 1, gg] <- 0
       }
       
-      gamma[i + 1, ] <- gamma[i, ]
-      d <- exp(gamma[i + 1, ])
-      u[gg] <- d[gg] * h_summary$d_coeff
-      
-      tot_u[i + 1] <- sum(u)
     }
+    gamma[i + 1, ] <- gamma[i, ]
+    d <- exp(gamma[i + 1, ])
+    
+    # Sample kappa
+    for (kk in 1:num_covariates) {
+      kappa_star <- kappa[i, ]
+      kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
+      
+      # u_star <- d * habitat_summary$n_lscape * habitat_summary$prop_cams * 
+      #   exp(kappa_star) / (cam_design$cam_A * study_design$t_steps)
+      
+      # Proportional staying time defined by priors
+      mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+      mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+      mh <- exp(mh1-mh2)
+      
+      if (mh > runif(1) & !is.na(mh)) {
+        kappa[i, ] <- kappa_star
+        accept[i + 1, 1 + kk] <- 1
+        # u <- u_star
+      } else {
+        kappa[i, ] <- kappa[i, ]
+        accept[i + 1, num_covariates + kk] <- 0
+      }
+      
+    }
+    
+    kappa[i + 1, ] <- kappa[i, ]
+
+    u <- d * habitat_summary$n_lscape * 
+      habitat_summary$prop_cams / exp(kappa[i + 1, ]) / 
+      (cam_design$cam_A * study_design$t_steps)
+    tot_u[i + 1] <- sum(u)
     
     # Update tuning parms
     if (i %% tune_check == 0) {
@@ -482,6 +515,18 @@ fit.model.mcmc.PR.habitat <- function(study_design,
       #mean(accept[(i - tune_check + 1):i], na.rm = T)
       gamma_tune[accept_gamma_check > 0.44] <- gamma_tune[accept_gamma_check > 0.44] + delta_n
       gamma_tune[accept_gamma_check <= 0.44] <- gamma_tune[accept_gamma_check <= 0.44] - delta_n
+      accept_kappa_check <- colMeans(
+        array(
+          accept[
+            (i - tune_check + 1):i,
+            2:(1 + num_covariates)
+          ],
+          dim = c(tune_check, num_covariates)
+        ),
+        na.rm = T
+      )
+      kappa_tune[which(accept_kappa_check > 0.44)] <- kappa_tune[which(accept_kappa_check > 0.44)] + delta_n
+      kappa_tune[which(accept_kappa_check <= 0.44)] <- kappa_tune[which(accept_kappa_check <= 0.44)] - delta_n
     }
   }
   # print("MCMC complete")
