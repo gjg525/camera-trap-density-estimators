@@ -34,7 +34,7 @@ study_design <- tibble::tibble(
   activity_sync = "sync",
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
-  num_runs = 1000,
+  # num_runs = 1000,
   n_iter = 20000,
   burn_in = 10000,
   # staying time censors
@@ -52,8 +52,12 @@ lscape_design <- tibble::tibble(
   Speed_ID = list(c("Slow", "Medium", "Fast")),
   # Speed_mins = list(c(.05, .3, .9)),
   # Speed_maxes = list(c(.15, .5, 1.1)),
+  
   Speed_mins = list(c(.19, .4, .9)),
   Speed_maxes = list(c(.21, .5, 1.1)),
+  # Speed_mins = list(c(.19, .19, .9)),
+  # Speed_maxes = list(c(.21, .21, 1.1)),
+  
   # Speed_mins = list(c(.05, .05, .05)),
   # Speed_maxes = list(c(.15, .15, .15)),
   Trail_ID = list(c("On Trail", "Off Trail")),
@@ -65,10 +69,10 @@ cam_design <- tibble::tibble(
   ncam = 250,
   # Design = "Random",
   # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
-  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
   Design = "Bias",
-  Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
+  Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
+  # Design = "Bias",
+  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
   # Design = "Bias",
   # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
   cam_length = study_design$dx * 0.3, # length of all viewshed sides
@@ -150,18 +154,19 @@ for (run in 1:study_design$num_runs) {
   stay_time_summary <- stay_time_tele %>% 
     dplyr::group_by(speed) %>% 
     dplyr::summarise(
-      # cell_mu = mean(t_stay),
-      # cell_sd = sd(t_stay),
-      cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-      cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+      cell_mu = mean(t_stay),
+      cell_sd = sd(t_stay),
+      # cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+      # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
       .groups = 'drop'
     ) %>% 
-    dplyr::mutate(stay_prop = cam_mu / sum(cam_mu)) %>% 
+    dplyr::mutate(stay_prop = cell_mu / sum(cell_mu)) %>% 
     dplyr::rename(Speed = speed) %>% 
     dplyr::arrange(desc(Speed))
   
-  kappa.prior.mu.tdst <- log(stay_time_summary$cam_mu)
-  kappa.prior.var.tdst <- log(stay_time_summary$cam_sd)
+  kappa.prior.mu.tdst <- log(stay_time_summary$stay_prop)
+  kappa.prior.var.tdst <- stay_time_summary$cell_sd
+  sum_stay_time_means <- sum(stay_time_summary$cell_mu)
   
   # If running new ABM simulation on each run, save
   # save_animal_data$data[run] <- list(animalxy.all)  
@@ -235,7 +240,7 @@ for (run in 1:study_design$num_runs) {
       # n_full = n_lscape / stay_prop
       # big_D = mean_count * sum(stay_prop) / stay_prop
     ) %>%
-    dplyr::select(Speed, prop_lscape, mean_count, ncams, cam_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
+    dplyr::select(Speed, prop_lscape, mean_count, ncams, cell_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
 
   # # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
   # # Does not work if cameras aren't placed in every landscape type
@@ -267,7 +272,7 @@ for (run in 1:study_design$num_runs) {
     
     D.chain <- foreach::foreach(iter = unlist(study_design$run_models)) %dopar% {
       ###################################
-      # TDST
+      # TDST no priors, camera stay time data
       ###################################
       if (iter == 1) {
         if (sum(count_data$count) == 0) {
@@ -315,14 +320,14 @@ for (run in 1:study_design$num_runs) {
       }
       
       ###################################
-      # TDST no stay time data
+      # TDST w/priors, tele stay time
       ###################################
       if (iter == 2) {
         if (sum(count_data$count) == 0) {
           D.TDST.MCMC <- NA
           SD.TDST.MCMC <- NA
         } else {
-          chain.TDST <- fit.model.mcmc.TDST.cov(
+          chain.TDST.priors <- fit.model.mcmc.TDST.cov(
             study_design = study_design,
             cam_design = cam_design,
             cam_locs = cam_locs,
@@ -330,7 +335,7 @@ for (run in 1:study_design$num_runs) {
             kappa_start = kappa.prior.mu.tdst,
             gamma_prior_var = 10^6,
             kappa_prior_mu = kappa.prior.mu.tdst,
-            kappa_prior_var = 10^-4,
+            kappa_prior_var = kappa.prior.var.tdst * 10 ^ -3,
             gamma_tune = -1,
             kappa_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
@@ -338,16 +343,16 @@ for (run in 1:study_design$num_runs) {
           )
           
           # ## Posterior summaries
-          # pop.ind.TDST <- which(names(chain.TDST) == "u")
-          # MCMC.parms.TDST.cov <- coda::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:study_design$burn_in), ])
+          # pop.ind.TDST <- which(names(chain.TDST.priors) == "u")
+          # MCMC.parms.TDST.cov <- coda::as.mcmc(do.call(cbind, chain.TDST.priors[-pop.ind.TDST])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.TDST.cov)
           
-          # plot(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
-          D.TDST.MCMC <- mean(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
-          SD.TDST.MCMC <- sd(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
+          # plot(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
+          D.TDST.MCMC <- mean(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
+          SD.TDST.MCMC <- sd(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
           
-          if (any(colMeans(chain.TDST$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) ||
-              any(colMeans(chain.TDST$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
+          if (any(colMeans(chain.TDST.priors$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) ||
+              any(colMeans(chain.TDST.priors$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
             warning(("TDST accept rate OOB"))
             D.TDST.MCMC <- NA
             SD.TDST.MCMC <- NA
@@ -355,11 +360,11 @@ for (run in 1:study_design$num_runs) {
         }
         D.chain <- tibble::tibble(
           iteration = run,
-          Model = "TDST No Data",
+          Model = "TDST w/ Priors",
           Covariate = "Covariate",
           Est = D.TDST.MCMC,
           SD = SD.TDST.MCMC,
-          all_results = list(chain.TDST)
+          all_results = list(chain.TDST.priors)
         )
       }
       
@@ -462,6 +467,10 @@ for (run in 1:study_design$num_runs) {
             gamma_start = rep(log(mean(count_data$count)), study_design$num_covariates),
             gamma_prior_var = 10^6,
             gamma_tune = rep(-1, study_design$num_covariates),
+            kappa_start = kappa.prior.mu.tdst,
+            kappa_prior_mu = kappa.prior.mu.tdst,
+            kappa_prior_var = kappa.prior.var.tdst * 10 ^ -3,
+            kappa_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data,
             habitat_summary
           )
@@ -526,6 +535,9 @@ plot_multirun_means(study_design, D.all %>%
                       dplyr::filter(is.finite(Est)))
 plot_multirun_sds(D.all %>% 
                     dplyr::filter(is.finite(Est)))
+# plot_multirun_mape(D.all %>% 
+#                       dplyr::filter(is.finite(Est)),
+#                    study_design$tot_animals)
 # plot_multirun_CV(D.all)
 # plot_multirun_hist(D.all)
 
