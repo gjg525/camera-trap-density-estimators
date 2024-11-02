@@ -550,6 +550,35 @@ plot_multirun_sds <- function(D.all) {
 ################################################################################
 #' @export
 #'
+plot_multirun_mape <- function(D.all, tot_N) {
+  D.all %>% 
+    dplyr::mutate(MAPE = abs(tot_N - Est) / Est) %>% 
+    ggplot(aes(x = Model, y = MAPE, fill = Covariate)) +
+    geom_boxplot(position = position_dodge2(preserve = "single"),
+                 outlier.shape = NA) +
+    labs(
+      x = "Model",
+      y = "MAPE"
+    ) +
+    coord_cartesian(ylim = quantile(D.all$MAPE, c(0.01, 0.99), na.rm = T)) +
+    theme(
+      text = element_text(size = 20),
+      legend.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = "black"),
+      panel.border = element_rect(colour = "black", fill = NA, size = 1),
+      legend.position = c(0.85, 0.84),
+      legend.background = element_blank(),
+      legend.spacing.y = unit(0, "mm"),
+      legend.box.background = element_rect(colour = "black")
+    )
+}
+
+################################################################################
+#' @export
+#'
 plot_multirun_CV <- function(D.all) {
   ggplot(D.all, aes(x = Model, y = SD / Est, fill = Covariate)) +
     geom_boxplot(position = position_dodge2(preserve = "single"),
