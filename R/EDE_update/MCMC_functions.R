@@ -116,8 +116,10 @@ fit.model.mcmc.TDST.cov <- function(study_design,
 
       if (is.null(stay_time_data_in)) {
         # No data
-        mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
-        mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+        mh1 <- sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
+          sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+        mh2 <- sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
+          sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
         mh <- exp(mh1-mh2)
       } else{
         # # repeat estimated parms for fitting
@@ -138,11 +140,11 @@ fit.model.mcmc.TDST.cov <- function(study_design,
           mh1 <- sum(dexp(stay_time_data_all, 1 / phi_star_cam_rep, log = TRUE), na.rm = TRUE) +
             sum(pexp(stay_time_data_censor, 1 / phi_star_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
             sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
-            sum(dnorm(kappa_star, 0, kappa_prior_var^0.5, log = TRUE))
+            sum(dnorm(kappa_star, kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
           mh2 <- sum(dexp(stay_time_data_all, 1 / phi_all_cam_rep, log = TRUE), na.rm = TRUE) +
             sum(pexp(stay_time_data_censor, 1 / phi_all_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
             sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
-            sum(dnorm(kappa[i, ], 0, kappa_prior_var^0.5, log = TRUE))
+            sum(dnorm(kappa[i, ], kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
           mh <- exp(mh1 - mh2)
   
           # Alternate: fit staying time with gamma distribution
