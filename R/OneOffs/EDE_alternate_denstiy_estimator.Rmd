@@ -3,6 +3,8 @@ title: "Explicit formulas for non-random sample designs in camera trap density e
 output: pdf_document
 ---
 
+Estimating proportional staying time can be done with camera trap stay time data or telemetry data. We model the TDST with both methods separately, and estimate stay time proportions for the habitat PR model with tele prior information.
+
 This document derives multiple camera trap density estimators that allow for non-random sample designs in heterogeneous landscapes. The role of a camera trap density estimator is to estimate the density, $\lambda$. Total abundances are then calculated as a function of density, sampling frame ($A$), camera viewshed area ($V$), and sampling period ($T$), $$N = \frac{\lambda A}{V T}.$$
 
 We estimate densities using the equilibrium solution of the EDE which assumes that animal densities are proportional to animal staying time, $$\frac{d_q}{\sum{d_q}} = \frac{\phi_q}{\sum{\phi_q}},$$ where $d_q$ is a density at location $q$ and $\phi_q$ is the staying time at location $q$.
@@ -25,9 +27,9 @@ The habitat PR model can also be explicitly defined for single-habitat sample de
 
 #### Results
 
-To test these models, we ran simulations where animals move with three different speeds depending on habitat type (slow, medium, fast), and place cameras under three sample designs; randomly, non-randomly (80% in slow habitat, 10% each in medium and fast habitats), and single-habitat (100% in slow habitat). We then estimated total abundances with the TDST model without priors, TDST model with stay-time priors defined by telemetry data but omitting camera stay time data (TDST no-data), PR model with and without covariates, and habitat PR models.
+To test these models, we ran simulations where animals move with three different speeds depending on habitat type (slow, medium, fast), and place cameras under three sample designs; randomly, non-randomly (80% in slow habitat, 10% each in medium and fast habitats), and single-habitat (cameras placed in only one habitat type). We then estimated total abundances with the TDST model without priors, TDST model with stay-time priors defined by telemetry data but omitting camera stay time data (TDST no-data), PR model with and without covariates, and the habitat PR model.
 
-The following boxplots represent summaries of model runs over 1000 iterations. The habitat PR model seems off since it is overestimating abundances in the random sample design but is accurate in th 80% sample design. When placing all cameras in one habitat type, none of the models can accurately estimate abundances but the PR habitat model and TDST no data are the most accurate.
+The following boxplots represent summaries of model runs over 1000 iterations. The random sample design is a good indicator of how well each model is working, and the median results show that all models are within 1% of the true abundance (N = 100). In general, the habitat PR model has slightly higher SD than its counterpart, the TDST No Data model while maintaining accuracy across the different sample designs. Note that accuracy for the TDST No Data model and the PR Habitat model rely on the accuracy of the telemetry data (which is near-perfect for our simulations). In future simulations, we should create a survey design for telemetry data to create variance surrounding the habitat-specific movement speeds.
 
 ##### Random Sample Design \
 ![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_est.png){#id .class width=50% height=50%}
