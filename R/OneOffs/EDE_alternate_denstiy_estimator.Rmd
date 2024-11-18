@@ -3,8 +3,6 @@ title: "Explicit formulas for non-random sample designs in camera trap density e
 output: pdf_document
 ---
 
-Estimating proportional staying time can be done with camera trap stay time data or telemetry data. We model the TDST with both methods separately, and estimate stay time proportions for the habitat PR model with tele prior information.
-
 This document derives multiple camera trap density estimators that allow for non-random sample designs in heterogeneous landscapes. The role of a camera trap density estimator is to estimate the density, $\lambda$. Total abundances are then calculated as a function of density, sampling frame ($A$), camera viewshed area ($V$), and sampling period ($T$), $$N = \frac{\lambda A}{V T}.$$
 
 We estimate densities using the equilibrium solution of the EDE which assumes that animal densities are proportional to animal staying time, $$\frac{d_q}{\sum{d_q}} = \frac{\phi_q}{\sum{\phi_q}},$$ where $d_q$ is a density at location $q$ and $\phi_q$ is the staying time at location $q$.
@@ -13,7 +11,9 @@ We generalize the EDE by defining densities and staying time by habitat type rat
 
 #### TDST Model
 
-The TDST model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$) with camera trap data, $$\sum{d_q} = \frac{\sum{\phi_q}}{\phi_q} d_q.$$ Total abundances can then calculated with the formula above, $N = \frac{A \sum{d_q}}{V T}$. Note that the TDST model requires covariate information to inform location-specific staying time and density estimates.
+The TDST model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$), $$\sum{d_q} = \frac{\sum{\phi_q}}{\phi_q} d_q.$$ Total abundances can then calculated with the formula above, $N = \frac{A \sum{d_q}}{V T}$.
+
+Note that the TDST requires proportional rather than absolute staying time. Proportional staying time can be estimated either with camera trap or telemetry data. For camera traps, motion-sensored cameras are required to time how long it takes for an animal to cross the viewshed. With telemetry data, individuals are tracked for how long they stay in each habitat type. In both cases, it is important to only use data when the animal is moving; otherwise, the model estimates may be biased. Note that because the camera viewshed has a different area from grid cell area, there is no easy way to translate grid cell staying time to viewshed area staying time.
 
 #### PR model
 
