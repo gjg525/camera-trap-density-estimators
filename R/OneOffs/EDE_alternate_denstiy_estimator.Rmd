@@ -3,27 +3,51 @@ title: "Explicit formulas for non-random sample designs in camera trap density e
 output: pdf_document
 ---
 
-This document derives multiple camera trap density estimators that allow for non-random sample designs in heterogeneous landscapes. The role of a camera trap density estimator is to estimate the density, $\lambda$. Total abundances are then calculated as a function of density, sampling frame ($A$), camera viewshed area ($V$), and sampling period ($T$), $$N = \frac{\lambda A}{V T}.$$
+```{r echo = F, warning = F}
+`%>%` <- magrittr::`%>%`
 
-We estimate densities using the equilibrium solution of the EDE which assumes that animal densities are proportional to animal staying time, $$\frac{d_q}{\sum{d_q}} = \frac{\phi_q}{\sum{\phi_q}},$$ where $d_q$ is a density at location $q$ and $\phi_q$ is the staying time at location $q$.
+load("C:/Users/guen.grosklos/Documents/Github/camera-trap-density-estimators/Sim_results/D_all.RData")
 
-We generalize the EDE by defining densities and staying time by habitat type rather than location, $d_h$ and $\phi_h$ for habitat type $h$. Then, we collect habitat-type specific staying times across the landscape with telemetry data. For example, with a GPS data set, we find that animals on average spend 50% of time in forested area, 35% on grassland, and 15% on road. With this information, we now know, for example, that road densities should be about 15% of total densities. We use this to calculate total abundances with camera traps as follows.
+D_all <- D_all %>% 
+  dplyr::rename(
+    Estimate = Est
+  ) %>% 
+  tidyr::pivot_longer(cols = c(Estimate, SD), names_to = "Parameter", values_to = "Value") %>% 
+  dplyr::mutate(
+    `totN` = dplyr::case_when(
+      Parameter == "Estimate" ~ 100,
+      Parameter == "SD" ~ NA
+    )
+  )
+
+```
+
+
+This document derives multiple camera trap density estimators that allow for non-random sample designs in heterogeneous landscapes. The role of a camera trap density estimator is to estimate the density, $\lambda$, which can then be used to calculate total abundance as a function of density, sampling frame ($A$), camera viewshed area ($V$), and sampling period ($T$), $$N = \frac{\lambda A}{V T}.$$
+
+We use theory from the equilibrium solution of the ecological diffusion equation (EDE) to connect movement data and count data for density and abundance estimation. The equilibrium solution of the EDE assumes that animal densities are proportional to animal staying time across locations of a landscape, $$\frac{d_q}{\sum{d_q}} = \frac{\phi_q}{\sum{\phi_q}},$$ where $d_q$ is a density at location $q$ and $\phi_q$ is the staying time at location $q$. Generally, $q$ is a small subunit within the entire landscape that is defined with landscape covariates.
+
+Rather than using small-scale units to define the landscape, we aggregate the grid cells into habitat types, $h$, with common characteristics. Then, we collect habitat-type specific staying times, $T_h$, across the landscape with telemetry data or camera trap data. For example, with a GPS data set, we find that animals on average spend 50% of time in forested area, 35% on grassland, and 15% on road. With this information, we now know, for example, that road densities should be about 15% of total densities. We use this to calculate total abundances with camera traps as follows.
 
 #### TDST Model
 
-The TDST model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$), $$\sum{d_q} = \frac{\sum{\phi_q}}{\phi_q} d_q.$$ Total abundances can then calculated with the formula above, $N = \frac{A \sum{d_q}}{V T}$.
+The total density and staying time (TDST) model calculates total density by estimating location-specific densities ($d_q$) and staying time ($\phi_q$), $$D = \frac{\sum{\phi_q}}{\phi_q} d_q,$$ where $D$ is the total landscape density. Total abundances can then be calculated with the formula above, $N = \frac{A \sum{d_q}}{V T}$.
 
-Note that the TDST requires proportional rather than absolute staying time. Proportional staying time can be estimated either with camera trap or telemetry data. For camera traps, motion-sensored cameras are required to time how long it takes for an animal to cross the viewshed. With telemetry data, individuals are tracked for how long they stay in each habitat type. In both cases, it is important to only use data when the animal is moving; otherwise, the model estimates may be biased. Note that because the camera viewshed has a different area from grid cell area, there is no easy way to translate grid cell staying time to viewshed area staying time.
+Note that the TDST requires proportional rather than absolute staying time. Proportional staying time can be estimated either with camera trap or telemetry data. For camera traps, motion-sensored cameras are required to capture the time it takes for an animal to cross the camera viewshed. With telemetry data, individuals are tracked for how long they stay in each habitat type. In both cases, it is important to only use data when the animal is moving; otherwise, the model estimates may be biased. Note that because the camera viewshed has a different area from the grid cell area, there is no easy way to translate grid cell staying time to viewshed area staying time. Therefore, these methods cannot be mixed when calculating proportional staying time. Additionally, information must be obtained from each habitat type in order to calculate proportional staying time.
 
 #### PR model
 
-The PR model estimates densities, $\lambda$, using only count data. Total abundances are then calculated using the formula above. The PR model may be used with and without covariate information, although random sampled designs are required for non-biased estimates when covariates are not used.
+The Poisson regression (PR) model estimates densities, $\lambda$, using only count data. Total abundances are then calculated using the formula above. The PR model may be used with and without covariate information, although random sample designs are required for non-biased estimates when covariates are not used.
 
 #### Habitat PR Model
 
-We combine the theory behind the TDST model with density estimates obtained with the non-covariate PR model to explicitly calculate habitat-specific abundances using relative staying time estimates obtained from telemetry data. Specifically, in order to calculate habitat-specific abundances, we must first scale the sampling period by the proportion of time that animals spend in the habitat type, $T_h = T \frac{\phi_h}{\sum{\phi_h}}$, and the proportion of cameras placed in the habitat type, $\frac{C_h}{\sum{C_h}}$. Then, by using the PR model to estimate densities for each habitat type ($\lambda_h$) and restricting the sampling to the area that contains the habitat type, $A_h$, we calculate habitat-specific abundances using the formula $$N_h = \frac{\lambda_h A_h}{V T_h} \frac{C_h}{\sum{C_h}}.$$ The sum over all habitat-specific abundances results in total abundance, $N = \sum{N_h}$.
+We combine the theory behind the TDST model with density estimates obtained with the non-covariate PR model to explicitly calculate camera-scaled habitat abundances using relative staying time estimates obtained from telemetry data. To derive this, we begin with the total abundance equation, $$N = \frac{A D}{V T},$$  and substitute total density with the TDST formula, $$D = \frac{d_h T}{T_h}$$. Canceling like-terms provides an estimate for total abundance given densities and staying time calculated for each habitat type, $$N = \frac{d_h A}{T_h V}.$$ 
 
-The habitat PR model can also be explicitly defined for single-habitat sample designs (i.e., cameras placed exclusively on one habitat type). Specifically, the proportion of cameras placed in the habitat of choice is now 1 while all other habits have 0 cameras, setting all habitat-specific abundances without cameras to zero. Then, total abundance given cameras placed only in habitat $h$ is $$N = \frac{\lambda_h A_h}{V T_h},$$ where habitat-specific density, $\lambda_h$, is calculated as above.
+The issue with calculating a total abundance for each habitat type is that the model precision relies on the number of cameras used in each habitat, so total abundances can vary dramatically between each habitat estimate. Therefore, we calculate the camera-scaled abundances for each habitat by normalizing the total abundance calculation above by the proportion of the total area encompassed by the habitat and the proportion of cameras placed in the habitat, $$N_h = \frac{d_h A}{T_h V} \frac{A_h}{A} \frac{C_h}{C} = \frac{d_h A_h C_h}{T_h V C}.$$ The sum over all habitat-specific abundances results in total abundance, $N = \sum{N_h}$. 
+
+<!-- Specifically, in order to calculate habitat-specific abundances, we must first scale the sampling period by the proportion of time that animals spend in the habitat type, $T_h = T \frac{\phi_h}{\sum{\phi_h}}$, and the proportion of cameras placed in the habitat type, $\frac{C_h}{\sum{C_h}}$. Then, by using the PR model to estimate densities for each habitat type ($\lambda_h$) and restricting the sampling to the area that contains the habitat type, $A_h$, we calculate habitat-specific abundances using the formula $$N_h = \frac{\lambda_h A_h}{V T_h} \frac{C_h}{\sum{C_h}}.$$ The sum over all habitat-specific abundances results in total abundance, $N = \sum{N_h}$.  -->
+
+The habitat PR model can also be explicitly defined for single-habitat sample designs (i.e., cameras placed exclusively on one habitat type). Specifically, the proportion of cameras placed in the habitat of choice is now 1 while all other habits have 0 cameras, setting all habitat-specific abundances without cameras to zero. Then, total abundance given cameras placed only in habitat $h$ is $$N = \frac{d_h A_h}{T_h V},$$ where habitat-specific density, $\lambda_h$, is calculated as above.
 
 #### Results
 
@@ -32,20 +56,260 @@ To test these models, we ran simulations where animals move with three different
 The following boxplots represent summaries of model runs over 1000 iterations. The random sample design is a good indicator of how well each model is working, and the median results show that all models are within 1% of the true abundance (N = 100). In general, the habitat PR model has slightly higher SD than its counterpart, the TDST No Data model while maintaining accuracy across the different sample designs. Note that accuracy for the TDST No Data model and the PR Habitat model rely on the accuracy of the telemetry data (which is near-perfect for our simulations). In future simulations, we should create a survey design for telemetry data to create variance surrounding the habitat-specific movement speeds.
 
 ##### Random Sample Design \
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_est.png){#id .class width=50% height=50%}
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_sd.png){#id .class width=50% height=50%}
 
-##### 80% Slow, 10% Medium, 10% Fast Sample Design \
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_est.png){#id .class width=50% height=50%}
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_sd.png){#id .class width=50% height=50%}
+```{r echo = F, warning = F, fig.width = 8, fig.height = 4}
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign == "random_cam") %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "Random Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+```
 
-##### All Cameras in Slow Habitat \
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_est.png){#id .class width=50% height=50%}
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_sd.png){#id .class width=50% height=50%}
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_est.png){#id .class width=50% height=50%} -->
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/random_cam_sd.png){#id .class width=50% height=50%} -->
 
-##### All Cameras in Fast Habitat \
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_est.png){#id .class width=50% height=50%}
-![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_sd.png){#id .class width=50% height=50%}
+##### 80% Sample Bias \
+
+In these simulations, we places 80% of the cameras in one habitat type and 10% of the cameras in each of the other two habitat types. 
+
+```{r echo = F, warning = F, fig.width = 8, fig.height = 4}
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign %in% c("slow_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "80% Slow Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+
+
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign %in% c("med_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "80% Medium Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+ 
+ 
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign %in% c("fast_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "80% Fast Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+```
+
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_est.png){#id .class width=50% height=50%} -->
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_bias_sd.png){#id .class width=50% height=50%} -->
+
+##### All One Habitat Type \
+
+In the following figures, all cameras are placed in one habitat type. Note that because camera data are not available for all habitat types, all staying time information must be collected with telemetry data.
+
+```{r echo = F, warning = F, fig.width = 8, fig.height = 4}
+ D_all %>%
+   dplyr::filter(Value < 500) %>%
+   dplyr::filter(SampDesign %in% c("all_slow_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "100% Slow Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+
+
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign %in% c("all_med_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "100% Medium Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+ 
+ 
+ D_all %>%
+   dplyr::filter(Value < 200) %>%
+   dplyr::filter(SampDesign %in% c("all_fast_cam")) %>%
+   ggplot2::ggplot(ggplot2::aes(x = Model, y = Value, fill = Covariate)) +
+   ggplot2::geom_boxplot(position = ggplot2::position_dodge2(preserve = "single"),
+                         outlier.shape = NA) +
+   # ggplot2::geom_violin() +
+   ggplot2::geom_hline(ggplot2::aes(yintercept = totN), 
+                       linetype = "dashed", 
+                       size = 1) +
+   ggplot2::labs(
+     x = "Model",
+     y = "100% Fast Sample \n Results"
+   ) +
+   # ggplot2::coord_cartesian(ylim = quantile(D_all$Est, c(0.01, 0.99), na.rm = T)) +
+   # scale_y_continuous(limits = c(lower, upper)) +
+   ggplot2::theme(
+     text = ggplot2::element_text(size = 20),
+     legend.title = ggplot2::element_blank(),
+     panel.grid.major = ggplot2::element_blank(),
+     panel.grid.minor = ggplot2::element_blank(),
+     panel.background = ggplot2::element_blank(),
+     axis.line = ggplot2::element_line(colour = "black"),
+     panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 1),
+     legend.position = c(0.85, 0.84),
+     # legend.position = c(0.8, 0.05),
+     legend.background = ggplot2::element_blank(),
+     legend.spacing.y = ggplot2::unit(0, "mm"),
+     legend.box.background = ggplot2::element_rect(colour = "black")
+   ) +
+   ggplot2::facet_wrap(~ Parameter, scales = "free", ncol = 2)
+```
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_est.png){#id .class width=50% height=50%} -->
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/slow_cam_all_sd.png){#id .class width=50% height=50%} -->
+
+<!-- ##### All Cameras in Fast Habitat \ -->
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_est.png){#id .class width=50% height=50%} -->
+<!-- ![](C:/Users/gueng/Desktop/New_cam_trap_runs/fast_cam_all_sd.png){#id .class width=50% height=50%} -->
 
 
 #### Model Summaries\
@@ -74,38 +338,4 @@ Habitat PR Model
 
 -   Supports single-habitat camera sample design
 
-<!-- Habitat-specific abundances may be calculated by multiplying habitat-specific densities by the area of the habitat, $$N_h = \frac{\lambda_h A}{V T} \frac{A_h}{\sum{A_h}} = \frac{\lambda_h A_h}{V T}.$$ This formula assumes that cameras are placed in each habitat type, although they do not need to be placed proportional to the habitat type availability, i.e., random sampling. Summing over all habitat-type abundances gives total abundance. -->
 
-<!-- We extend the TDST model by scaling the densities by the proportion of time spent in each habitat type, providing separate total abundance estimates for each habitat type, $$N = \frac{\lambda_h \sum{\phi_h}}{\phi_h} \frac{A_h}{V T} = \frac{\lambda_h A_h}{V T_h},$$ where $T_h = T \frac{\phi_h}{\sum{\phi_h}}$ is the habitat-specific sampling period. The issue with this method is that the errors change for each estimate depending on how much data are collected in each habitat type. To account for this, we can scale the full estimates by the proportion of cameras deployed in each habitat type to get camera-adjusted habitat abundances, $$N_h = \frac{\lambda_h \sum{\phi_h}}{\phi_h} \frac{A_h}{V T} \frac{C_h}{\sum{C_h}} = \frac{\lambda_h A_h}{V  T_h} \frac{C_h}{\sum{C_h}}.$$ Summing over this value gives total abundance. This last formula effectively estimates densities at each habitat type by accounting for the proportion of time spent in each habitat type and the proportion of cameras placed in each habitat type. -->
-
-<!-- NOTE: These equations assume that the mean camera counts ($\lambda$) is calculated with all of the cameras in the data. A simpler way to write the formula is to assume that the mean estimates only use cameras in the habitat type. Then we can stop at the second equation. -->
-
-<!-- ##### Cameras Placed in One Habitat Type (Full-Bias Sample Design) -->
-
-<!-- If we place all cameras on one habitat type, e.g., roads, then we can estimate total densities as $$\sum{d_h} = \frac{d_h \sum{\phi_h}}{\phi_h}.$$ $\phi_h$ for all $h$ may be estimated with GPS data or camera trap data, then all that is left to estimate is road density, $d_1$. We can do this with the same likelihood methods for estimating densities as the Poisson regression but with the sampling frame and sampling period adjusted to the size of the habitat type and the proportional time spent in the habitat type. For example, if the total sampling frame is 900 km$^2$ and the road habitat type is 10% of the total area, then the sampling frame for road density is $A_1 = 90 km^2$. Similarly, if the total sampling period is 1000 hours, then the sampling period for road density is adjusted to 15% of the total sampling period, or $T_1 = 150$. Combining all of this together, we can calculate total abundance with $$N = \frac{\lambda_1 \sum{\phi_1}}{\phi_1} \frac{A_1}{V T} = \frac{\lambda_1 A_1}{V T_1},$$ where $\lambda_1$ is the road density, and $V$ is the camera viewshed area NOTE:CHECK THIS MATH. NOT SURE IF DENSITY IS PROPERLY DEFINED -->
-
-<!-- ##### Cameras Non-randomly (Partial-Bias Sample Design) -->
-
-<!-- If cameras are placed non-randomly but encounters are recorded in every habitat type, the above formula may be generalized to account to for the partial-bias camera placement. Camera-adjusted, habitat-specific abundances (abundances scale with camera proportions in habitat) are defined as $$N_h = \frac{\lambda_h \sum{\phi_h}}{\phi_h} \frac{A_h}{V T} \frac{C_h}{\sum{C_h}} = \frac{\lambda_h A_h}{V  T_h} \frac{C_h}{\sum{C_h}}$$ where $C_h$ is the number of cameras located in habitat $h$. Total abundance is calculated as the sum of all habitat type abundances, $\sum{N_h}$. CHECK -->
-
-<!-- NOTE: Understand the difference between the full-bias design and partial-bias and why deconstructing the full design into weighted-camera abundances provides a better estimate. There is probably a better way to describe it other than weighted-camera abundance. -->
-
-<!-- ##### Estimating relative staying times -->
-
-<!-- To use the formulas above, staying time must be estimated and can be done so with either gps collar data or camera traps. If camera traps are used, then cameras must be placed in every habitat type, which is not a requirement if staying time data are collected from collars. -->
-
-<!-- Test these methods (staying time estimated with cameras vs gps)! -->
-
-<!-- -   Compare these two with partial-bias sample designs. How much more accurate are the GPS models? -->
-
-<!-- -   Compare the GPS-collected data with random, partial-bias, and full-bias sample designs. Do we get better precision if we place all cameras on one habitat type? -->
-
-#### NOTES
-
-<!-- -   When subbing the TDST stay time data for collar data summaries (i.e., only use count data without any camera trap stay time data), the prior sds on kappa must be small to let the model fit to the priors. Also, the priors do not need to be exactly the staying time but the proportion of time spent in each habitat type -->
-
--   I can't figure out how to translate cell-size staying time to camera viewshed-size staying time. Multiplying by camera area over cell area doesn't seem to work (oddly enough, this scaling works for counts...). Again, this doesn't pose a problem for the TDST when stay time data are omitted, but is useless when staying time data (from cameras) are used.
-
-<!-- -   The habitat PR model works just as well as the TDST prior-no data model (I think they are pretty much equivalent). When fitting the habitat PR model with 0 cameras placed in a habitat type, the habitat-specific camera count must be set to 0, otherwise the uninformed priors on the 0-camera habitat types will run wild. -->
-
--   We need to think about how to estimate sds from habitat-specific staying time collected from collars. Currently, the habitat PR model does not use any SD and the TDST with priors-no data has a forced small prior variance.
