@@ -8,9 +8,9 @@ fit.model.mcmc.TDST.cov <- function(study_design,
                                     cam_locs,
                                     gamma_start,
                                     kappa_start,
-                                    gamma_prior_var = 10^6,
+                                    gamma_prior_var = 10^4,
                                     kappa_prior_mu = 0,
-                                    kappa_prior_var = 10^6,
+                                    kappa_prior_var = 10^4,
                                     gamma_tune,
                                     kappa_tune,
                                     count_data_in,
@@ -209,7 +209,7 @@ fit.model.mcmc.TDST.cov <- function(study_design,
 fit.model.mcmc.PR <- function(study_design,
                               cam_design,
                               gamma_start,
-                              gamma_prior_var = 10^6,
+                              gamma_prior_var = 10^4,
                               gamma_tune = -1,
                               count_data_in
 ) {
@@ -289,7 +289,7 @@ fit.model.mcmc.PR.cov <- function(study_design,
                                   cam_design,
                                   cam_locs,
                                   gamma_start,
-                                  gamma_prior_var = 10^6,
+                                  gamma_prior_var = 10^4,
                                   gamma_tune,
                                   count_data_in,
                                   stay_time_data_in
@@ -394,7 +394,7 @@ fit.model.mcmc.PR.habitat <- function(study_design,
                                       cam_design,
                                       cam_locs,
                                       gamma_start,
-                                      gamma_prior_var = 10^6,
+                                      gamma_prior_var = 10^4,
                                       gamma_tune,
                                       kappa_start,
                                       kappa_prior_mu,
@@ -490,7 +490,7 @@ fit.model.mcmc.PR.habitat <- function(study_design,
       
       if (mh > runif(1) & !is.na(mh)) {
         kappa[i, ] <- kappa_star
-        accept[i + 1, 1 + kk] <- 1
+        accept[i + 1, num_covariates + kk] <- 1
         # u <- u_star
       } else {
         kappa[i, ] <- kappa[i, ]
@@ -519,7 +519,7 @@ fit.model.mcmc.PR.habitat <- function(study_design,
         array(
           accept[
             (i - tune_check + 1):i,
-            2:(1 + num_covariates)
+            (num_covariates + 1):(2 * num_covariates)
           ],
           dim = c(tune_check, num_covariates)
         ),
@@ -531,7 +531,7 @@ fit.model.mcmc.PR.habitat <- function(study_design,
   }
   # print("MCMC complete")
   
-  list(accept = accept, gamma = gamma, tot_u = tot_u)
+  list(accept = accept, gamma = gamma, kappa = kappa, tot_u = tot_u)
 }
 
 
@@ -542,8 +542,8 @@ fit.model.mcmc.REST <- function(study_design,
                                 cam_design,
                                 gamma_start,
                                 kappa_start,
-                                gamma_prior_var = 10^6,
-                                kappa_prior_var = 10^6,
+                                gamma_prior_var = 10^4,
+                                kappa_prior_var = 10^4,
                                 gamma_tune = -1,
                                 kappa_tune = -1,
                                 encounter_data_in,
@@ -670,8 +670,8 @@ fit.model.mcmc.REST.cov <- function(study_design,
                                     cam_locs,
                                     gamma_start,
                                     kappa_start,
-                                    gamma_prior_var = 10^6,
-                                    kappa_prior_var = 10^6,
+                                    gamma_prior_var = 10^4,
+                                    kappa_prior_var = 10^4,
                                     gamma_tune,
                                     kappa_tune,
                                     encounter_data_in,
@@ -853,8 +853,8 @@ fit.model.mcmc.TTE <- function(study_design,
                                cam_design,
                                gamma_start,
                                kappa_start,
-                               gamma_prior_var = 10^6,
-                               kappa_prior_var = 10^6,
+                               gamma_prior_var = 10^4,
+                               kappa_prior_var = 10^4,
                                gamma_tune = -1,
                                kappa_tune = -1,
                                TTE_data_in,
@@ -989,8 +989,8 @@ fit.model.mcmc.TTE.cov <- function(study_design,
                                    cam_locs,
                                    gamma_start,
                                    kappa_start,
-                                   gamma_prior_var = 10^6,
-                                   kappa_prior_var = 10^6,
+                                   gamma_prior_var = 10^4,
+                                   kappa_prior_var = 10^4,
                                    gamma_tune,
                                    kappa_tune,
                                    TTE_data_in,
@@ -1187,7 +1187,7 @@ fit.model.mcmc.TTE.cov <- function(study_design,
 fit.model.mcmc.STE <- function(study_design,
                                cam_design,
                                gamma_start,
-                               gamma_prior_var = 10^6,
+                               gamma_prior_var = 10^4,
                                gamma_tune = -1,
                                STE_data_in
                                ) {
