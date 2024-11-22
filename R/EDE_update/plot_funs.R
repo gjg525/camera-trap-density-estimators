@@ -551,8 +551,10 @@ plot_multirun_sds <- function(D.all) {
 #' @export
 #'
 plot_multirun_mape <- function(D.all, tot_N) {
+  D.all <- D.all %>% 
+    dplyr::mutate(MAPE = abs(tot_N - Est) / Est)
+  
   D.all %>% 
-    dplyr::mutate(MAPE = abs(tot_N - Est) / Est) %>% 
     ggplot(aes(x = Model, y = MAPE, fill = Covariate)) +
     geom_boxplot(position = position_dodge2(preserve = "single"),
                  outlier.shape = NA) +

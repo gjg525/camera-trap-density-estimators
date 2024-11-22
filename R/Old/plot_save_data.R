@@ -1,6 +1,6 @@
 library(tidyverse)
 
-source("R/plot_funs.R")
+source("../../R/Old/plot_funs.R")
 
 file_path <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/Images/"
 fig_colors_darkest <- c("#00441b", "#662506", "#08306b", "#49006a", "#99d8c9", "#fed98e")

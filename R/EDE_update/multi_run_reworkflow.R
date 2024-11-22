@@ -111,7 +111,8 @@ burn.in <- 3000
 
 animalxy.list <- list()
 tri_cam_list <- list()
-model_nums <- c(3,5)
+# model_nums <- c(3,5)
+model_nums <- 1:5
 num_models <- length(model_nums)
 # D.all <- data.frame(Model = NA,
 #                     Covariate = NA,
