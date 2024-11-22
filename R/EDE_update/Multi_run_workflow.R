@@ -34,12 +34,11 @@ study_design <- tibble::tibble(
   activity_sync = "sync",
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
-  # num_runs = 1000,
+  num_runs = 1000,
   n_iter = 20000,
   burn_in = 10000,
   # staying time censors
   t_censor = 10, 
-  # num_occ = t_steps / TTE_censor,
   run_models = list(1:5),
   covariate_labels = list(c("Slow", "Medium", "Fast"))
 )
@@ -52,33 +51,34 @@ lscape_design <- tibble::tibble(
   Speed_ID = list(c("Slow", "Medium", "Fast")),
   # Speed_mins = list(c(.05, .3, .9)),
   # Speed_maxes = list(c(.15, .5, 1.1)),
-  
   Speed_mins = list(c(.19, .4, .9)),
   Speed_maxes = list(c(.21, .5, 1.1)),
-  # Speed_mins = list(c(.19, .19, .9)),
-  # Speed_maxes = list(c(.21, .21, 1.1)),
-  
-  # Speed_mins = list(c(.05, .05, .05)),
-  # Speed_maxes = list(c(.15, .15, .15)),
   Trail_ID = list(c("On Trail", "Off Trail")),
   Trail_speed = list(c("Medium", "Medium"))
 )
 
 # Cam designs
 cam_design <- tibble::tibble(
-  ncam = 250,
-  # Design = "Random",
-  # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-  Design = "Bias",
-  Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
-  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
+  ncam = 200,
+  Design = "Random",
+  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
+
   # Design = "Bias",
   # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
-  cam_length = study_design$dx * 0.3, # length of all viewshed sides
+  # cam_length = study_design$dx * 0.3, # length of all viewshed sides
+  cam_length = study_design$dx * 0.1, # length of all viewshed sides
   cam_A = cam_length ^ 2 / 2,
   tot_snaps = ncam * study_design$t_steps
 )
+# Design = "Bias",
+# Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads  # Design = "Bias",
+  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
+  # Design = "Bias",
+  # Props = list(c(0.1, 0.8, 0.1)), # proportion of cameras placed on and off roads
+  # Design = "Bias",
+  # Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
+  # Design = "Bias",
+  # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
 
 num_models <- length(unlist(study_design$run_models))
 
@@ -88,8 +88,8 @@ D.all <- tibble::tibble(
   Model = NA,
   Covariate = NA,
   Est = NA,
-  SD = NA,
-  all_results = NA
+  SD = NA
+  # all_results = NA
 )
 
 save_animal_data <- tibble::tibble(
@@ -103,12 +103,12 @@ all_data <- tibble::tibble(
   count_data = NA,
   encounter_data = NA,
   stay_time_all = NA,
-  stay_time_raw = NA,
-  stay_time_data = NA,
-  TTE_data_all = NA,
-  TTE_data_raw = NA,
-  TTE_data = NA,
-  STE_data = NA
+  # stay_time_raw = NA,
+  stay_time_data = NA
+  # TTE_data_all = NA,
+  # TTE_data_raw = NA,
+  # TTE_data = NA,
+  # STE_data = NA
 )
 
 # # Calculate total area using available space
@@ -145,6 +145,9 @@ for (run in 1:study_design$num_runs) {
         unlist(covariate_labels)))
     )
   
+  # Set first column as reference category for intercept
+  study_design$Z[[1]][, 1] <- 1
+  
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
@@ -160,16 +163,19 @@ for (run in 1:study_design$num_runs) {
       # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
       .groups = 'drop'
     ) %>% 
-    dplyr::mutate(stay_prop = cell_mu / sum(cell_mu)) %>% 
+    dplyr::mutate(
+      sum_stay = sum(cell_mu),
+      stay_prop = cell_mu / sum_stay,
+      cell_sd = cell_sd / sum_stay
+    ) %>% 
     dplyr::rename(Speed = speed) %>% 
     dplyr::arrange(desc(Speed))
   
   kappa.prior.mu.tdst <- log(stay_time_summary$stay_prop)
   kappa.prior.var.tdst <- stay_time_summary$cell_sd
-  sum_stay_time_means <- sum(stay_time_summary$cell_mu)
-  
+
   # If running new ABM simulation on each run, save
-  # save_animal_data$data[run] <- list(animalxy.all)  
+  save_animal_data$data[run] <- list(animalxy.all)
   
   # Place cameras on study area
   cam_locs <- create_cam_samp_design(study_design,
@@ -197,7 +203,6 @@ for (run in 1:study_design$num_runs) {
       cam_locs %>%
         dplyr::group_by(Speed) %>%
         dplyr::summarise(
-          # mean_count = mean(count, na.rm = T),
           ncams = dplyr::n(),
           .groups = 'drop'
         ),
@@ -209,38 +214,37 @@ for (run in 1:study_design$num_runs) {
     )  %>%
     dplyr::mutate(
       prop_cams = ncams / sum(ncams, na.rm = T),
-      # stay_prop_full = stay_prop / sum(stay_prop),
       d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps)
     ) %>%
     dplyr::arrange(desc(Speed)) %>%
     replace(is.na(.), 0)
   # 
-  cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>%
-                         dplyr::filter(t != 0))
-
-  n_adj <- habitat_summary %>%
-    dplyr::left_join(
-      cc %>%
-        dplyr::group_by(Speed) %>%
-        dplyr::summarise(
-          mean_count = mean(count, na.rm = T),
-          .groups = 'drop'
-        ),
-      by = dplyr::join_by(Speed)
-    ) %>%
-    dplyr::mutate(
-      mean_count = tidyr::replace_na(mean_count, 0),
-      ncams = tidyr::replace_na(ncams, 0)
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(
-      # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
-      n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
-      n_habitat = mean_count * d_coeff
-      # n_full = n_lscape / stay_prop
-      # big_D = mean_count * sum(stay_prop) / stay_prop
-    ) %>%
-    dplyr::select(Speed, prop_lscape, mean_count, ncams, cell_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
+  # cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>%
+  #                        dplyr::filter(t != 0))
+  # 
+  # n_adj <- habitat_summary %>%
+  #   dplyr::left_join(
+  #     cc %>%
+  #       dplyr::group_by(Speed) %>%
+  #       dplyr::summarise(
+  #         mean_count = mean(count, na.rm = T),
+  #         .groups = 'drop'
+  #       ),
+  #     by = dplyr::join_by(Speed)
+  #   ) %>%
+  #   dplyr::mutate(
+  #     mean_count = tidyr::replace_na(mean_count, 0),
+  #     ncams = tidyr::replace_na(ncams, 0)
+  #   ) %>%
+  #   dplyr::ungroup() %>%
+  #   dplyr::mutate(
+  #     # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
+  #     n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
+  #     n_habitat = mean_count * d_coeff
+  #     # n_full = n_lscape / stay_prop
+  #     # big_D = mean_count * sum(stay_prop) / stay_prop
+  #   ) %>%
+  #   dplyr::select(Speed, prop_lscape, mean_count, ncams, cell_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
 
   # # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
   # # Does not work if cameras aren't placed in every landscape type
@@ -257,7 +261,7 @@ for (run in 1:study_design$num_runs) {
                                            dplyr::filter(t != 0))),
         encounter_data = list(get_encounter_data(cam_locs, cam_captures[[1]])),
         stay_time_all = list(get_stay_time_data(cam_locs, cam_captures[[1]])),
-        stay_time_raw = list(stay_time_all[[1]][[1]]),
+        # stay_time_raw = list(stay_time_all[[1]][[1]]),
         stay_time_data = list(stay_time_all[[1]][[2]])
       )
     
@@ -285,8 +289,8 @@ for (run in 1:study_design$num_runs) {
             cam_locs = cam_locs,
             gamma_start = log(mean(count_data$count)),
             kappa_start = rep(log(mean(as.matrix(stay_time_data), na.rm = T)), study_design$num_covariates),
-            gamma_prior_var = 10^6,
-            kappa_prior_var = 10^6,
+            gamma_prior_var = 10^4,
+            kappa_prior_var = 10^4,
             gamma_tune = -1,
             kappa_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
@@ -314,8 +318,8 @@ for (run in 1:study_design$num_runs) {
           Model = "TDST",
           Covariate = "Covariate",
           Est = D.TDST.MCMC,
-          SD = SD.TDST.MCMC,
-          all_results = list(chain.TDST)
+          SD = SD.TDST.MCMC
+          # all_results = list(chain.TDST)
         )
       }
       
@@ -333,9 +337,9 @@ for (run in 1:study_design$num_runs) {
             cam_locs = cam_locs,
             gamma_start = log(mean(count_data$count)),
             kappa_start = kappa.prior.mu.tdst,
-            gamma_prior_var = 10^6,
+            gamma_prior_var = 10^4,
             kappa_prior_mu = kappa.prior.mu.tdst,
-            kappa_prior_var = kappa.prior.var.tdst * 10 ^ -3,
+            kappa_prior_var = kappa.prior.var.tdst,
             gamma_tune = -1,
             kappa_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
@@ -363,8 +367,8 @@ for (run in 1:study_design$num_runs) {
           Model = "TDST w/ Priors",
           Covariate = "Covariate",
           Est = D.TDST.MCMC,
-          SD = SD.TDST.MCMC,
-          all_results = list(chain.TDST.priors)
+          SD = SD.TDST.MCMC
+          # all_results = list(chain.TDST.priors)
         )
       }
       
@@ -380,7 +384,7 @@ for (run in 1:study_design$num_runs) {
             study_design = study_design,
             cam_design = cam_design,
             gamma_start = log(mean(count_data$count)),
-            gamma_prior_var = 10^6,
+            gamma_prior_var = 10^4,
             gamma_tune = -1,
             count_data_in = count_data$count
           )
@@ -404,8 +408,8 @@ for (run in 1:study_design$num_runs) {
           Model = "PR",
           Covariate = "Non-Covariate",
           Est = D.PR.MCMC,
-          SD = SD.PR.MCMC,
-          all_results = list(chain.PR)
+          SD = SD.PR.MCMC
+          # all_results = list(chain.PR)
         )
       }
       
@@ -422,7 +426,7 @@ for (run in 1:study_design$num_runs) {
             cam_design = cam_design,
             cam_locs = cam_locs,
             gamma_start = rep(log(mean(count_data$count)), study_design$num_covariates),
-            gamma_prior_var = 10^6,
+            gamma_prior_var = 10^4,
             gamma_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data$count
           )
@@ -432,7 +436,7 @@ for (run in 1:study_design$num_runs) {
           # MCMC.parms.PR.cov <- coda::as.mcmc(do.call(cbind, chain.PR.cov[-pop.ind.PR])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.PR.cov)
           
-          # plot(chain.PR$tot_u[study_design$burn_in:study_design$n_iter])
+          # plot(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
           D.PR.MCMC.cov <- mean(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
           SD.PR.MCMC.cov <- sd(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
           
@@ -447,8 +451,8 @@ for (run in 1:study_design$num_runs) {
           Model = "PR",
           Covariate = "Covariate",
           Est = D.PR.MCMC.cov,
-          SD = SD.PR.MCMC.cov,
-          all_results = list(chain.PR.cov)
+          SD = SD.PR.MCMC.cov
+          # all_results = list(chain.PR.cov)
         )
       }
       
@@ -465,11 +469,11 @@ for (run in 1:study_design$num_runs) {
             cam_design = cam_design,
             cam_locs = cam_locs,
             gamma_start = rep(log(mean(count_data$count)), study_design$num_covariates),
-            gamma_prior_var = 10^6,
+            gamma_prior_var = 10^4,
             gamma_tune = rep(-1, study_design$num_covariates),
             kappa_start = kappa.prior.mu.tdst,
             kappa_prior_mu = kappa.prior.mu.tdst,
-            kappa_prior_var = kappa.prior.var.tdst * 10 ^ -3,
+            kappa_prior_var = kappa.prior.var.tdst,
             kappa_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data,
             habitat_summary
@@ -484,7 +488,7 @@ for (run in 1:study_design$num_runs) {
           D.PR.MCMC.habitat <- mean(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
           SD.PR.MCMC.habitat <- sd(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
           
-          if (mean(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2 || mean(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7) {
+          if (any(colMeans(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) || any(colMeans(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
             warning(("Mean Count accept rate OOB"))
             D.PR.MCMC.habitat <- NA
             SD.PR.MCMC.habitat <- NA
@@ -495,8 +499,8 @@ for (run in 1:study_design$num_runs) {
           Model = "PR Habitat",
           Covariate = "Non-Covariate",
           Est = D.PR.MCMC.habitat,
-          SD = SD.PR.MCMC.habitat,
-          all_results = list(chain.PR.habitat)
+          SD = SD.PR.MCMC.habitat
+          # all_results = list(chain.PR.habitat)
         )
       }
       
@@ -535,10 +539,11 @@ plot_multirun_means(study_design, D.all %>%
                       dplyr::filter(is.finite(Est)))
 plot_multirun_sds(D.all %>% 
                     dplyr::filter(is.finite(Est)))
-# plot_multirun_mape(D.all %>% 
-#                       dplyr::filter(is.finite(Est)),
-#                    study_design$tot_animals)
-# plot_multirun_CV(D.all)
+plot_multirun_mape(D.all %>%
+                      dplyr::filter(is.finite(Est)),
+                   study_design$tot_animals)
+plot_multirun_CV(D.all %>% 
+                   dplyr::filter(is.finite(Est)))
 # plot_multirun_hist(D.all)
 
 # plot_ABM(study_design,
@@ -626,68 +631,15 @@ Data_summary <- all_data %>%
     num_stay_time_outliers_3 = sum(stay_time_data[[1]] > 3 * study_design$dt, na.rm = T)
   )
 
-# D_data_join <- full_join(D.all, Data_summary, by = "iteration")
+
+# results_fast_all_cam <- list(
+#   save_animal_data,
+#   study_design,
+#   cam_design,
+#   lscape_design,
+#   all_data,
+#   D.all
+# )
 # 
-# D_data_join %>% 
-#   group_by(Model) %>% 
-#   ggplot(aes(x = num_stay_time_outliers_3, y = Est)) +
-#   geom_point()
+# save(results_fast_all_cam, file = "Sim_results/results_fast_all_cam.RData")
 # 
-# # Check data fits
-# fit.pois <- fitdistrplus::fitdist(all_data$encounter_data[[1]]$encounter, "pois")
-# plot(fit.pois)
-# fit.pois$aic
-# fit.nbinom <- fitdistrplus::fitdist(all_data$encounter_data[[1]]$encounter, "nbinom")
-# fit.exp <- fitdistrplus::fitdist(all_data$stay_time_raw[[1]]$t_stay, "exp")
-# fit.gamma <- fitdistrplus::fitdist(all_data$stay_time_raw[[1]]$t_stay, "gamma")
-# fit.norm <- fitdistrplus::fitdist(x, "norm")
-# ###########################
-# # Save outputs
-# ###########################
-# # # Get folder path in G Drive
-# drive_link <- googledrive::drive_get("Blog")
-# 
-# # Upload specific variables in Rdata format
-# # Create temp file to save data
-# tmpfl <- tempfile(fileext = ".Rdata")
-# save(list=c("study_design", 
-#             "cam_design", 
-#             "lscape_design", 
-#             "all_data", 
-#             "D.all", 
-#             "animalxy.all"), file = tmpfl)
-# # # Upload to Drive
-# googledrive::drive_upload(tmpfl,
-#                           path = paste0(drive_link$path, "Cam_trap_activity_sims/R_dat"),
-#                           name = "active_base.Rdata")
-# 
-# # # Upload D.all
-# # Create temp file to save data
-# tmpfl <- tempfile(fileext = ".RDS")
-# 
-# saveRDS(D.all, file = tmpfl, compress = TRUE)
-# 
-# # Upload to Drive
-# googledrive::drive_upload(tmpfl,
-#                           path = paste0(drive_link$path, "Camera_trap_simulations/R_dat/activity_sims"),
-#                           name = "active_sims_90_results.RDS")
-# 
-# # Create temp file to save data
-# tmpfl <- tempfile(fileext = ".RDS")
-# 
-# saveRDS(all_data, file = tmpfl, compress = TRUE)
-# 
-# # # Upload to Drive
-# googledrive::drive_upload(tmpfl,
-#                           path = paste0(drive_link$path, "Camera_trap_simulations/R_dat/activity_sims"),
-#                           name = "active_sims_90_data.RDS")
-# 
-# # Create temp file to save data
-# tmpfl <- tempfile(fileext = ".RDS")
-# 
-# saveRDS(animalxy.all, file = tmpfl, compress = TRUE)
-# 
-# # # Upload to Drive
-# googledrive::drive_upload(tmpfl,
-#                           path = paste0(drive_link$path, "Camera_trap_simulations/R_dat/activity_sims"),
-#                           name = "active_sims_90_animal.RDS")
