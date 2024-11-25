@@ -31,7 +31,7 @@ fit.model.mcmc.TDST.cov <- function(study_design,
   gamma <- matrix(NA, n_iter + 1, 1)
   kappa <- matrix(NA, n_iter + 1, num_covariates)
   tot_u <- matrix(NA, n_iter + 1, 1)
-  accept <- matrix(NA, n_iter + 1, 1 + num_covariates)
+  accept <- matrix(NA, n_iter + 1, 2)
   gamma[1] <- gamma_start
   colnames(gamma) <- "gamma"
   kappa[1, ] <- kappa_start
@@ -39,7 +39,8 @@ fit.model.mcmc.TDST.cov <- function(study_design,
   colnames(tot_u) <- "Total estimate"
   colnames(accept) <- c(
     "accept.rate.gamma",
-    paste0("accept.rate.kappa.", covariate_labels)
+    # paste0("accept.rate.kappa.", covariate_labels)
+    "accept.rate.kappa"
   )
 
   # Account for censored times
@@ -102,75 +103,146 @@ fit.model.mcmc.TDST.cov <- function(study_design,
     beta <- exp(gamma[i + 1])
 
     # Sample kappa
-    for (kk in 1:num_covariates) {
-      kappa_star <- kappa[i, ]
-      kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
-      phi_star <- exp_na_covs(Z, kappa_star)
-      sum_phi_star <- sum(phi_star, na.rm = T)
-      if (is.infinite(sum_phi_star)) {
-        u_star <- phi_star * 0
-      } else {
-        u_star <- beta * phi_star / sum_phi_star
-      }
-
-      if (is.null(stay_time_data_in)) {
-        # No stay time data from cameras
-        mh1 <- sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
-          sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
-        mh2 <- sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
-          sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
-        mh <- exp(mh1-mh2)
-      } else{
-        # # repeat estimated parms for fitting
-        phi_star_cams <- phi_star[cam_locs$lscape_index] * cam_A / cell_A
-        phi_star_cam_rep <- matrix(rep(phi_star_cams, dim(stay_time_data_all)[2]),
-          nrow = ncam, ncol = dim(stay_time_data_all)[2]
-        )
-        phi_all_cams <- phi[cam_locs$lscape_index] * cam_A / cell_A
-        phi_all_cam_rep <- matrix(rep(phi_all_cams, dim(stay_time_data_all)[2]),
-          nrow = ncam, ncol = dim(stay_time_data_all)[2]
-        )
-  
-        # repeat estimated parms for fitting
-        u_star_cams <- u_star[cam_locs$lscape_index] * cam_A / cell_A
-        u_cams <- u[cam_locs$lscape_index] * cam_A / cell_A
+    # Sample kappa
+    kappa_star <- kappa[i, ]
+    kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
+    kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
+    
+    phi_star <- exp_na_covs(Z, kappa_star)
+    sum_phi_star <- sum(phi_star, na.rm = T)
+    if (is.infinite(sum_phi_star)) {
+      u_star <- phi_star * 0
+    } else {
+      u_star <- beta * phi_star / sum_phi_star
+    }
+    
+    if (is.null(stay_time_data_in)) {
+      # No stay time data from cameras
+      mh1 <- sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
+        sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+      mh2 <- sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
+        sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+      mh <- exp(mh1-mh2)
+    } else{
+      # # repeat estimated parms for fitting
+      phi_star_cams <- phi_star[cam_locs$lscape_index] * cam_A / cell_A
+      phi_star_cam_rep <- matrix(rep(phi_star_cams, dim(stay_time_data_all)[2]),
+                                 nrow = ncam, ncol = dim(stay_time_data_all)[2]
+      )
+      phi_all_cams <- phi[cam_locs$lscape_index] * cam_A / cell_A
+      phi_all_cam_rep <- matrix(rep(phi_all_cams, dim(stay_time_data_all)[2]),
+                                nrow = ncam, ncol = dim(stay_time_data_all)[2]
+      )
+      
+      # repeat estimated parms for fitting
+      u_star_cams <- u_star[cam_locs$lscape_index] * cam_A / cell_A
+      u_cams <- u[cam_locs$lscape_index] * cam_A / cell_A
+      
+      if (all(1 / phi_star_cams > 0) & all(!is.infinite(1 / phi_star_cams))) {
+        mh1 <- sum(dexp(stay_time_data_all, 1 / phi_star_cam_rep, log = TRUE), na.rm = TRUE) +
+          sum(pexp(stay_time_data_censor, 1 / phi_star_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+          sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
+          sum(dnorm(kappa_star, kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
+        mh2 <- sum(dexp(stay_time_data_all, 1 / phi_all_cam_rep, log = TRUE), na.rm = TRUE) +
+          sum(pexp(stay_time_data_censor, 1 / phi_all_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+          sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
+          sum(dnorm(kappa[i, ], kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
+        mh <- exp(mh1 - mh2)
         
-        if (all(1 / phi_star_cams > 0) & all(!is.infinite(1 / phi_star_cams))) {
-          mh1 <- sum(dexp(stay_time_data_all, 1 / phi_star_cam_rep, log = TRUE), na.rm = TRUE) +
-            sum(pexp(stay_time_data_censor, 1 / phi_star_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
-            sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
-            sum(dnorm(kappa_star, kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
-          mh2 <- sum(dexp(stay_time_data_all, 1 / phi_all_cam_rep, log = TRUE), na.rm = TRUE) +
-            sum(pexp(stay_time_data_censor, 1 / phi_all_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
-            sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
-            sum(dnorm(kappa[i, ], kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
-          mh <- exp(mh1 - mh2)
-  
-          # Alternate: fit staying time with gamma distribution
-          # if(all(1/phi_star_cams>0) & all(!is.infinite(1/phi_star_cams))){
-          #   mh1 <- sum(dgamma(stay_time_data_all, phi_star_cam_rep,log=TRUE),na.rm=TRUE) +
-          #     sum(pgamma(stay_time_data_censor, phi_star_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-          #     sum(dnorm(kappa_star,0,kappa_prior_var^0.5,log=TRUE))
-          #   mh2 <- sum(dgamma(stay_time_data_all, phi_all_cam_rep,log=TRUE),na.rm=TRUE) +
-          #     sum(pgamma(stay_time_data_censor, phi_all_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
-          #     sum(dnorm(kappa[i,],0,kappa_prior_var^0.5,log=TRUE))
-          #   mh <- exp(mh1-mh2)
-  
-        } else {
-          kappa[i, ] <- kappa[i, ]
-          accept[i + 1, 1 + kk] <- 0
-        }
-      }
-      if (mh > runif(1) & !is.na(mh)) {
-        kappa[i, ] <- kappa_star
-        accept[i + 1, 1 + kk] <- 1
-        u <- u_star
-        phi <- phi_star
+        # Alternate: fit staying time with gamma distribution
+        # if(all(1/phi_star_cams>0) & all(!is.infinite(1/phi_star_cams))){
+        #   mh1 <- sum(dgamma(stay_time_data_all, phi_star_cam_rep,log=TRUE),na.rm=TRUE) +
+        #     sum(pgamma(stay_time_data_censor, phi_star_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #     sum(dnorm(kappa_star,0,kappa_prior_var^0.5,log=TRUE))
+        #   mh2 <- sum(dgamma(stay_time_data_all, phi_all_cam_rep,log=TRUE),na.rm=TRUE) +
+        #     sum(pgamma(stay_time_data_censor, phi_all_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+        #     sum(dnorm(kappa[i,],0,kappa_prior_var^0.5,log=TRUE))
+        #   mh <- exp(mh1-mh2)
+        
       } else {
         kappa[i, ] <- kappa[i, ]
-        accept[i + 1, 1 + kk] <- 0
+        accept[i + 1, 2] <- 0
       }
     }
+    if (mh > runif(1) & !is.na(mh)) {
+      kappa[i, ] <- kappa_star
+      accept[i + 1, 2] <- 1
+      u <- u_star
+      phi <- phi_star
+    } else {
+      kappa[i, ] <- kappa[i, ]
+      accept[i + 1, 2] <- 0
+    }
+    
+    # for (kk in 1:num_covariates) {
+    #   kappa_star <- kappa[i, ]
+    #   kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
+    #   phi_star <- exp_na_covs(Z, kappa_star)
+    #   sum_phi_star <- sum(phi_star, na.rm = T)
+    #   if (is.infinite(sum_phi_star)) {
+    #     u_star <- phi_star * 0
+    #   } else {
+    #     u_star <- beta * phi_star / sum_phi_star
+    #   }
+    # 
+    #   if (is.null(stay_time_data_in)) {
+    #     # No stay time data from cameras
+    #     mh1 <- sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
+    #       sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    #     mh2 <- sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
+    #       sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    #     mh <- exp(mh1-mh2)
+    #   } else{
+    #     # # repeat estimated parms for fitting
+    #     phi_star_cams <- phi_star[cam_locs$lscape_index] * cam_A / cell_A
+    #     phi_star_cam_rep <- matrix(rep(phi_star_cams, dim(stay_time_data_all)[2]),
+    #       nrow = ncam, ncol = dim(stay_time_data_all)[2]
+    #     )
+    #     phi_all_cams <- phi[cam_locs$lscape_index] * cam_A / cell_A
+    #     phi_all_cam_rep <- matrix(rep(phi_all_cams, dim(stay_time_data_all)[2]),
+    #       nrow = ncam, ncol = dim(stay_time_data_all)[2]
+    #     )
+    # 
+    #     # repeat estimated parms for fitting
+    #     u_star_cams <- u_star[cam_locs$lscape_index] * cam_A / cell_A
+    #     u_cams <- u[cam_locs$lscape_index] * cam_A / cell_A
+    #     
+    #     if (all(1 / phi_star_cams > 0) & all(!is.infinite(1 / phi_star_cams))) {
+    #       mh1 <- sum(dexp(stay_time_data_all, 1 / phi_star_cam_rep, log = TRUE), na.rm = TRUE) +
+    #         sum(pexp(stay_time_data_censor, 1 / phi_star_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+    #         sum(dpois(count_data_in, u_star_cams, log = TRUE), na.rm = TRUE) +
+    #         sum(dnorm(kappa_star, kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
+    #       mh2 <- sum(dexp(stay_time_data_all, 1 / phi_all_cam_rep, log = TRUE), na.rm = TRUE) +
+    #         sum(pexp(stay_time_data_censor, 1 / phi_all_cam_rep, lower.tail = F, log = TRUE), na.rm = TRUE) +
+    #         sum(dpois(count_data_in, u_cams, log = TRUE), na.rm = TRUE) +
+    #         sum(dnorm(kappa[i, ], kappa_prior_mu, kappa_prior_var^0.5, log = TRUE))
+    #       mh <- exp(mh1 - mh2)
+    # 
+    #       # Alternate: fit staying time with gamma distribution
+    #       # if(all(1/phi_star_cams>0) & all(!is.infinite(1/phi_star_cams))){
+    #       #   mh1 <- sum(dgamma(stay_time_data_all, phi_star_cam_rep,log=TRUE),na.rm=TRUE) +
+    #       #     sum(pgamma(stay_time_data_censor, phi_star_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+    #       #     sum(dnorm(kappa_star,0,kappa_prior_var^0.5,log=TRUE))
+    #       #   mh2 <- sum(dgamma(stay_time_data_all, phi_all_cam_rep,log=TRUE),na.rm=TRUE) +
+    #       #     sum(pgamma(stay_time_data_censor, phi_all_cam_rep, lower.tail = F, log = TRUE),na.rm=TRUE) +
+    #       #     sum(dnorm(kappa[i,],0,kappa_prior_var^0.5,log=TRUE))
+    #       #   mh <- exp(mh1-mh2)
+    # 
+    #     } else {
+    #       kappa[i, ] <- kappa[i, ]
+    #       accept[i + 1, 1 + kk] <- 0
+    #     }
+    #   }
+    #   if (mh > runif(1) & !is.na(mh)) {
+    #     kappa[i, ] <- kappa_star
+    #     accept[i + 1, 1 + kk] <- 1
+    #     u <- u_star
+    #     phi <- phi_star
+    #   } else {
+    #     kappa[i, ] <- kappa[i, ]
+    #     accept[i + 1, 1 + kk] <- 0
+    #   }
+    # }
     kappa[i + 1, ] <- kappa[i, ]
     phi <- exp_na_covs(Z, kappa[i + 1, ])
 
@@ -184,18 +256,23 @@ fit.model.mcmc.TDST.cov <- function(study_design,
       accept_gamma_check <- mean(accept[(i - tune_check + 1):i, 1], na.rm = T)
       gamma_tune[which(accept_gamma_check > 0.44)] <- gamma_tune[which(accept_gamma_check > 0.44)] + delta_n
       gamma_tune[which(accept_gamma_check <= 0.44)] <- gamma_tune[which(accept_gamma_check <= 0.44)] - delta_n
-      accept_kappa_check <- colMeans(
-        array(
-          accept[
-            (i - tune_check + 1):i,
-            2:(1 + num_covariates)
-          ],
-          dim = c(tune_check, num_covariates)
-        ),
-        na.rm = T
-      )
-      kappa_tune[which(accept_kappa_check > 0.44)] <- kappa_tune[which(accept_kappa_check > 0.44)] + delta_n
-      kappa_tune[which(accept_kappa_check <= 0.44)] <- kappa_tune[which(accept_kappa_check <= 0.44)] - delta_n
+      
+      accept_kappa_check <- mean(accept[(i - tune_check + 1):i, 2], na.rm = T)
+      kappa_tune[accept_kappa_check > 0.44] <- kappa_tune[accept_kappa_check > 0.44] + delta_n
+      kappa_tune[accept_kappa_check <= 0.44] <- kappa_tune[accept_kappa_check <= 0.44] - delta_n
+      
+      # accept_kappa_check <- colMeans(
+      #   array(
+      #     accept[
+      #       (i - tune_check + 1):i,
+      #       2:(1 + num_covariates)
+      #     ],
+      #     dim = c(tune_check, num_covariates)
+      #   ),
+      #   na.rm = T
+      # )
+      # kappa_tune[which(accept_kappa_check > 0.44)] <- kappa_tune[which(accept_kappa_check > 0.44)] + delta_n
+      # kappa_tune[which(accept_kappa_check <= 0.44)] <- kappa_tune[which(accept_kappa_check <= 0.44)] - delta_n
     }
   }
   # print("MCMC complete")
@@ -482,9 +559,6 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     
     # Sample kappa
     kappa_star <- kappa[i, ]
-    # for (kk in 1:(num_covariates - 1)) {
-    #   kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
-    # }
     kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
     kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
     
