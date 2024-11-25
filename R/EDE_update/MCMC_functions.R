@@ -415,15 +415,20 @@ fit.model.mcmc.PR.habitat <- function(study_design,
   gamma <- matrix(, n_iter + 1, num_covariates)
   kappa <- matrix(, n_iter + 1, num_covariates)
   tot_u <- matrix(, n_iter + 1, 1)
-  accept <- matrix(, n_iter + 1, 2 * num_covariates)
+  # accept <- matrix(, n_iter + 1, 2 * num_covariates)
+  accept <- matrix(, n_iter + 1, num_covariates + 1)
   gamma[1, ] <- gamma_start
   colnames(gamma) <- paste0("gamma.", covariate_labels)
   kappa[1, ] <- kappa_start
   colnames(kappa) <- paste0("kappa.", covariate_labels)
   colnames(tot_u) <- "Total estimate"
+  # colnames(accept) <- c(
+  #   paste0("accept.rate.gamma.", covariate_labels),
+  #   paste0("accept.rate.kappa.", covariate_labels)
+  # )
   colnames(accept) <- c(
     paste0("accept.rate.gamma.", covariate_labels),
-    paste0("accept.rate.kappa.", covariate_labels)
+    "accept.rate.kappa."
   )
   
   d <- exp(gamma[1, ])
@@ -476,28 +481,50 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     d <- exp(gamma[i + 1, ])
     
     # Sample kappa
-    for (kk in 1:num_covariates) {
-      kappa_star <- kappa[i, ]
-      kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
-      
-      # u_star <- d * habitat_summary$n_lscape * habitat_summary$prop_cams * 
-      #   exp(kappa_star) / (cam_design$cam_A * study_design$t_steps)
-      
-      # Proportional staying time defined by priors
-      mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
-      mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
-      mh <- exp(mh1-mh2)
-      
-      if (mh > runif(1) & !is.na(mh)) {
-        kappa[i, ] <- kappa_star
-        accept[i + 1, num_covariates + kk] <- 1
-        # u <- u_star
-      } else {
-        kappa[i, ] <- kappa[i, ]
-        accept[i + 1, num_covariates + kk] <- 0
-      }
-      
+    kappa_star <- kappa[i, ]
+    # for (kk in 1:(num_covariates - 1)) {
+    #   kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
+    # }
+    kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
+    kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
+    
+    # Proportional staying time defined by priors
+    mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    mh <- exp(mh1-mh2)
+    
+    if (mh > runif(1) & !is.na(mh)) {
+      kappa[i, ] <- kappa_star
+      accept[i + 1, num_covariates + 1] <- 1
+      # u <- u_star
+    } else {
+      kappa[i, ] <- kappa[i, ]
+      accept[i + 1, num_covariates + 1] <- 0
     }
+    
+    # for (kk in 1:num_covariates) {
+    #   kappa_star <- kappa[i, ]
+    #   kappa_star[kk] <- rnorm(1, kappa[i, kk], exp(2 * kappa_tune[kk]))
+    #   kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
+    #   
+    #   # u_star <- d * habitat_summary$n_lscape * habitat_summary$prop_cams * 
+    #   #   exp(kappa_star) / (cam_design$cam_A * study_design$t_steps)
+    #   
+    #   # Proportional staying time defined by priors
+    #   mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    #   mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
+    #   mh <- exp(mh1-mh2)
+    #   
+    #   if (mh > runif(1) & !is.na(mh)) {
+    #     kappa[i, ] <- kappa_star
+    #     accept[i + 1, num_covariates + kk] <- 1
+    #     # u <- u_star
+    #   } else {
+    #     kappa[i, ] <- kappa[i, ]
+    #     accept[i + 1, num_covariates + kk] <- 0
+    #   }
+    #   
+    # }
     
     kappa[i + 1, ] <- kappa[i, ]
 
@@ -515,18 +542,23 @@ fit.model.mcmc.PR.habitat <- function(study_design,
       #mean(accept[(i - tune_check + 1):i], na.rm = T)
       gamma_tune[accept_gamma_check > 0.44] <- gamma_tune[accept_gamma_check > 0.44] + delta_n
       gamma_tune[accept_gamma_check <= 0.44] <- gamma_tune[accept_gamma_check <= 0.44] - delta_n
-      accept_kappa_check <- colMeans(
-        array(
-          accept[
-            (i - tune_check + 1):i,
-            (num_covariates + 1):(2 * num_covariates)
-          ],
-          dim = c(tune_check, num_covariates)
-        ),
-        na.rm = T
-      )
-      kappa_tune[which(accept_kappa_check > 0.44)] <- kappa_tune[which(accept_kappa_check > 0.44)] + delta_n
-      kappa_tune[which(accept_kappa_check <= 0.44)] <- kappa_tune[which(accept_kappa_check <= 0.44)] - delta_n
+      
+      accept_kappa_check <- mean(accept[(i - tune_check + 1):i, num_covariates + 1], na.rm = T)
+      kappa_tune[accept_kappa_check > 0.44] <- kappa_tune[accept_kappa_check > 0.44] + delta_n
+      kappa_tune[accept_kappa_check <= 0.44] <- kappa_tune[accept_kappa_check <= 0.44] - delta_n
+      
+      # accept_kappa_check <- colMeans(
+      #   array(
+      #     accept[
+      #       (i - tune_check + 1):i,
+      #       (num_covariates + 1):(2 * num_covariates)
+      #     ],
+      #     dim = c(tune_check, num_covariates)
+      #   ),
+      #   na.rm = T
+      # )
+      # kappa_tune[which(accept_kappa_check > 0.44)] <- kappa_tune[which(accept_kappa_check > 0.44)] + delta_n
+      # kappa_tune[which(accept_kappa_check <= 0.44)] <- kappa_tune[which(accept_kappa_check <= 0.44)] - delta_n
     }
   }
   # print("MCMC complete")
