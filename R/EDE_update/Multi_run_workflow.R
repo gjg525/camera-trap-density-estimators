@@ -158,7 +158,7 @@ for (run in 1:study_design$num_runs) {
     dplyr::group_by(speed) %>% 
     dplyr::summarise(
       cell_mu = mean(t_stay),
-      cell_sd = sd(t_stay),
+      cell_sd = sd(log(t_stay)),
       # cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
       # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
       .groups = 'drop'
@@ -170,9 +170,9 @@ for (run in 1:study_design$num_runs) {
     ) %>% 
     dplyr::rename(Speed = speed) %>% 
     dplyr::arrange(desc(Speed))
-  
-  kappa.prior.mu.tdst <- log(stay_time_summary$stay_prop)
-  kappa.prior.var.tdst <- stay_time_summary$cell_sd
+
+  kappa.prior.mu <- log(stay_time_summary$stay_prop)
+  kappa.prior.var <- stay_time_summary$cell_sd ^ 2
 
   # If running new ABM simulation on each run, save
   save_animal_data$data[run] <- list(animalxy.all)
@@ -292,7 +292,7 @@ for (run in 1:study_design$num_runs) {
             gamma_prior_var = 10^4,
             kappa_prior_var = 10^4,
             gamma_tune = -1,
-            kappa_tune = rep(-1, study_design$num_covariates),
+            kappa_tune = -1, #rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
             stay_time_data_in = as.matrix(stay_time_data)
           )
@@ -336,12 +336,12 @@ for (run in 1:study_design$num_runs) {
             cam_design = cam_design,
             cam_locs = cam_locs,
             gamma_start = log(mean(count_data$count)),
-            kappa_start = kappa.prior.mu.tdst,
+            kappa_start = kappa.prior.mu,
             gamma_prior_var = 10^4,
-            kappa_prior_mu = kappa.prior.mu.tdst,
-            kappa_prior_var = kappa.prior.var.tdst,
+            kappa_prior_mu = kappa.prior.mu,
+            kappa_prior_var = kappa.prior.var,
             gamma_tune = -1,
-            kappa_tune = rep(-1, study_design$num_covariates),
+            kappa_tune = -1, #rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
             stay_time_data_in = NULL
           )
@@ -471,10 +471,10 @@ for (run in 1:study_design$num_runs) {
             gamma_start = rep(log(mean(count_data$count)), study_design$num_covariates),
             gamma_prior_var = 10^4,
             gamma_tune = rep(-1, study_design$num_covariates),
-            kappa_start = kappa.prior.mu.tdst,
-            kappa_prior_mu = kappa.prior.mu.tdst,
-            kappa_prior_var = kappa.prior.var.tdst,
-            kappa_tune = rep(-1, study_design$num_covariates),
+            kappa_start = kappa.prior.mu,
+            kappa_prior_mu = kappa.prior.mu,
+            kappa_prior_var = kappa.prior.var,
+            kappa_tune = -1, #rep(-1, study_design$num_covariates),
             count_data_in = count_data,
             habitat_summary
           )
