@@ -103,11 +103,9 @@ fit.model.mcmc.TDST.cov <- function(study_design,
     beta <- exp(gamma[i + 1])
 
     # Sample kappa
-    # Sample kappa
     kappa_star <- kappa[i, ]
     kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
-    kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
-    
+
     phi_star <- exp_na_covs(Z, kappa_star)
     sum_phi_star <- sum(phi_star, na.rm = T)
     if (is.infinite(sum_phi_star)) {
@@ -115,6 +113,10 @@ fit.model.mcmc.TDST.cov <- function(study_design,
     } else {
       u_star <- beta * phi_star / sum_phi_star
     }
+    
+    # repeat estimated parms for fitting
+    u_star_cams <- u_star[cam_locs$lscape_index] * cam_A / cell_A
+    u_cams <- u[cam_locs$lscape_index] * cam_A / cell_A
     
     if (is.null(stay_time_data_in)) {
       # No stay time data from cameras

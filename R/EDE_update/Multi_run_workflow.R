@@ -35,8 +35,8 @@ study_design <- tibble::tibble(
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
   num_runs = 1000,
-  n_iter = 20000,
-  burn_in = 10000,
+  n_iter = 40000,
+  burn_in = 30000,
   # staying time censors
   t_censor = 10, 
   run_models = list(1:5),
@@ -60,16 +60,6 @@ lscape_design <- tibble::tibble(
 # Cam designs
 cam_design <- tibble::tibble(
   ncam = 200,
-  Design = "Random",
-  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-
-  # Design = "Bias",
-  # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
-  # cam_length = study_design$dx * 0.3, # length of all viewshed sides
-  cam_length = study_design$dx * 0.1, # length of all viewshed sides
-  cam_A = cam_length ^ 2 / 2,
-  tot_snaps = ncam * study_design$t_steps
-)
 # Design = "Bias",
 # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads  # Design = "Bias",
   # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
@@ -79,6 +69,15 @@ cam_design <- tibble::tibble(
   # Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
   # Design = "Bias",
   # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
+  Design = "Bias",
+  Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
+  # cam_length = study_design$dx * 0.3, # length of all viewshed sides
+  cam_length = study_design$dx * 0.1, # length of all viewshed sides
+  cam_A = cam_length ^ 2 / 2,
+  tot_snaps = ncam * study_design$t_steps
+)
+  # Design = "Random",
+  # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
 
 num_models <- length(unlist(study_design$run_models))
 
@@ -145,9 +144,6 @@ for (run in 1:study_design$num_runs) {
         unlist(covariate_labels)))
     )
   
-  # Set first column as reference category for intercept
-  study_design$Z[[1]][, 1] <- 1
-  
   # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
@@ -171,6 +167,17 @@ for (run in 1:study_design$num_runs) {
     dplyr::rename(Speed = speed) %>% 
     dplyr::arrange(desc(Speed))
 
+  # Use smallest stay time as reference category
+  ref_cat_idx <- which(stay_time_summary$stay_prop == min(stay_time_summary$stay_prop))
+  
+  # Set reference category for intercept
+  study_design$Z[[1]][, ref_cat_idx] <- 1
+  
+  # Subtract reference category from stay time proportion
+  prop_adjust <- stay_time_summary$stay_prop /
+    stay_time_summary$stay_prop[ref_cat_idx]
+  prop_adjust[ref_cat_idx] <- stay_time_summary$stay_prop[ref_cat_idx]
+  kappa.prior.mu.adj <- log(prop_adjust)
   kappa.prior.mu <- log(stay_time_summary$stay_prop)
   kappa.prior.var <- stay_time_summary$cell_sd ^ 2
 
@@ -336,9 +343,9 @@ for (run in 1:study_design$num_runs) {
             cam_design = cam_design,
             cam_locs = cam_locs,
             gamma_start = log(mean(count_data$count)),
-            kappa_start = kappa.prior.mu,
+            kappa_start = kappa.prior.mu.adj,
             gamma_prior_var = 10^4,
-            kappa_prior_mu = kappa.prior.mu,
+            kappa_prior_mu = kappa.prior.mu.adj,
             kappa_prior_var = kappa.prior.var,
             gamma_tune = -1,
             kappa_tune = -1, #rep(-1, study_design$num_covariates),
@@ -632,7 +639,7 @@ Data_summary <- all_data %>%
   )
 
 
-# results_fast_all_cam <- list(
+# results_random_cam_alt <- list(
 #   save_animal_data,
 #   study_design,
 #   cam_design,
@@ -641,5 +648,5 @@ Data_summary <- all_data %>%
 #   D.all
 # )
 # 
-# save(results_fast_all_cam, file = "Sim_results/results_fast_all_cam.RData")
+# save(results_random_cam_alt, file = "Sim_results/results_random_cam_alt.RData")
 # 
