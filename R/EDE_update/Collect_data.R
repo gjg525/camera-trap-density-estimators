@@ -184,29 +184,29 @@
           .groups = "drop"
         )
 
-      stay_time_ref <- tibble::tibble(
-        Speed = c("Slow", "Medium", "Fast"),
-        mean_stay = 1
-      ) %>%
-        dplyr::filter(
-          !(Speed %in% unique(stay_time_raw$Speed))
-        )
-
-      stay_time_normalize <- stay_time_raw %>%
-        dplyr::group_by(Speed) %>%
-        dplyr::summarise(
-          mean_stay = mean(t_stay),
-          .groups = 'drop'
-        ) %>%
-        dplyr::bind_rows(stay_time_ref) %>%
-        dplyr::summarise(
-          sum_stay = sum(mean_stay)
-        ) %>%
-        dplyr::pull(sum_stay)
+      # stay_time_ref <- tibble::tibble(
+      #   Speed = c("Slow", "Medium", "Fast"),
+      #   mean_stay = 1
+      # ) %>%
+      #   dplyr::filter(
+      #     !(Speed %in% unique(stay_time_raw$Speed))
+      #   )
+      # 
+      # stay_time_normalize <- stay_time_raw %>%
+      #   dplyr::group_by(Speed) %>%
+      #   dplyr::summarise(
+      #     mean_stay = mean(t_stay),
+      #     .groups = 'drop'
+      #   ) %>%
+      #   dplyr::bind_rows(stay_time_ref) %>%
+      #   dplyr::summarise(
+      #     sum_stay = sum(mean_stay)
+      #   ) %>%
+      #   dplyr::pull(sum_stay)
       
       # Format staying time data
       stay_time_data <- stay_time_raw %>% 
-        dplyr::mutate(t_stay = t_stay / stay_time_normalize) %>%
+        # dplyr::mutate(t_stay = t_stay / stay_time_normalize) %>%
         # dplyr::add_row(lscape_index = cam_locs$lscape_index[cam_locs$lscape_index %notin% cam_captures$lscape_index]) |>
         dplyr::full_join(cam_locs |>
                            select(cam_ID, lscape_index),
