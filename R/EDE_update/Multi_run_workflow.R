@@ -12,6 +12,10 @@ source("./R/EDE_update/Create_landscape.R")
 source("./R/EDE_update/Collect_data.R")
 source("./R/EDE_update/Collect_tele_data.R")
 
+# Load animal GPS data
+load(file = "Sim_results/save_animal_data.RData")
+load(file = "Sim_results/save_lscape_defs.RData")
+
 # Initializations
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 options(ggplot2.discrete.colour = fig_colors)
@@ -34,7 +38,7 @@ study_design <- tibble::tibble(
   activity_sync = "sync",
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
-  num_runs = 1000,
+  num_runs = 10,
   n_iter = 40000,
   burn_in = 30000,
   # staying time censors
@@ -60,24 +64,20 @@ lscape_design <- tibble::tibble(
 # Cam designs
 cam_design <- tibble::tibble(
   ncam = 200,
-# Design = "Bias",
-# Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads  # Design = "Bias",
-  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
+  Design = "Random",
+  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
   # Design = "Bias",
+  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
   # Props = list(c(0.1, 0.8, 0.1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
   # Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
+  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
   # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
-  Design = "Bias",
-  Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
+  # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
   # cam_length = study_design$dx * 0.3, # length of all viewshed sides
   cam_length = study_design$dx * 0.1, # length of all viewshed sides
   cam_A = cam_length ^ 2 / 2,
   tot_snaps = ncam * study_design$t_steps
 )
-  # Design = "Random",
-  # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
 
 num_models <- length(unlist(study_design$run_models))
 
@@ -91,10 +91,15 @@ D.all <- tibble::tibble(
   # all_results = NA
 )
 
-save_animal_data <- tibble::tibble(
-  iteration = 1:study_design$num_runs,
-  data = NA
-)
+# save_animal_data <- tibble::tibble(
+#   iteration = 1:study_design$num_runs,
+#   data = NA
+# )
+# 
+# save_lscape_defs <- tibble::tibble(
+#   iteration = 1:study_design$num_runs,
+#   data = NA
+# )
 
 all_data <- tibble::tibble(
   iteration = 1:study_design$num_runs,
@@ -131,8 +136,21 @@ cam_design <- cam_design %>%
 for (run in 1:study_design$num_runs) {
   print(paste("Run", run, "of", study_design$num_runs))
 
-  # # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
-  lscape_defs <- lscape_creator(study_design, lscape_design)
+  # # # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
+  # lscape_defs <- lscape_creator(study_design, lscape_design)
+  # 
+  # # # Run agent-based model
+  # animalxy.all <- ABM_sim(study_design,
+  #                         lscape_defs)
+  # # If running new ABM simulation on each run, save
+  # save_animal_data$data[run] <- list(animalxy.all)
+  # 
+  # # If running new ABM simulation on each run, save
+  # save_lscape_defs$data[run] <- list(lscape_defs)
+  
+  # Load ABM from save file
+  animalxy.all <- save_animal_data$data[[run]]
+  lscape_defs <- save_lscape_defs$data[[run]]
   
   # Create covariate matrix with 0, 1 values
   study_design <- study_design %>% 
@@ -144,45 +162,38 @@ for (run in 1:study_design$num_runs) {
         unlist(covariate_labels)))
     )
   
-  # Run agent-based model
-  animalxy.all <- ABM_sim(study_design,
-                          lscape_defs)
+  tele_summary <- Collect_tele_data(animalxy.all, study_design)
   
-  stay_time_tele <- Collect_tele_data(animalxy.all, study_design)
-  
-  stay_time_summary <- stay_time_tele %>% 
-    dplyr::group_by(speed) %>% 
-    dplyr::summarise(
-      cell_mu = mean(t_stay),
-      cell_sd = sd(log(t_stay)),
-      # cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-      # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-      .groups = 'drop'
-    ) %>% 
-    dplyr::mutate(
-      sum_stay = sum(cell_mu),
-      stay_prop = cell_mu / sum_stay,
-      cell_sd = cell_sd / sum_stay
-    ) %>% 
-    dplyr::rename(Speed = speed) %>% 
-    dplyr::arrange(desc(Speed))
+  # stay_time_summary <- tele_summary %>%
+  #   dplyr::group_by(speed) %>%
+  #   dplyr::summarise(
+  #     cell_mu = mean(t_stay),
+  #     cell_sd = sd(log(t_stay)),
+  #     # cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+  #     # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
+  #     .groups = 'drop'
+  #   ) %>%
+  #   dplyr::mutate(
+  #     sum_stay = sum(cell_mu),
+  #     stay_prop = cell_mu / sum_stay,
+  #     cell_sd = cell_sd / sum_stay
+  #   ) %>%
+  #   dplyr::rename(Speed = speed) %>%
+  #   dplyr::arrange(desc(Speed))
 
   # Use smallest stay time as reference category
-  ref_cat_idx <- which(stay_time_summary$stay_prop == min(stay_time_summary$stay_prop))
+  ref_cat_idx <- which(tele_summary$stay_prop == min(tele_summary$stay_prop))
   
   # Set reference category for intercept
   study_design$Z[[1]][, ref_cat_idx] <- 1
   
   # Subtract reference category from stay time proportion
-  prop_adjust <- stay_time_summary$stay_prop /
-    stay_time_summary$stay_prop[ref_cat_idx]
-  prop_adjust[ref_cat_idx] <- stay_time_summary$stay_prop[ref_cat_idx]
+  prop_adjust <- tele_summary$stay_prop /
+    tele_summary$stay_prop[ref_cat_idx]
+  prop_adjust[ref_cat_idx] <- tele_summary$stay_prop[ref_cat_idx]
   kappa.prior.mu.adj <- log(prop_adjust)
-  kappa.prior.mu <- log(stay_time_summary$stay_prop)
-  kappa.prior.var <- stay_time_summary$cell_sd ^ 2
-
-  # If running new ABM simulation on each run, save
-  save_animal_data$data[run] <- list(animalxy.all)
+  kappa.prior.mu <- log(tele_summary$stay_prop)
+  kappa.prior.var <- tele_summary$stay_sd ^ 2 # stay_time_summary$cell_sd ^ 2
   
   # Place cameras on study area
   cam_locs <- create_cam_samp_design(study_design,
@@ -216,7 +227,7 @@ for (run in 1:study_design$num_runs) {
       by = dplyr::join_by(Speed)
     ) %>%
     dplyr::left_join(
-      stay_time_summary,
+      tele_summary,
       by = dplyr::join_by(Speed)
     )  %>%
     dplyr::mutate(
@@ -251,12 +262,12 @@ for (run in 1:study_design$num_runs) {
   #     # n_full = n_lscape / stay_prop
   #     # big_D = mean_count * sum(stay_prop) / stay_prop
   #   ) %>%
-  #   dplyr::select(Speed, prop_lscape, mean_count, ncams, cell_mu, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
-
+  #   dplyr::select(Speed, prop_lscape, mean_count, ncams, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
+  # 
   # # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
   # # Does not work if cameras aren't placed in every landscape type
   # sum(n_adj$n_lscape, na.rm = T)
-  #
+  # 
   # # This method is more reliable when one or more lscape type is missing
   # sum(n_adj$n_habitat)
 
@@ -522,8 +533,8 @@ for (run in 1:study_design$num_runs) {
 }
 
 # # # Remove outlier estimates
-# D.all$Est[D.all$Est > 5 * study_design$tot_animals] <- NA
-# D.all$SD[D.all$SD > 5 * study_design$tot_animals] <- NA
+D.all$Est[D.all$Est > 5 * study_design$tot_animals] <- NA
+D.all$SD[D.all$SD > 5 * study_design$tot_animals] <- NA
 
 # # Omit all_results column (too much data)
 # D.all <- D.all %>% 
@@ -639,8 +650,8 @@ Data_summary <- all_data %>%
   )
 
 
-# results_random_cam_alt <- list(
-#   save_animal_data,
+# results_fast_cam_alt <- list(
+#   # save_animal_data,
 #   study_design,
 #   cam_design,
 #   lscape_design,
@@ -648,5 +659,8 @@ Data_summary <- all_data %>%
 #   D.all
 # )
 # 
-# save(results_random_cam_alt, file = "Sim_results/results_random_cam_alt.RData")
-# 
+# save(results_fast_cam_alt, file = "Sim_results/results_fast_cam_alt.RData")
+
+
+# save(save_animal_data, file = "Sim_results/save_animal_data.RData")
+# save(save_lscape_defs, file = "Sim_results/save_lscape_defs.RData")

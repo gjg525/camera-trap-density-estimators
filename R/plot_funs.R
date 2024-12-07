@@ -380,12 +380,13 @@ plot_grouped_multirun_CV <- function(Unused_cov = "None",
 plot_multirun_hist <- function() {
   mean_data <- D.all |>
     group_by(Model) |>
-    summarise(Means = mean(Est),
+    summarise(Means = median(Est),
               SDs = sd(Est))
 
   ggplot(D.all, aes(x = Est, fill = Model)) +
-    geom_density(position = "identity", alpha = 0.3, adjust = 1) +
-    # geom_vline(data = mean_data, aes(xintercept = Means, color = Model)) +
+    # geom_density(position = "identity", alpha = 0.3, adjust = 1) +
+    geom_histogram(position = "identity", alpha = 0.3, adjust = 1) +
+    geom_vline(data = mean_data, aes(xintercept = Means, color = Model)) +
     labs(x = "Estimate", y = "Density", fill="Model") +
     theme(text = element_text(size = 20),
           legend.title=element_blank(),
