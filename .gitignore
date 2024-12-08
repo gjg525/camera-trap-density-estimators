@@ -5,3 +5,5 @@
 Noncov_subcam_mean.eps
 *.RData
 *.rds
+Sim_results_old/*
+Sim_results/*
