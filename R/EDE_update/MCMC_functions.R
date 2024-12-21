@@ -395,7 +395,7 @@ fit.model.mcmc.PR.cov <- function(study_design,
   ))
   # Initialize with landscape-scale covariates
   d <- exp_na_covs(Z, gamma[1, ]) # expected densities
-  u <- d / t_steps
+  u <- d / t_steps / cam_A * cell_A
   tot_u[1] <- sum(u, na.rm = T)
   
   tune_check <- 100
@@ -410,11 +410,11 @@ fit.model.mcmc.PR.cov <- function(study_design,
       gamma_star <- gamma[i, ]
       gamma_star[gg] <- rnorm(1, gamma[i, gg], exp(2 * gamma_tune[gg]))
       d_star <- exp_na_covs(Z, gamma_star)
-      u_star <- d_star / t_steps
+      u_star <- d_star / t_steps / cam_A * cell_A
       
       # repeat estimated parms for fitting
-      d_star_cams <- d_star[cam_locs$lscape_index] * cam_A / cell_A
-      d_all_cams <- d[cam_locs$lscape_index] * cam_A / cell_A
+      d_star_cams <- d_star[cam_locs$lscape_index] 
+      d_all_cams <- d[cam_locs$lscape_index]
       
       if (all(d_star_cams > 0)) {
         mh1 <- sum(dpois(count_data_in, d_star_cams, log = TRUE), na.rm = TRUE) +
@@ -439,7 +439,7 @@ fit.model.mcmc.PR.cov <- function(study_design,
     }
     gamma[i + 1, ] <- gamma[i, ]
     d <- exp_na_covs(Z, gamma[i + 1, ])
-    u <- d / t_steps
+    u <- d / t_steps / cam_A * cell_A
     tot_u[i + 1] <- sum(u, na.rm = T)
     
     # Update tuning parms
@@ -561,9 +561,10 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     
     # Sample kappa
     kappa_star <- kappa[i, ]
-    kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
+    # kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
+    kappa_star <- truncnorm::rtruncnorm(3, 0, Inf, kappa[i, ], exp(2 * kappa_tune))
     kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
-    
+
     # Proportional staying time defined by priors
     mh1 <- sum(dnorm(kappa_star,kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
     mh2 <- sum(dnorm(kappa[i,],kappa_prior_mu,kappa_prior_var^0.5,log=TRUE))
