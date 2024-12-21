@@ -2,19 +2,35 @@
 # Collect data telemetry
 ########################################
 Collect_tele_data = function(animalxy.all, study_design) {
-  # Collect animal location in each time step
-  cell_captures_tele <- animalxy.all %>% 
-    dplyr::filter(t %in% seq(1, study_design$t_steps, study_design$dt)) %>% 
-    dplyr::rename(Speed = lscape_type) %>% 
-    dplyr::group_by(Speed) %>% 
-    dplyr::count() %>% 
-    dplyr::ungroup() %>% 
+  # # Calculate mean residence indices
+  cell_captures_tele <- animalxy.all %>%
+    dplyr::filter(t %in% seq(1, study_design$t_steps, study_design$dt)) %>%
+    dplyr::rename(Speed = lscape_type) %>%
+    dplyr::group_by(Speed) %>%
+    dplyr::count() %>%
+    dplyr::ungroup() %>%
     dplyr::mutate(
       stay_prop = n / sum(n),
       # Standard deviation for log-transformed counts
       stay_sd = sqrt(stay_prop * (1 - stay_prop) / sum(n)) / stay_prop
-    ) %>% 
+      # # variance on multinomial distribution
+      # stay_sd = stay_prop * (1 - stay_prop) / sum(n)
+    ) %>%
     dplyr::arrange(desc(Speed))
+  
+  # # Calculate mean
+  # cell_captures_tele <- animalxy.all %>% 
+  #   dplyr::filter(t %in% seq(1, study_design$t_steps, study_design$dt)) %>% 
+  #   dplyr::rename(Speed = lscape_type) %>% 
+  #   dplyr::group_by(Speed, lscape_index) %>% 
+  #   dplyr::count() %>% 
+  #   dplyr::group_by(Speed) %>% 
+  #   dplyr::summarise(
+  #     mean_n = mean(n),
+  #     sd_n = sd(n)
+  #   ) %>% 
+  #   dplyr::ungroup() %>% 
+  #   dplyr::arrange(desc(Speed))
   
   # # First, collect data within each grid cell to reduce subsequent calculations
   # # Creates IDs (pass_i) for each pass through a cell and landscape indices for the cell that the individual passes into (next_i)
