@@ -38,7 +38,7 @@ study_design <- tibble::tibble(
   activity_sync = "sync",
   activity_prob = list(rep(1, t_steps)), # can be defined for all time steps
   # MCMC parms
-  num_runs = 10,
+  num_runs = 1000,
   n_iter = 40000,
   burn_in = 30000,
   # staying time censors
@@ -182,6 +182,7 @@ for (run in 1:study_design$num_runs) {
   #   dplyr::arrange(desc(Speed))
 
   # Use smallest stay time as reference category
+  # ref_cat_idx <- which(tele_summary$stay_prop == min(tele_summary$stay_prop))
   ref_cat_idx <- which(tele_summary$stay_prop == min(tele_summary$stay_prop))
   
   # Set reference category for intercept
@@ -193,7 +194,7 @@ for (run in 1:study_design$num_runs) {
   prop_adjust[ref_cat_idx] <- tele_summary$stay_prop[ref_cat_idx]
   kappa.prior.mu.adj <- log(prop_adjust)
   kappa.prior.mu <- log(tele_summary$stay_prop)
-  kappa.prior.var <- tele_summary$stay_sd ^ 2 # stay_time_summary$cell_sd ^ 2
+  kappa.prior.var <- tele_summary$stay_sd^2 # stay_time_summary$cell_sd ^ 2
   
   # Place cameras on study area
   cam_locs <- create_cam_samp_design(study_design,
@@ -227,7 +228,11 @@ for (run in 1:study_design$num_runs) {
       by = dplyr::join_by(Speed)
     ) %>%
     dplyr::left_join(
-      tele_summary,
+      tele_summary, #%>% 
+        # dplyr::mutate(
+        #   tot_n = sum(stay_prop),
+        #   stay_prop = stay_prop / tot_n
+        # ),
       by = dplyr::join_by(Speed)
     )  %>%
     dplyr::mutate(
@@ -309,6 +314,8 @@ for (run in 1:study_design$num_runs) {
             kappa_start = rep(log(mean(as.matrix(stay_time_data), na.rm = T)), study_design$num_covariates),
             gamma_prior_var = 10^4,
             kappa_prior_var = 10^4,
+            # kappa_prior_mu = kappa.prior.mu.adj,
+            # kappa_prior_var = kappa.prior.var,
             gamma_tune = -1,
             kappa_tune = -1, #rep(-1, study_design$num_covariates),
             count_data_in = count_data$count,
@@ -489,7 +496,7 @@ for (run in 1:study_design$num_runs) {
             gamma_start = rep(log(mean(count_data$count)), study_design$num_covariates),
             gamma_prior_var = 10^4,
             gamma_tune = rep(-1, study_design$num_covariates),
-            kappa_start = kappa.prior.mu,
+            kappa_start = log(exp(kappa.prior.mu) / sum(exp(kappa.prior.mu))),
             kappa_prior_mu = kappa.prior.mu,
             kappa_prior_var = kappa.prior.var,
             kappa_tune = -1, #rep(-1, study_design$num_covariates),
@@ -499,7 +506,7 @@ for (run in 1:study_design$num_runs) {
           
           # ## Posterior summaries
           # pop.ind.PR.habitat <- which(names(chain.PR.habitat) == "u")
-          # MCMC.parms.PR.habitat <- coda::as.mcmc(do.call(cbind, chain.PR.habitat[-pop.ind.PR])[-c(1:study_design$burn_in), ])
+          # MCMC.parms.PR.habitat <- coda::as.mcmc(do.call(cbind, chain.PR.habitat[-pop.ind.PR.habitat])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.PR.habitat)
           
           # plot(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
@@ -557,11 +564,11 @@ plot_multirun_means(study_design, D.all %>%
                       dplyr::filter(is.finite(Est)))
 plot_multirun_sds(D.all %>% 
                     dplyr::filter(is.finite(Est)))
-plot_multirun_mape(D.all %>%
-                      dplyr::filter(is.finite(Est)),
-                   study_design$tot_animals)
-plot_multirun_CV(D.all %>% 
-                   dplyr::filter(is.finite(Est)))
+# plot_multirun_mape(D.all %>%
+#                       dplyr::filter(is.finite(Est)),
+#                    study_design$tot_animals)
+# plot_multirun_CV(D.all %>% 
+#                    dplyr::filter(is.finite(Est)))
 # plot_multirun_hist(D.all)
 
 # plot_ABM(study_design,
