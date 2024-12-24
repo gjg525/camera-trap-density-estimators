@@ -12,7 +12,8 @@ source("./R/EDE_update/Create_landscape.R")
 source("./R/EDE_update/Collect_data.R")
 source("./R/EDE_update/Collect_tele_data.R")
 
-cam_tests <- c(10, 25, 50, 100, 150, 200)
+# cam_tests <- c(10, 25, 50, 100, 150, 200)
+cam_tests <- 50
 
 # Load animal GPS data
 load(file = "Sim_results/save_animal_data.RData")
@@ -67,6 +68,7 @@ lscape_design <- tibble::tibble(
 # Cam designs
 cam_design <- tibble::tibble(
   ncam = 200,
+  Design_name = "Random",
   Design = "Random",
   Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
   # Design = "Bias",
@@ -83,40 +85,6 @@ cam_design <- tibble::tibble(
 )
 
 num_models <- length(unlist(study_design$run_models))
-
-# Initialize summary matrices
-D.all <- tibble::tibble(
-  iteration = rep(1:study_design$num_runs, each = num_models),
-  Model = NA,
-  Covariate = NA,
-  Est = NA,
-  SD = NA
-  # all_results = NA
-)
-
-# save_animal_data <- tibble::tibble(
-#   iteration = 1:study_design$num_runs,
-#   data = NA
-# )
-# 
-# save_lscape_defs <- tibble::tibble(
-#   iteration = 1:study_design$num_runs,
-#   data = NA
-# )
-
-all_data <- tibble::tibble(
-  iteration = 1:study_design$num_runs,
-  cam_captures = NA,
-  count_data = NA,
-  encounter_data = NA,
-  stay_time_all = NA,
-  # stay_time_raw = NA,
-  stay_time_data = NA
-  # TTE_data_all = NA,
-  # TTE_data_raw = NA,
-  # TTE_data = NA,
-  # STE_data = NA
-)
 
 # # Calculate total area using available space
 # study_design <- study_design %>%
@@ -139,6 +107,26 @@ for (cam in 1:length(cam_tests)) {
       tot_snaps = ncam * study_design$t_steps,
       percent_cam_coverage = ncam * cam_A / study_design$tot_A
     )
+  
+  # Initialize summary matrices
+  D.all <- tibble::tibble(
+    iteration = rep(1:study_design$num_runs, each = num_models),
+    cams = NA,
+    Model = NA,
+    Covariate = NA,
+    Est = NA,
+    SD = NA
+    # all_results = NA
+  )
+  
+  all_data <- tibble::tibble(
+    iteration = 1:study_design$num_runs,
+    cam_captures = NA,
+    count_data = NA,
+    encounter_data = NA,
+    stay_time_all = NA,
+    stay_time_data = NA
+  )
   
   # Multi-run simulations
   for (run in 1:study_design$num_runs) {
@@ -498,8 +486,8 @@ for (cam in 1:length(cam_tests)) {
         ########################################
         if (iter == 5) {
           if (sum(count_data$count) == 0) {
-            D.PR.MCMC.cov <- NA
-            SD.PR.MCMC.cov <- NA
+            D.PR.MCMC.habitat <- NA
+            SD.PR.MCMC.habitat <- NA
           } else {
             chain.PR.habitat <- fit.model.mcmc.PR.habitat(
               study_design = study_design,
@@ -550,8 +538,25 @@ for (cam in 1:length(cam_tests)) {
     }
     
     D.all[(num_models * (run - 1) + 1):(num_models * run), ] <- dplyr::bind_rows(D.chain)
-}
+  }
+  
+  save_results <- list(
+    # save_animal_data,
+    study_design,
+    cam_design,
+    lscape_design,
+    all_data,
+    D.all
+  )
 
+  save(save_results, file = paste0("Sim_results/results_",
+                                   cam_design$Design_name,
+                                   "_",
+                                   cam_design$ncam,
+                                   "_cam.RData")
+  )
+  
+}
 # # # # Remove outlier estimates
 # D.all$Est[D.all$Est > 5 * study_design$tot_animals] <- NA
 # D.all$SD[D.all$SD > 5 * study_design$tot_animals] <- NA
