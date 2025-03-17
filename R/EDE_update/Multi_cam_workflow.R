@@ -12,17 +12,19 @@ source("./R/EDE_update/Create_landscape.R")
 source("./R/EDE_update/Collect_data.R")
 source("./R/EDE_update/Collect_tele_data.R")
 
-# cam_tests <- c(10, 25, 50, 100, 150, 200)
-cam_tests <- 50
-
-# Load animal GPS data
-load(file = "Sim_results/save_animal_data.RData")
-load(file = "Sim_results/save_lscape_defs.RData")
-
 # Initializations
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
 options(ggplot2.discrete.colour = fig_colors)
 options(ggplot2.discrete.fill = fig_colors)
+
+# Run with different number of cameras
+# cam_tests <- c(10, 25, 50, 75, 100)
+# cam_tests <- c(50, 75, 100)
+cam_tests <- c(100)
+
+# Load animal GPS data
+load(file = "Sim_results/save_animal_data.RData")
+load(file = "Sim_results/save_lscape_defs.RData")
 
 # Study design
 study_design <- tibble::tibble(
@@ -65,48 +67,29 @@ lscape_design <- tibble::tibble(
   Trail_speed = list(c("Medium", "Medium"))
 )
 
-# Cam designs
-cam_design <- tibble::tibble(
-  ncam = 200,
-  Design_name = "Random",
-  Design = "Random",
-  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
-  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
-  # Props = list(c(0.1, 0.8, 0.1)), # proportion of cameras placed on and off roads
-  # Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
-  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
-  # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
-  # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
-  # cam_length = study_design$dx * 0.3, # length of all viewshed sides
-  cam_length = study_design$dx * 0.1, # length of all viewshed sides
-  cam_A = cam_length ^ 2 / 2,
-  tot_snaps = ncam * study_design$t_steps
-)
-
 num_models <- length(unlist(study_design$run_models))
 
-# # Calculate total area using available space
-# study_design <- study_design %>%
-#   dplyr::mutate(
-#     tot_A = unique(
-#       study_design %>%
-#         dplyr::reframe(
-#           bounds = unlist(bounds),
-#           tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
-#           ) %>%
-#         pull(tot_A)
-#     )
-#   )
-
 for (cam in 1:length(cam_tests)) {
-  # # camera data summaries
-  cam_design <- cam_design %>% 
-    dplyr::mutate(
-      ncam = cam_tests[cam],
-      tot_snaps = ncam * study_design$t_steps,
-      percent_cam_coverage = ncam * cam_A / study_design$tot_A
-    )
+  
+  # Cam designs
+  cam_design <- tibble::tibble(
+    ncam = cam_tests[cam],
+    # Design_name = "Random",
+    Design_name = "Fast_80_bias",
+    # Design = "Random",
+    # Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
+    Design = "Bias",
+    # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
+    # Props = list(c(0.1, 0.8, 0.1)), # proportion of cameras placed on and off roads
+    Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
+    # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
+    # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
+    # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
+    # cam_length = study_design$dx * 0.3, # length of all viewshed sides
+    cam_length = study_design$dx * 0.1, # length of all viewshed sides
+    cam_A = cam_length ^ 2 / 2,
+    tot_snaps = ncam * study_design$t_steps
+  )
   
   # Initialize summary matrices
   D.all <- tibble::tibble(
@@ -145,7 +128,8 @@ for (cam in 1:length(cam_tests)) {
     # save_lscape_defs$data[run] <- list(lscape_defs)
     
     # Load ABM from save file
-    animalxy.all <- save_animal_data$data[[run]]
+    animalxy.all <- save_animal_data$data[[run]] %>% 
+      dplyr::rename(Road = road)
     lscape_defs <- save_lscape_defs$data[[run]]
     
     # Create covariate matrix with 0, 1 values
@@ -555,6 +539,8 @@ for (cam in 1:length(cam_tests)) {
                                    cam_design$ncam,
                                    "_cam.RData")
   )
+  
+  rm(save_results, all_data, D.all)
   
 }
 # # # # Remove outlier estimates

@@ -2,7 +2,7 @@ library(dplyr)
 library(ggplot2)
 tot_animals <- 100
 
-fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
+fig_colors <- c("#1B5E20", "#00A8C6", "#FBC02D", "#E65100", "#8E44AD", "#4B6FAD", "#D81B60")
 
 file_names <- c(
   "random",
@@ -42,23 +42,26 @@ file_names <- c(
 # 
 # save(D_all, file = "G:/My Drive/Missoula_postdoc/TDST_Model/Data/D_all.RData")
 
-load("G:/My Drive/Missoula_postdoc/TDST_Model/Data/D_all.RData")
+# load("G:/My Drive/Missoula_postdoc/TDST_Model/Data/D_all.RData")
+load("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/Data/D_all.RData")
 
 D_all <- D_all %>% 
-  dplyr::filter(
-    Model %in% c("PR", "PR Habitat")
-  ) %>% 
+  dplyr::filter(Model %in% c("PR", "PR Habitat")) %>% 
   dplyr::mutate(
+    Model = paste(Model, Covariate),
     Model = dplyr::case_when(
-      Model == "PR" & Covariate == "Covariate" ~ "PR Covariate",
-      Model == "PR" & Covariate == "Non-Covariate" ~ "PR Non-Covariate",
-      # Model == "PR Habitat" ~ "Habitat PR",
-      Model == "TDST" ~ "TDST Camera",
-      Model == "TDST w/ Priors" ~ "TDST Tele Priors",
-      .default = Model
+      Model == "PR Non-Covariate" ~ "PD",
+      Model == "PR Covariate" ~ "PR",
+      Model == "PR Habitat Non-Covariate" ~ "HAM" # or PDH?
     )
   )
 
+D_all$Model <- factor(
+  D_all$Model,
+  levels = c("PD", "HAM", "PR")
+)
+
+# Random only
 for (ff in 1){#:length(file_names)) {
   D_all %>% 
     dplyr::filter(Est < 250) %>%
@@ -83,7 +86,7 @@ for (ff in 1){#:length(file_names)) {
                    legend.box.background = ggplot2::element_rect(colour = "black"))
   
   ggplot2::ggsave(
-    paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/", 
+    paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
            file_names[ff],
            "_cam.png"),
     plot = ggplot2::last_plot(),
@@ -119,7 +122,7 @@ for (ff in 1){#:length(file_names)) {
                    legend.box.background = ggplot2::element_rect(colour = "black"))
   
   ggplot2::ggsave(
-    paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/", 
+    paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
            file_names[ff],
            "_cam_SD.png"),
     plot = ggplot2::last_plot(),
@@ -136,7 +139,7 @@ for (ff in 1){#:length(file_names)) {
 }
 
 ################################################################################
-
+# All other sample designs
 D_all %>% 
   dplyr::filter(Est < 250) %>%
   dplyr::filter(SampDesign %in% c("slow_cam", "med_cam", "fast_cam")) %>% 
@@ -166,7 +169,7 @@ D_all %>%
                  legend.box.background = ggplot2::element_rect(colour = "black"))
 
 ggplot2::ggsave(
-  paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/bias_cam.png"),
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/bias_cam.png"),
   plot = ggplot2::last_plot(),
   # path = file_path,
   # scale = 1,
@@ -208,7 +211,7 @@ D_all %>%
                  legend.box.background = ggplot2::element_rect(colour = "black"))
 
 ggplot2::ggsave(
-  paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/bias_cam_SD.png"),
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/bias_cam_SD.png"),
   plot = ggplot2::last_plot(),
   # path = file_path,
   # scale = 1,
@@ -250,7 +253,7 @@ D_all %>%
                  legend.box.background = ggplot2::element_rect(colour = "black"))
 
 ggplot2::ggsave(
-  paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/all_bias_cam.png"),
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/all_bias_cam.png"),
   plot = ggplot2::last_plot(),
   # path = file_path,
   # scale = 1,
@@ -293,7 +296,7 @@ D_all %>%
                  legend.box.background = ggplot2::element_rect(colour = "black"))
 
 ggplot2::ggsave(
-  paste0("G:/My Drive/Missoula_postdoc/TDST_Model/imgs/all_bias_cam_SD.png"),
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/all_bias_cam_SD.png"),
   plot = ggplot2::last_plot(),
   # path = file_path,
   # scale = 1,

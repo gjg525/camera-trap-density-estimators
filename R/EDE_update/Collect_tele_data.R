@@ -1,12 +1,12 @@
 ########################################
 # Collect data telemetry
 ########################################
-Collect_tele_data = function(animalxy.all, study_design) {
+Collect_tele_data = function(animalxy.all, study_design, grouping = "Speed") {
   # # Calculate mean residence indices
   cell_captures_tele <- animalxy.all %>%
     dplyr::filter(t %in% seq(1, study_design$t_steps, study_design$dt)) %>%
     dplyr::rename(Speed = lscape_type) %>%
-    dplyr::group_by(Speed) %>%
+    dplyr::group_by(!!sym(grouping)) %>%
     dplyr::count() %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
@@ -16,7 +16,7 @@ Collect_tele_data = function(animalxy.all, study_design) {
       # # variance on multinomial distribution
       # stay_sd = stay_prop * (1 - stay_prop) / sum(n)
     ) %>%
-    dplyr::arrange(desc(Speed))
+    dplyr::arrange(desc(!!sym(grouping)))
   
   # # Calculate mean
   # cell_captures_tele <- animalxy.all %>% 

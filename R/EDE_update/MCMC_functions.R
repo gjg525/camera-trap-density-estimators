@@ -104,7 +104,7 @@ fit.model.mcmc.TDST.cov <- function(study_design,
 
     # Sample kappa
     kappa_star <- kappa[i, ]
-    kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
+    kappa_star <- rnorm(num_covariates, kappa[i, ], exp(2 * kappa_tune))
 
     phi_star <- exp_na_covs(Z, kappa_star)
     sum_phi_star <- sum(phi_star, na.rm = T)
@@ -480,7 +480,8 @@ fit.model.mcmc.PR.habitat <- function(study_design,
                                       kappa_prior_var,
                                       kappa_tune,
                                       count_data_in,
-                                      habitat_summary) {
+                                      habitat_summary,
+                                      grouping = "Speed") {
   
   n_iter <- study_design$n_iter
   cam_A <- cam_design$cam_A
@@ -510,10 +511,25 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     "accept.rate.kappa."
   )
   
+  # habitat_summary <- habitat_summary %>% 
+  #   dplyr::mutate(
+  #     d = exp(gamma[1, ]),
+  #     stay_prop = exp(kappa[1, ])
+  #   )
+    
   d <- exp(gamma[1, ])
-  u <- d * habitat_summary$n_lscape / exp(kappa[1, ]) * 
-    habitat_summary$prop_cams / (cam_design$cam_A * study_design$t_steps)
+  stay_prop <- exp(kappa[1, ])
   
+  # u <- habitat_summary %>% 
+  #   dplyr::mutate(
+  #     u = d * n_lscape / stay_prop * 
+  #       prop_cams / (cam_design$cam_A * study_design$t_steps)
+  #   ) %>% 
+  #   dplyr::pull(u)
+    
+  u <- d * habitat_summary$n_lscape / stay_prop *
+    habitat_summary$prop_cams / (cam_design$cam_A * study_design$t_steps)
+
   tot_u <- sum(u)
   
   tune_check <- 100
@@ -529,7 +545,13 @@ fit.model.mcmc.PR.habitat <- function(study_design,
       gamma_star[gg] <- rnorm(1, gamma[i, gg], exp(2 * gamma_tune[gg]))
       d_star <- exp(gamma_star)
      
-      count_data_in_h <- count_data_in$count[count_data_in$Speed == covariate_labels[gg]]
+      if (grouping == "Speed") {
+        count_data_in_h <-
+          count_data_in$count[count_data_in$Speed == covariate_labels[gg]]
+      } else {
+        count_data_in_h <- 
+          count_data_in$count[count_data_in$Road == covariate_labels[gg]]
+      }
       
       if (length(count_data_in_h) == 0) {
         count_data_in_h <- 0
@@ -545,7 +567,6 @@ fit.model.mcmc.PR.habitat <- function(study_design,
         if (mh > runif(1)) {
           gamma[i, ] <- gamma_star
           accept[i + 1, gg] <- 1
-          d <- d_star
         } else {
           gamma[i, ] <- gamma[i, ]
           accept[i + 1, gg] <- 0
@@ -558,11 +579,11 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     }
     gamma[i + 1, ] <- gamma[i, ]
     d <- exp(gamma[i + 1, ])
-    
+
     # Sample kappa
     kappa_star <- kappa[i, ]
-    # kappa_star <- rnorm(3, kappa[i, ], exp(2 * kappa_tune))
-    kappa_star <- truncnorm::rtruncnorm(3, 0, Inf, kappa[i, ], exp(2 * kappa_tune))
+    kappa_star <- rnorm(num_covariates, kappa[i, ], exp(2 * kappa_tune))
+    # kappa_star <- truncnorm::rtruncnorm(num_covariates, 0, Inf, kappa[i, ], exp(2 * kappa_tune))
     kappa_star <- log(exp(kappa_star) / sum(exp(kappa_star)))
 
     # Proportional staying time defined by priors
@@ -604,10 +625,19 @@ fit.model.mcmc.PR.habitat <- function(study_design,
     # }
     
     kappa[i + 1, ] <- kappa[i, ]
-
-    u <- d * habitat_summary$n_lscape * 
-      habitat_summary$prop_cams / exp(kappa[i + 1, ]) / 
-      (cam_design$cam_A * study_design$t_steps)
+    
+    stay_prop <- exp(kappa[i + 1, ])
+    
+    # u <- habitat_summary %>% 
+    #   dplyr::mutate(
+    #     u = d * n_lscape / stay_prop * 
+    #       prop_cams / (cam_design$cam_A * study_design$t_steps)
+    #   ) %>% 
+    #   dplyr::pull(u)
+    
+    u <- d * habitat_summary$n_lscape / stay_prop *
+      habitat_summary$prop_cams / (cam_design$cam_A * study_design$t_steps)
+    
     tot_u[i + 1] <- sum(u)
     
     # Update tuning parms

@@ -30,7 +30,8 @@ study_design <- tibble::tibble(
   dt = 1,     # Time step size
   bounds = list(c(0, dx * q ^ 0.5)), # Sampling area boundaries
   tot_A = (bounds[[1]][2] - bounds[[1]][1])^2,
-  num_groups = 10,
+  num_groups = 50,
+  # num_groups = 25,
   group_sizes = list(rep(1, num_groups)),
   group_spread = 0, # Tightness of grouping behavior (relative to grid size)
   tot_animals = sum(unlist(group_sizes)),
@@ -44,35 +45,33 @@ study_design <- tibble::tibble(
   # staying time censors
   t_censor = 10, 
   run_models = list(1:5),
-  covariate_labels = list(c("Slow", "Medium", "Fast"))
+  covariate_labels = list(c("On Trail", "Off Trail"))
 )
 
 # Landscape design
 lscape_design <- tibble::tibble(
-  lscape_tag = "Random",
-  default_kappa = 0, # Turning angle
-  num_roads = 0,
-  Speed_ID = list(c("Slow", "Medium", "Fast")),
+  lscape_tag = "Random", #  "Random road", # "cross", # "grid", #
+  default_kappa = 10, # Turning angle
+  num_roads = 10,
+  Speed_ID = list(c("Medium")),
   # Speed_mins = list(c(.05, .3, .9)),
   # Speed_maxes = list(c(.15, .5, 1.1)),
-  Speed_mins = list(c(.19, .4, .9)),
-  Speed_maxes = list(c(.21, .5, 1.1)),
+  # Speed_mins = list(c(.05)),
+  # Speed_maxes = list(c(.15)),
+  Speed_mins = list(c(.3)),
+  Speed_maxes = list(c(.5)),
   Trail_ID = list(c("On Trail", "Off Trail")),
   Trail_speed = list(c("Medium", "Medium"))
 )
 
 # Cam designs
 cam_design <- tibble::tibble(
-  ncam = 200,
+  ncam = 250,
   Design = "Random",
-  Props = list(c(1, 1, 1)), # proportion of cameras placed on and off roads
-  # Design = "Bias",
-  # Props = list(c(0.8, 0.1, 0.1)), # proportion of cameras placed on and off roads
-  # Props = list(c(0.1, 0.8, 0.1)), # proportion of cameras placed on and off roads
-  # Props = list(c(0.1, 0.1, 0.8)), # proportion of cameras placed on and off roads
-  # Props = list(c(1, 0, 0)), # proportion of cameras placed on and off roads
-  # Props = list(c(0, 1, 0)), # proportion of cameras placed on and off roads
-  # Props = list(c(0, 0, 1)), # proportion of cameras placed on and off roads
+  Props = list(c(1, 1)), # proportion of cameras placed on and off roads
+  # Design = "Road Bias",
+  # Props = list(c(1, 0)), # proportion of cameras placed on and off roads
+  # Props = list(c(0, 1)), # proportion of cameras placed on and off roads
   cam_length = study_design$dx * 0.3, # length of all viewshed sides
   # cam_length = study_design$dx * 0.1, # length of all viewshed sides
   cam_A = cam_length ^ 2 / 2,
@@ -91,68 +90,41 @@ D.all <- tibble::tibble(
   # all_results = NA
 )
 
-# save_animal_data <- tibble::tibble(
-#   iteration = 1:study_design$num_runs,
-#   data = NA
-# )
-# 
-# save_lscape_defs <- tibble::tibble(
-#   iteration = 1:study_design$num_runs,
-#   data = NA
-# )
-
 all_data <- tibble::tibble(
   iteration = 1:study_design$num_runs,
   cam_captures = NA,
   count_data = NA,
   encounter_data = NA,
   stay_time_all = NA,
-  # stay_time_raw = NA,
   stay_time_data = NA
-  # TTE_data_all = NA,
-  # TTE_data_raw = NA,
-  # TTE_data = NA,
-  # STE_data = NA
 )
-
-# # Calculate total area using available space
-# study_design <- study_design %>%
-#   dplyr::mutate(
-#     tot_A = unique(
-#       study_design %>%
-#         dplyr::reframe(
-#           bounds = unlist(bounds),
-#           tot_A = (bounds[2] - bounds[1])^2 * sum(!is.na(lscape_defs$Road)) / q
-#           ) %>%
-#         pull(tot_A)
-#     )
-#   )
 
 # # camera data summaries
 cam_design <- cam_design %>%
   dplyr::mutate(percent_cam_coverage = ncam * cam_A / study_design$tot_A)
+
+IS_mean <- c()
 
 # Multi-run simulations
 for (run in 1:study_design$num_runs) {
   print(paste("Run", run, "of", study_design$num_runs))
   
   # # Create custom landscape (tag = "grid", "circ", "squares", "metapop")
-  lscape_design$lscape_tag <- "grid"
-  lscape_design$num_roads <- 4
   lscape_defs <- lscape_creator(study_design, lscape_design)
 
+  # border_check <- border_check(
+  #   lscape_defs, 
+  #   max(lscape_defs$X), 
+  #   max(lscape_defs$Y)
+  # )
+  # 
+  # if(!is.null(border_check)) {
+  #   warning("Check directions on borders")
+  # }
+  
   # # Run agent-based model
   animalxy.all <- ABM_sim(study_design,
                           lscape_defs)
-  # # If running new ABM simulation on each run, save
-  # save_animal_data$data[run] <- list(animalxy.all)
-  # 
-  # # If running new ABM simulation on each run, save
-  # save_lscape_defs$data[run] <- list(lscape_defs)
-  
-  # # Load ABM from save file
-  # animalxy.all <- save_animal_data$data[[run]]
-  # lscape_defs <- save_lscape_defs$data[[run]]
   
   # Create covariate matrix with 0, 1 values
   study_design <- study_design %>% 
@@ -161,27 +133,16 @@ for (run in 1:study_design$num_runs) {
       Z = list(create_covariate_mat(
         lscape_defs,
         study_design,
-        unlist(covariate_labels)))
+        unlist(covariate_labels),
+        grouping = "Road")
+      )
     )
   
-  tele_summary <- Collect_tele_data(animalxy.all, study_design)
-  
-  # stay_time_summary <- tele_summary %>%
-  #   dplyr::group_by(speed) %>%
-  #   dplyr::summarise(
-  #     cell_mu = mean(t_stay),
-  #     cell_sd = sd(log(t_stay)),
-  #     # cam_mu = mean(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-  #     # cam_sd = sd(t_stay * cam_design$cam_A / (study_design$dx * study_design$dx)),
-  #     .groups = 'drop'
-  #   ) %>%
-  #   dplyr::mutate(
-  #     sum_stay = sum(cell_mu),
-  #     stay_prop = cell_mu / sum_stay,
-  #     cell_sd = cell_sd / sum_stay
-  #   ) %>%
-  #   dplyr::rename(Speed = speed) %>%
-  #   dplyr::arrange(desc(Speed))
+  tele_summary <- Collect_tele_data(
+    animalxy.all, 
+    study_design, 
+    grouping = "Road"
+  )
   
   # Use smallest stay time as reference category
   # ref_cat_idx <- which(tele_summary$stay_prop == min(tele_summary$stay_prop))
@@ -209,74 +170,29 @@ for (run in 1:study_design$num_runs) {
   "%notin%" <- Negate("%in%")
   all_data$cam_captures[run] <- list(get_cam_captures(animalxy.all %>%
                                                         dplyr::filter(t != 0)))
-  # cam_captures <- get_cam_captures(animalxy)
-  
+
   habitat_summary <- lscape_defs %>%
-    dplyr::group_by(Speed) %>%
+    dplyr::group_by(Road) %>%
     dplyr::summarise(
       n_lscape = dplyr::n()
     ) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(
-      prop_lscape = n_lscape / sum(n_lscape)
-    ) %>%
     dplyr::left_join(
       cam_locs %>%
-        dplyr::group_by(Speed) %>%
+        dplyr::group_by(Road) %>%
         dplyr::summarise(
           ncams = dplyr::n(),
           .groups = 'drop'
         ),
-      by = dplyr::join_by(Speed)
+      by = dplyr::join_by(Road)
     ) %>%
-    dplyr::left_join(
-      tele_summary, #%>% 
-      # dplyr::mutate(
-      #   tot_n = sum(stay_prop),
-      #   stay_prop = stay_prop / tot_n
-      # ),
-      by = dplyr::join_by(Speed)
-    )  %>%
     dplyr::mutate(
-      prop_cams = ncams / sum(ncams, na.rm = T),
-      d_coeff = n_lscape * prop_cams / stay_prop / (cam_design$cam_A * study_design$t_steps)
+      prop_cams = ncams / sum(ncams, na.rm = T)
     ) %>%
-    dplyr::arrange(desc(Speed)) %>%
-    replace(is.na(.), 0)
-  # 
-  # cc <- get_count_data(cam_locs, all_data$cam_captures[[run]], animalxy.all %>%
-  #                        dplyr::filter(t != 0))
-  # 
-  # n_adj <- habitat_summary %>%
-  #   dplyr::left_join(
-  #     cc %>%
-  #       dplyr::group_by(Speed) %>%
-  #       dplyr::summarise(
-  #         mean_count = mean(count, na.rm = T),
-  #         .groups = 'drop'
-  #       ),
-  #     by = dplyr::join_by(Speed)
-  #   ) %>%
-  #   dplyr::mutate(
-  #     mean_count = tidyr::replace_na(mean_count, 0),
-  #     ncams = tidyr::replace_na(ncams, 0)
-  #   ) %>%
-  #   dplyr::ungroup() %>%
-  #   dplyr::mutate(
-  #     # stay_prop_adj = 1 / stay_prop * ncams / sum(ncams, na.rm = T),
-  #     n_lscape = mean_count * n_lscape / (cam_design$cam_A * study_design$t_steps),
-  #     n_habitat = mean_count * d_coeff
-  #     # n_full = n_lscape / stay_prop
-  #     # big_D = mean_count * sum(stay_prop) / stay_prop
-  #   ) %>%
-  #   dplyr::select(Speed, prop_lscape, mean_count, ncams, stay_prop, prop_cams, d_coeff, n_lscape, n_habitat)
-  # 
-  # # The sum over the adjustments should equal total abundance when cameras are placed in each lscape type
-  # # Does not work if cameras aren't placed in every landscape type
-  # sum(n_adj$n_lscape, na.rm = T)
-  # 
-  # # This method is more reliable when one or more lscape type is missing
-  # sum(n_adj$n_habitat)
+    replace(is.na(.), 0) %>% 
+    dplyr::select(Road, n_lscape, prop_cams)
+  
+  habitat_summary <- habitat_summary[order(unlist(study_design$covariate_labels)),]
   
   # Run models only if any data points were collected
   if (nrow(all_data$cam_captures[[run]]) > 0) {
@@ -294,12 +210,18 @@ for (run in 1:study_design$num_runs) {
     encounter_data <- all_data$encounter_data[[run]]
     stay_time_data <- all_data$stay_time_data[[run]]
     
+    IS_mean[run] <- mean(count_data$count) * study_design$tot_A / 
+      (cam_design$cam_A * study_design$t_steps)
+    
     # n_cores <- parallel::detectCores() $ Check number of cores available
     my_cluster <- parallel::makeCluster(3, type = "PSOCK")
     # register cluster to be used by %dopar%
     doParallel::registerDoParallel(cl = my_cluster)
-    
-    D.chain <- foreach::foreach(iter = unlist(study_design$run_models)) %dopar% {
+
+    D.chain <- foreach::foreach(
+      iter = unlist(study_design$run_models),
+      .packages = "dplyr"
+    ) %dopar% {
       ###################################
       # TDST no priors, camera stay time data
       ###################################
@@ -323,16 +245,16 @@ for (run in 1:study_design$num_runs) {
             count_data_in = count_data$count,
             stay_time_data_in = as.matrix(stay_time_data)
           )
-          
+
           # ## Posterior summaries
           # pop.ind.TDST <- which(names(chain.TDST) == "u")
           # MCMC.parms.TDST.cov <- coda::as.mcmc(do.call(cbind, chain.TDST[-pop.ind.TDST])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.TDST.cov)
-          
+
           # plot(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
           D.TDST.MCMC <- mean(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
           SD.TDST.MCMC <- sd(chain.TDST$tot_u[study_design$burn_in:study_design$n_iter])
-          
+
           if (any(colMeans(chain.TDST$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) ||
               any(colMeans(chain.TDST$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
             warning(("TDST accept rate OOB"))
@@ -349,7 +271,7 @@ for (run in 1:study_design$num_runs) {
           # all_results = list(chain.TDST)
         )
       }
-      
+
       ###################################
       # TDST w/priors, tele stay time
       ###################################
@@ -372,16 +294,16 @@ for (run in 1:study_design$num_runs) {
             count_data_in = count_data$count,
             stay_time_data_in = NULL
           )
-          
+
           # ## Posterior summaries
           # pop.ind.TDST <- which(names(chain.TDST.priors) == "u")
           # MCMC.parms.TDST.cov <- coda::as.mcmc(do.call(cbind, chain.TDST.priors[-pop.ind.TDST])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.TDST.cov)
-          
+
           # plot(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
           D.TDST.MCMC <- mean(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
           SD.TDST.MCMC <- sd(chain.TDST.priors$tot_u[study_design$burn_in:study_design$n_iter])
-          
+
           if (any(colMeans(chain.TDST.priors$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) ||
               any(colMeans(chain.TDST.priors$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
             warning(("TDST accept rate OOB"))
@@ -398,7 +320,7 @@ for (run in 1:study_design$num_runs) {
           # all_results = list(chain.TDST.priors)
         )
       }
-      
+
       ########################################
       ## PR no covariates
       ########################################
@@ -415,15 +337,15 @@ for (run in 1:study_design$num_runs) {
             gamma_tune = -1,
             count_data_in = count_data$count
           )
-          
+
           # ## Posterior summaries
           # MCMC.parms.PR <- coda::as.mcmc(do.call(cbind, chain.PR)[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.PR)
-          
+
           # plot(chain.PR$tot_u[study_design$burn_in:study_design$n_iter])
           D.PR.MCMC <- mean(chain.PR$tot_u[study_design$burn_in:study_design$n_iter])
           SD.PR.MCMC <- sd(chain.PR$tot_u[study_design$burn_in:study_design$n_iter])
-          
+
           if (mean(chain.PR$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2 || mean(chain.PR$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7) {
             warning(("Mean Count accept rate OOB"))
             D.PR.MCMC <- NA
@@ -439,7 +361,7 @@ for (run in 1:study_design$num_runs) {
           # all_results = list(chain.PR)
         )
       }
-      
+
       ########################################
       ## PR w/ covariates
       ########################################
@@ -457,16 +379,16 @@ for (run in 1:study_design$num_runs) {
             gamma_tune = rep(-1, study_design$num_covariates),
             count_data_in = count_data$count
           )
-          
+
           # ## Posterior summaries
           # pop.ind.PR <- which(names(chain.PR.cov) == "u")
           # MCMC.parms.PR.cov <- coda::as.mcmc(do.call(cbind, chain.PR.cov[-pop.ind.PR])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.PR.cov)
-          
+
           # plot(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
           D.PR.MCMC.cov <- mean(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
           SD.PR.MCMC.cov <- sd(chain.PR.cov$tot_u[study_design$burn_in:study_design$n_iter])
-          
+
           if (mean(chain.PR.cov$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2 || mean(chain.PR.cov$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7) {
             warning(("Mean Count accept rate OOB"))
             D.PR.MCMC.cov <- NA
@@ -482,7 +404,7 @@ for (run in 1:study_design$num_runs) {
           # all_results = list(chain.PR.cov)
         )
       }
-      
+
       ########################################
       ## PR habitat model
       ########################################
@@ -503,18 +425,19 @@ for (run in 1:study_design$num_runs) {
             kappa_prior_var = kappa.prior.var,
             kappa_tune = -1, #rep(-1, study_design$num_covariates),
             count_data_in = count_data,
-            habitat_summary
+            habitat_summary,
+            grouping = "Road"
           )
-          
+
           # ## Posterior summaries
-          # pop.ind.PR.habitat <- which(names(chain.PR.habitat) == "u")
+          # pop.ind.PR.habitat <- which(names(chain.PR.habitat) == "tot_u")
           # MCMC.parms.PR.habitat <- coda::as.mcmc(do.call(cbind, chain.PR.habitat[-pop.ind.PR.habitat])[-c(1:study_design$burn_in), ])
           # summary(MCMC.parms.PR.habitat)
-          
+
           # plot(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
           D.PR.MCMC.habitat <- mean(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
           SD.PR.MCMC.habitat <- sd(chain.PR.habitat$tot_u[study_design$burn_in:study_design$n_iter])
-          
+
           if (any(colMeans(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) < 0.2) || any(colMeans(chain.PR.habitat$accept[study_design$burn_in:study_design$n_iter, ]) > 0.7)) {
             warning(("Mean Count accept rate OOB"))
             D.PR.MCMC.habitat <- NA
@@ -530,9 +453,9 @@ for (run in 1:study_design$num_runs) {
           # all_results = list(chain.PR.habitat)
         )
       }
-      
+
       D.chain <- D.chain
-      
+
       # D.all[D.all$iteration == run, ] <- D.mcmc
     }
     stopCluster(my_cluster)
@@ -586,6 +509,44 @@ plot_space_use(study_design,
 #                 fill = "Speed")
 # plot_staytime_data(stay_time_raw_in = all_data$stay_time_raw[[1]],
 #                    fill = "Speed")
+
+lscape_defs %>% 
+  dplyr::group_by(Road) %>% 
+  dplyr::count() %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(props = n / sum(n))
+
+animalxy.all %>% 
+  dplyr::filter(t %in% 1:500) %>% 
+  dplyr::group_by(Road) %>% 
+  dplyr::count() %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(props = n / sum(n))
+
+animalxy.all %>% 
+  dplyr::filter(t %in% 1:500) %>% 
+  dplyr::group_by(Road, lscape_index) %>%
+  dplyr::count() %>% 
+  dplyr::group_by(Road) %>% 
+  dplyr::summarise(mm = mean(n)) %>% 
+  dplyr:::ungroup() %>% 
+  dplyr::mutate(props = mm / sum(mm))
+
+
+count_data %>% 
+  dplyr::group_by(Road) %>% 
+  dplyr::summarise(tot_count = sum(count)) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(props = tot_count / sum(tot_count))
+
+animalxy.all %>% 
+  dplyr::filter(t %in% 1:500) %>% 
+  dplyr::group_by(Road, lscape_index) %>%
+  dplyr::count() %>% 
+  dplyr::ungroup() %>% 
+  ggplot(aes(x = n, fill = Road)) + 
+  geom_histogram(position = "identity", alpha = 0.4)
+
 
 # # Plot camera time series
 # cam_caps <- all_data$cam_captures[[1]]
@@ -659,7 +620,7 @@ Data_summary <- all_data %>%
   )
 
 
-# results_fast_cam_alt <- list(
+# results_road_slow_cam <- list(
 #   # save_animal_data,
 #   study_design,
 #   cam_design,
@@ -668,7 +629,7 @@ Data_summary <- all_data %>%
 #   D.all
 # )
 # 
-# save(results_fast_cam_alt, file = "Sim_results/results_fast_cam_alt.RData")
+# save(results_road_slow_cam, file = "Sim_results/results_road_slow_cam.RData")
 
 
 # save(save_animal_data, file = "Sim_results/save_animal_data.RData")

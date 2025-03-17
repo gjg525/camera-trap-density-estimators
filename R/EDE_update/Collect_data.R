@@ -82,7 +82,7 @@
             Y = Y,
             trav_speeds = trav_speeds,
             Speed = lscape_type[1],
-            Road = road,
+            Road = Road,
             .groups = "drop"
           ) |>
           dplyr::filter(t_stay > 0) |>
@@ -145,7 +145,7 @@
           .groups = "drop"
         ) |>
         dplyr::full_join(cam_locs |>
-                           select(cam_ID, lscape_index, Speed),
+                           select(cam_ID, lscape_index, Speed, Road),
                          by = c("lscape_index")) |>
         dplyr::arrange(cam_ID) |>
         dplyr::mutate(count = replace(count, is.na(count), 0))

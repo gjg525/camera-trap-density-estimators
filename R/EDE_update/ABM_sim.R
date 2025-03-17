@@ -115,6 +115,7 @@
                 0
               )
             } else {
+              step_count <- 0
               # Individual moves across landscape until time is depleted
               while (t.step > 0) {
                 # x,y indices of individual
@@ -353,6 +354,11 @@
                     theta_from_center
                   )
                 }
+                
+                step_count <- step_count + 1
+                if (step_count > 2000) {
+                  stop("Animal stuck in simulation. Check for convergent landscape directions.")
+                }
               }
             }
           }
@@ -390,7 +396,7 @@
 
       # Add speed and road info
       animalxy.all$lscape_type <- lscape_defs$Speed[animalxy.all$lscape_index]
-      animalxy.all$road <- lscape_defs$Road[animalxy.all$lscape_index]
+      animalxy.all$Road <- lscape_defs$Road[animalxy.all$lscape_index]
 
       return(animalxy.all)
 }

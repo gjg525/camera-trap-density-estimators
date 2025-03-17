@@ -81,8 +81,21 @@ create_cam_samp_design <- function(study_design,
 sample_speeds <- function(cam.dist.prop = NULL, lscape_speeds) {
   if (cam.dist.prop$Design == "Random") {
     cam.samps <- sample(lscape_speeds$Index, cam.dist.prop$ncam, replace = F)
-  } else{
+  } else if (cam.dist.prop$Design == "Road Bias") {
     ps <- cam.dist.prop$ncam * unlist(cam.dist.prop$Props)
+    cam.samps <- c(sample(lscape_speeds |>
+                            filter(Road == "On Trail") |>
+                            pull(Index),
+                          ps[1],
+                          replace = F),
+                   sample(lscape_speeds |>
+                            filter(Road == "Off Trail") |>
+                            pull(Index),
+                          ps[2],
+                          replace=F))
+  } else{
+    ps <- round(cam.dist.prop$ncam * unlist(cam.dist.prop$Props))
+    ps[3] <- cam.dist.prop$ncam - sum(ps[1:2])
     cam.samps <- c(sample(lscape_speeds |>
                             filter(Speed == "Slow") |>
                             pull(Index),
@@ -225,7 +238,7 @@ get_covariate_info <- function(data_in, cov_name) {
 ################################################################################
 #' @export
 #'
-create_covariate_mat <- function(lscape_defs, study_design, covariate_labels) {
+create_covariate_mat <- function(lscape_defs, study_design, covariate_labels, grouping = "Speed") {
 
   # Create covariate matrix with 0, 1 values
   if (any(is.na(covariate_labels))){
@@ -240,7 +253,7 @@ create_covariate_mat <- function(lscape_defs, study_design, covariate_labels) {
                 ncol = length(covariate_labels))
     for (zz in 1:length(covariate_labels)) {
       cov_vec <- lscape_defs |> 
-        dplyr::filter(Speed == covariate_labels[zz]) %>% 
+        dplyr::filter(!!sym(grouping) == covariate_labels[zz]) %>% 
         dplyr::pull(Index)
       Z[cov_vec, zz] <- 1
     }
@@ -471,7 +484,34 @@ Cell_bias <- function(lscape_data, Index, Dir, Kappa, Road_ID) {
   lscape_data$Direction[Index] <- Dir
   lscape_data$Kappa[Index] <- Kappa
   lscape_data$Road[Index] <- Road_ID
+  
+  return(lscape_data)
+}
 
+#' @export
+#'
+Cell_bias_xy <- function(lscape_data, Index_x, Index_y, Dir, Kappa_in, Road_ID) {
+
+  lscape_data <- lscape_data %>% 
+    dplyr::mutate(
+      Direction = dplyr::case_when(
+        X %in% Index_x & Y %in% Index_y ~ Dir,
+        .default = Direction
+      ),
+      Kappa = dplyr::case_when(
+        X %in% Index_x & Y %in% Index_y ~ Kappa_in,
+        .default = Kappa
+      ),
+      Road = dplyr::case_when(
+        X %in% Index_x & Y %in% Index_y ~ Road_ID,
+        .default = Road
+      )
+    )
+  
+  # lscape_data$Direction[Index_x, Index_y] <- Dir
+  # lscape_data$Kappa[Index_x, Index_y] <- Kappa
+  # lscape_data$Road[Index_x, Index_y] <- Road_ID
+  
   return(lscape_data)
 }
 

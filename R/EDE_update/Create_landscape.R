@@ -7,7 +7,7 @@ lscape_creator <- function(study_design, lscape_design) {
   q <- study_design$q
   tag <- lscape_design$lscape_tag
   num_roads <- lscape_design$num_roads
-
+  
   speed_bounds <- tibble::tibble(
     Speed = unlist(lscape_design$Speed_ID),
     Min = unlist(lscape_design$Speed_mins),
@@ -60,7 +60,54 @@ lscape_creator <- function(study_design, lscape_design) {
     # #############################################################################
     # # # Create custom landscape
     # #############################################################################
+  } else if (tag == "Random road") {
+    trail_length <- 15
+    x_lims_vert <- seq(min(lscape_defs$X) + 1, max(lscape_defs$X) - trail_length - 1)
+    y_lims_vert <- seq(min(lscape_defs$Y) + 1, max(lscape_defs$Y) - trail_length - 1)
+    x_lims_hor <- seq(min(lscape_defs$X) + 1, max(lscape_defs$X) - trail_length - 1)
+    y_lims_hor <- seq(min(lscape_defs$Y) + 1, max(lscape_defs$Y) - trail_length - 1)
+    
+    for (road in 1:num_roads) {
+      # Vertical trails
+      sample_x <- sample(x_lims_vert, 1)
+      sample_y <- sample(y_lims_vert, 1)
+      y_dir <- sample(c(pi/2, 3 * pi / 2), 1)
+      
+      lscape_defs <- Cell_bias_xy(
+        lscape_defs,
+        sample_x,
+        sample_y:(sample_y + trail_length - 1),
+        y_dir,
+        10,
+        "On Trail"
+      )
+      
+      # remove x coords to avoid collision
+      x_lims_vert <- x_lims_vert[!(x_lims_vert %in% (sample_x - 1):(sample_x + 1))]
+      
+      # horizontal trails
+      sample_x <- sample(x_lims_hor, 1)
+      sample_y <- sample(y_lims_hor, 1)
+      x_dir <- sample(c(0, pi), 1)
+      
+      lscape_defs <- Cell_bias_xy(
+        lscape_defs,
+        sample_x:(sample_x + trail_length - 1),
+        sample_y,
+        x_dir,
+        10,
+        "On Trail"
+      )
+      
+      # remove y coord to avoid collision
+      y_lims_hor <- y_lims_hor[!(y_lims_hor %in% (sample_y - 1):(sample_y + 1))]
+      
+      if(length(x_lims_vert) == 0 | length(y_lims_hor) == 0) {
+        break
+      }
+    }
   } else if (tag == "grid") {
+    road_kappa <- 3
     start_inds <- round(seq(0, 29, length.out = num_roads + 2))
     road_inds_all <- c()
     
@@ -69,28 +116,28 @@ lscape_creator <- function(study_design, lscape_design) {
         lscape_defs,
         (start_inds[2 * road] * 30 + 2):(start_inds[2 * road] * 30 + 29),
         0,
-        10,
+        road_kappa,
         "On Trail"
       )
       lscape_defs <- Cell_bias(
         lscape_defs,
         (start_inds[2 * road + 1] * 30 + 2):(start_inds[2 * road + 1] * 30 + 29),
         pi,
-        10,
+        road_kappa,
         "On Trail"
       )
       lscape_defs <- Cell_bias(
         lscape_defs,
         seq(start_inds[2 * road + 1] + 30, start_inds[2 * road + 1] + 840, by = 30),
         pi / 2,
-        10,
+        road_kappa,
         "On Trail"
       )
       lscape_defs <- Cell_bias(
         lscape_defs,
         seq(start_inds[2 * road] + 30, start_inds[2 * road] + 840, by = 30),
         3 * pi / 2,
-        10,
+        road_kappa,
         "On Trail"
       )
       
@@ -107,99 +154,252 @@ lscape_creator <- function(study_design, lscape_design) {
     lscape_defs <- Cell_bias(lscape_defs, road_overlap, NA, 10, "On Trail")
     
     # Border movement
-    lscape_defs <- Cell_bias(lscape_defs, 1:29, 0, 10, "On Trail")
-    lscape_defs <- Cell_bias(lscape_defs, seq(30, 870, by = 30), pi / 2, 10, "On Trail")
-    lscape_defs <- Cell_bias(lscape_defs, 872:900, pi, 10, "On Trail")
-    lscape_defs <- Cell_bias(lscape_defs, seq(31, 871, by = 30), 3 * pi / 2, 10, "On Trail")
-  } else if (tag == "circ") {
-    lscape_defs <- Cell_bias(
-      lscape_defs,
-      c(856:885, seq(64, 864, by = 30)),
-      0,
-      10,
-      "On Trail"
-    )
-    lscape_defs <- Cell_bias(
-      lscape_defs,
-      c(36:65, seq(5, 875, by = 30)),
-      pi,
-      10,
-      "On Trail"
-    )
-    # 'Reflective bounds' on road borders
-    for (road in c(0:4, 16:28)) {
+    lscape_defs <- Cell_bias(lscape_defs, seq(30, 900, by = 30), 3 * pi / 2, road_kappa, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, 2:30, pi, road_kappa, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, seq(1, 871, by = 30), pi / 2, road_kappa, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, 871:899, 0, road_kappa, "On Trail")
+  } else if (tag == "cross") {
+    start_inds <- 15
+    road_inds_all <- c()
+    
       lscape_defs <- Cell_bias(
         lscape_defs,
-        (road * 30 + 6):(road * 30 + 25),
-        pi / 2,
+        (start_inds * 30 + 2):(start_inds * 30 + 29),
+        0,
         10,
         "On Trail"
       )
-    }
-    for (road in c(6:15, 26:29)) {
+      # lscape_defs <- Cell_bias(
+      #   lscape_defs,
+      #   (start_inds[2 + 1] * 30 + 2):(start_inds[2 + 1] * 30 + 29),
+      #   pi,
+      #   10,
+      #   "On Trail"
+      # )
+      # lscape_defs <- Cell_bias(
+      #   lscape_defs,
+      #   seq(start_inds[2 + 1] + 30, start_inds[2 + 1] + 840, by = 30),
+      #   pi / 2,
+      #   10,
+      #   "On Trail"
+      # )
       lscape_defs <- Cell_bias(
         lscape_defs,
-        (road * 30 + 6):(road * 30 + 25),
+        seq(start_inds + 30, start_inds + 840, by = 30),
         3 * pi / 2,
         10,
         "On Trail"
       )
-    }
-    for (road in 0:15) {
-      lscape_defs <- Cell_bias(
-        lscape_defs,
-        (road * 30 + 2):(road * 30 + 4),
-        5 * pi / 8,
-        1,
-        "On Trail"
+      
+      road_inds_all <- c(
+        road_inds_all, 
+        (start_inds * 30 + 2):(start_inds * 30 + 29),
+        # (start_inds[2 + 1] * 30 + 2):(start_inds[2 + 1] * 30 + 29),
+        # seq(start_inds[2 + 1] + 30, start_inds[2 + 1] + 870, by = 30),
+        seq(start_inds + 30, start_inds + 870, by = 30)
       )
-    }
-    for (road in 16:28) {
-      lscape_defs <- Cell_bias(
-        lscape_defs,
-        (road * 30 + 2):(road * 30 + 4),
-        3 * pi / 8,
-        1,
-        "On Trail"
-      )
-    }
-    for (road in 16:29) {
-      lscape_defs <- Cell_bias(
-        lscape_defs,
-        (road * 30 + 26):(road * 30 + 29),
-        13 * pi / 8,
-        1,
-        "On Trail"
-      )
-    }
-    for (road in 1:15) {
-      lscape_defs <- Cell_bias(
-        lscape_defs,
-        (road * 30 + 26):(road * 30 + 29),
-        11 * pi / 8,
-        1,
-        "On Trail"
-      )
-    }
+    
+    road_overlap <- road_inds_all[duplicated(road_inds_all)]
+    lscape_defs <- Cell_bias(lscape_defs, road_overlap, NA, 10, "On Trail")
+    
+    # Border movement
+    lscape_defs <- Cell_bias(lscape_defs, seq(30, 900, by = 30), 3 * pi / 2, 5, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, 2:30, pi, 5, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, seq(1, 871, by = 30), pi / 2, 5, "On Trail")
+    lscape_defs <- Cell_bias(lscape_defs, 871:899, 0, 5, "On Trail")
+  } else if (tag == "circ") {
+    road_kappa <- 5
+    # Outer trail
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      c(3:28),
+      3,
+      0,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      28,
+      3:28,
+      pi/2,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      c(3:28),
+      28,
+      pi,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      3,
+      4:28,
+      3*pi/2,
+      road_kappa,
+      "On Trail"
+    )
+    # 
+    # Second trail
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      11,
+      11:20,
+      pi/2,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      12:20,
+      11,
+      pi,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      20,
+      12:20,
+      3*pi/2,
+      road_kappa,
+      "On Trail"
+    )
+    lscape_defs <- Cell_bias_xy(
+      lscape_defs,
+      11:19,
+      20,
+      0,
+      road_kappa,
+      "On Trail"
+    )
+    # # Middle trail
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   8,
+    #   8:23,
+    #   pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   9:23,
+    #   8,
+    #   pi,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   23,
+    #   9:23,
+    #   3*pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   8:22,
+    #   23,
+    #   0,
+    #   10,
+    #   "On Trail"
+    # )
+    # 
+    # # Inner trail
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   13:18,
+    #   13,
+    #   0,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   18,
+    #   13:18,
+    #   pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   13:18,
+    #   18,
+    #   pi,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   13,
+    #   14:18,
+    #   3*pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # 
+    # # bisecting roads
+    # # Inner
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   15,
+    #   12:15,
+    #   3*pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   16:19,
+    #   15,
+    #   0,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   15,
+    #   16:19,
+    #   pi/2,
+    #   10,
+    #   "On Trail"
+    # )
+    # lscape_defs <- Cell_bias_xy(
+    #   lscape_defs,
+    #   12:14,
+    #   15,
+    #   pi,
+    #   10,
+    #   "On Trail"
+    # )
+    
+    
   } else if (tag == "squares") {
     # Squares
     lscape_defs <- Cell_bias(
       lscape_defs,
-      c(855:884, 270:299),
+      c(840:869, 272:299),
       0,
       10,
       "On Trail"
     )
     lscape_defs <- Cell_bias(
       lscape_defs,
-      c(36:65, 631:660),
+      c(32:59, 632:659),
       pi,
       10,
       "On Trail"
     )
     lscape_defs <- Cell_bias(
       lscape_defs,
-      c(seq(35, 845, by = 30), seq(270, 630, by = 30)),
+      # c(seq(35, 845, by = 30), seq(270, 630, by = 30)),
+      c(seq(32, 842, by = 30), seq(59, 630, by = 30)),
       pi / 2,
       10,
       "On Trail"
@@ -210,7 +410,8 @@ lscape_creator <- function(study_design, lscape_design) {
       3 * pi / 2,
       10,
       "On Trail"
-    )  } else if (tag == "metapop") {
+    )  
+    } else if (tag == "metapop") {
     # "Metapopulation"
     # Initialize roads
     lscape_defs <- Cell_bias(lscape_defs, 8531:8570, 0, 10, "On Trail")
