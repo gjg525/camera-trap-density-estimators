@@ -61,82 +61,87 @@ D_all$Model <- factor(
   levels = c("PD", "HAM", "PR")
 )
 
-# Random only
-for (ff in 1){#:length(file_names)) {
-  D_all %>% 
-    dplyr::filter(Est < 250) %>%
-    dplyr::filter(SampDesign == paste0(file_names[ff], "_cam")) %>% 
-    ggplot2::ggplot(ggplot2::aes(x = Model, y = Est, fill = Model)) +
-    ggplot2::geom_boxplot(lwd = 0.5, fatten = .5, outlier.shape = NA) +
-    ggplot2::geom_hline(yintercept=tot_animals, linetype="dashed", size = 0.7) +
-    ggplot2::labs(x = "Model",
-                  y = "Posterior Means") +
-    ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
-    ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
-    ggplot2::theme(text = ggplot2::element_text(size = 16),
-                   legend.title = ggplot2::element_blank(),
-                   panel.grid.major = ggplot2::element_blank(),
-                   panel.grid.minor = ggplot2::element_blank(),
-                   panel.background = ggplot2::element_blank(),
-                   axis.line = ggplot2::element_line(colour = "black"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1),
-                   legend.position = "none",
-                   legend.background = ggplot2::element_blank(),
-                   legend.spacing.y = ggplot2::unit(0, "mm"),
-                   legend.box.background = ggplot2::element_rect(colour = "black"))
+# Random 
+D_all %>% 
+  dplyr::filter(Est < 250) %>%
+  dplyr::filter(SampDesign == paste0(file_names[1], "_cam")) %>% 
+  ggplot2::ggplot(ggplot2::aes(x = Model, y = Est, fill = Model)) +
+  ggplot2::geom_boxplot(lwd = 0.5, fatten = .5, outlier.shape = NA) +
+  ggplot2::geom_hline(yintercept=tot_animals, linetype="dashed", size = 0.7) +
+  ggplot2::labs(x = "Model",
+                y = "Posterior Means") +
+  ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
+  ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 150,# max(D_cam_means$hh, na.rm = T), 
+                    label = "a",
+                    size = 5) +
+  ggplot2::theme(text = ggplot2::element_text(size = 16),
+                 legend.title = ggplot2::element_blank(),
+                 panel.grid.major = ggplot2::element_blank(),
+                 panel.grid.minor = ggplot2::element_blank(),
+                 panel.background = ggplot2::element_blank(),
+                 axis.line = ggplot2::element_line(colour = "black"),
+                 panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1),
+                 legend.position = "none",
+                 legend.background = ggplot2::element_blank(),
+                 legend.spacing.y = ggplot2::unit(0, "mm"),
+                 legend.box.background = ggplot2::element_rect(colour = "black"))
+
+ggplot2::ggsave(
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
+         file_names[1],
+         "_cam.png"),
+  plot = ggplot2::last_plot(),
+  # path = file_path,
+  # scale = 1,
+  width = 5,
+  height = 3,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
+
+D_all %>% 
+  dplyr::filter(Est < 250) %>%
+  dplyr::filter(SampDesign == paste0(file_names[1], "_cam")) %>% 
+  ggplot2::ggplot(ggplot2::aes(x = Model, y = SD, fill = Model)) +
+  ggplot2::geom_boxplot(lwd = 0.5, fatten = .5, outlier.shape = NA) +
+  ggplot2::labs(x = "Model",
+                y = "Posterior SDs") +
+  ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
+  ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 22,# max(D_cam_means$hh, na.rm = T), 
+                    label = "b",
+                    size = 5) +
+  ggplot2::theme(text = ggplot2::element_text(size = 16),
+                 legend.title = ggplot2::element_blank(),
+                 panel.grid.major = ggplot2::element_blank(),
+                 panel.grid.minor = ggplot2::element_blank(),
+                 panel.background = ggplot2::element_blank(),
+                 axis.line = ggplot2::element_line(colour = "black"),
+                 panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1),
+                 legend.position = "none",
+                 legend.background = ggplot2::element_blank(),
+                 legend.spacing.y = ggplot2::unit(0, "mm"),
+                 legend.box.background = ggplot2::element_rect(colour = "black"))
+
+ggplot2::ggsave(
+  paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
+         file_names[1],
+         "_cam_SD.png"),
+  plot = ggplot2::last_plot(),
+  # path = file_path,
+  # scale = 1,
+  width = 5,
+  height = 3,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
   
-  ggplot2::ggsave(
-    paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
-           file_names[ff],
-           "_cam.png"),
-    plot = ggplot2::last_plot(),
-    # path = file_path,
-    # scale = 1,
-    width = 5,
-    height = 3,
-    # units = c("in", "cm", "mm", "px"),
-    dpi = 600,
-    limitsize = TRUE,
-    bg = NULL
-  )
-  
-  D_all %>% 
-    dplyr::filter(Est < 250) %>%
-    dplyr::filter(SampDesign == paste0(file_names[ff], "_cam")) %>% 
-    ggplot2::ggplot(ggplot2::aes(x = Model, y = SD, fill = Model)) +
-    ggplot2::geom_boxplot(lwd = 0.5, fatten = .5, outlier.shape = NA) +
-    ggplot2::labs(x = "Model",
-                  y = "Posterior SDs") +
-    ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
-    ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
-    ggplot2::theme(text = ggplot2::element_text(size = 16),
-                   legend.title = ggplot2::element_blank(),
-                   panel.grid.major = ggplot2::element_blank(),
-                   panel.grid.minor = ggplot2::element_blank(),
-                   panel.background = ggplot2::element_blank(),
-                   axis.line = ggplot2::element_line(colour = "black"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1),
-                   legend.position = "none",
-                   legend.background = ggplot2::element_blank(),
-                   legend.spacing.y = ggplot2::unit(0, "mm"),
-                   legend.box.background = ggplot2::element_rect(colour = "black"))
-  
-  ggplot2::ggsave(
-    paste0("C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/TDST_Model/imgs/", 
-           file_names[ff],
-           "_cam_SD.png"),
-    plot = ggplot2::last_plot(),
-    # path = file_path,
-    # scale = 1,
-    width = 5,
-    height = 3,
-    # units = c("in", "cm", "mm", "px"),
-    dpi = 600,
-    limitsize = TRUE,
-    bg = NULL
-  )
-  
-}
+
 
 ################################################################################
 # All other sample designs
@@ -157,6 +162,9 @@ D_all %>%
                 y = "Posterior Means") +
   ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
   ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 210,# max(D_cam_means$hh, na.rm = T), 
+                    label = "a",
+                    size = 5) +
   ggplot2::theme(text = ggplot2::element_text(size = 16),
                  panel.grid.major = ggplot2::element_blank(),
                  panel.grid.minor = ggplot2::element_blank(),
@@ -197,10 +205,13 @@ D_all %>%
                 y = "Posterior SDs") +
   ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
   ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 32,# max(D_cam_means$hh, na.rm = T), 
+                    label = "b",
+                    size = 5) +
   ggplot2::theme(text = ggplot2::element_text(size = 16),
                  legend.title=element_text(size=12),
                  legend.text=element_text(size=10),
-                 legend.position = c(0.915, 0.69),
+                 legend.position = c(0.9, 0.77),
                  panel.grid.major = ggplot2::element_blank(),
                  panel.grid.minor = ggplot2::element_blank(),
                  panel.background = ggplot2::element_blank(),
@@ -241,6 +252,9 @@ D_all %>%
                 y = "Posterior Means") +
   ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
   ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 235,# max(D_cam_means$hh, na.rm = T), 
+                    label = "c",
+                    size = 5) +
   ggplot2::theme(text = ggplot2::element_text(size = 16),
                  panel.grid.major = ggplot2::element_blank(),
                  panel.grid.minor = ggplot2::element_blank(),
@@ -282,10 +296,13 @@ D_all %>%
                 y = "Posterior SDs") +
   ggplot2::scale_fill_manual(values= fig_colors[1:5]) +
   ggplot2::scale_color_manual(values = c('grey0', 'grey40', 'grey60')) +
+  ggplot2::annotate("text", x = 0.5, y = 27,# max(D_cam_means$hh, na.rm = T), 
+                    label = "d",
+                    size = 5) +
   ggplot2::theme(text = ggplot2::element_text(size = 16),
                  legend.title=element_text(size=12),
                  legend.text=element_text(size=10),
-                 legend.position = c(0.915, 0.69),
+                 legend.position = c(0.9, 0.81),
                  panel.grid.major = ggplot2::element_blank(),
                  panel.grid.minor = ggplot2::element_blank(),
                  panel.background = ggplot2::element_blank(),
