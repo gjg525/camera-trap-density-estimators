@@ -12,6 +12,19 @@ design_names <- c(
   "Random", "Slow_80_bias", "Medium_80_bias", "Fast_80_bias", "Slow_bias", "Medium_bias", "Fast_bias"
 )
 
+# Upload base data for IS random at 250 cams
+load(paste0(
+  sim_dir,
+  "D_all.RData")
+)
+
+IS_random <- D_all |> 
+  dplyr::filter(Model == "IS" & SampDesign == "random_cam" & Est < 250) |> 
+  dplyr::summarise(
+    Mean_Est = mean(Est),
+    Mean_var = mean(SD)
+  )
+
 ncams <- c(10, 25, 50, 75, 100)
 
 D_all_in <- c()
@@ -35,7 +48,7 @@ for (dn in design_names) {
   }
 }
 
-D_all <- D_all_in %>% 
+D_all_in <- D_all_in %>% 
   dplyr::mutate(
     Design = dplyr::case_when(
       cam_design %in% c("Slow_80_bias") ~ "80% Slow",
@@ -50,7 +63,7 @@ D_all <- D_all_in %>%
   
 # # Outliers defined as 1.5 times the interquartile range
 # # So 250 is about the mean upper bound over all results
-# outlier <- D_all  %>% 
+# outlier <- D_all_in  %>% 
 #   # dplyr::group_by(Model, Covariate, Design) %>% 
 #   dplyr::summarise(
 #     q1 = quantile(Est, 0.25, na.rm = T),
@@ -59,18 +72,18 @@ D_all <- D_all_in %>%
 #     upper_bound = q3 + (1.5 * (q3 - q1))
 #   )
   
-D_all$Model <- factor(
-  D_all$Model,
+D_all_in$Model <- factor(
+  D_all_in$Model,
   levels = c("IS", "PATH")
 )
-D_all$Design <- factor(
-  D_all$Design,
+D_all_in$Design <- factor(
+  D_all_in$Design,
   levels = c("Random", "80% Slow", "80% Medium", "80% Fast", "100% Slow", "100% Medium", "100% Fast")
 )
 # 
 ################################################################################
 # Summarize results
-D_cam_means <- D_all %>% 
+D_cam_means <- D_all_in %>% 
   dplyr::filter(Est < 250) %>%
   dplyr::mutate(MAE = abs(tot_animals - Est)) |> 
   dplyr::group_by(cams, Model, Design) %>% 
@@ -136,11 +149,11 @@ D_cam_means_fctr |>
     )
   ) +
   ggplot2::labs(x = "Number of Cameras",
-                y = "Mean SDs") + 
+                y = "Mean Variance") + 
   ggplot2::scale_x_continuous(breaks = c(10,25,50, 75, 100), 
                               labels = c("10","25","50", "75", "100")) +
-  ggplot2::annotate("text", x = 100, y = 105,
-                    label = "b",
+  ggplot2::annotate("text", x = -Inf, y = Inf,
+                    label = "b", hjust = -1, vjust = 1.5,
                     size = 5) +
   ggplot2::theme(
     axis.title=element_text(size = 16),
@@ -192,8 +205,8 @@ D_cam_means_fctr |>
                 y = "Mean Errors") + 
   ggplot2::scale_x_continuous(breaks = c(10,25,50, 75, 100), 
                               labels = c("10","25","50", "75", "100")) +
-  ggplot2::annotate("text", x = 100, y = 48,
-                    label = "a",
+  ggplot2::annotate("text", x = -Inf, y = Inf,
+                    label = "a", hjust = -1, vjust = 1.5,
                     size = 5) +
   ggplot2::theme(
     axis.title=element_text(size = 16),
@@ -223,6 +236,50 @@ ggplot2::ggsave(
   limitsize = TRUE,
   bg = NULL
 )
+
+# Plot effort vs precision for IS method at 250 cameras
+D_cam_means_fctr |> 
+  dplyr::filter(Model != "IS Random") |> 
+  dplyr::mutate(Percent_effort = cams / 250) |> 
+  ggplot2::ggplot(ggplot2::aes(x = Percent_effort, y = Mean_SD, color = Model, linetype = Model)) + 
+  ggplot2::geom_hline(yintercept=IS_random$Mean_var, color = "#D81B60", linetype="solid", size = 0.7) +  
+  ggplot2::geom_line(size = 1) +
+  ggplot2::geom_point(size = 2) +
+  custom_colors +
+  ggplot2::scale_linetype_manual(
+    values = c(
+      # "IS Random" = "solid",
+      "PATH Random" = "solid",
+      "PATH 80% Slow" = "dashed",
+      "PATH 100% Slow" = "dotted",
+      "PATH 80% Medium" = "dashed",
+      "PATH 100% Medium" = "dotted",
+      "PATH 80% Fast" = "dashed",
+      "PATH 100% Fast" = "dotted"
+    )
+  ) +
+  ggplot2::labs(x = "Percent Cameras Used",
+                y = "Mean Variance") + 
+  ggplot2::scale_x_continuous(breaks = c(.04,.1,.2, .3, .4),
+                              labels = c("4%","10%","20%", "30%", "40%")) +
+  ggplot2::annotate("text", x = -Inf, y = Inf,
+                    label = "a", hjust = -1, vjust = 1.5,
+                    size = 5) +
+  ggplot2::theme(
+    axis.title=element_text(size = 16),
+    axis.text = ggplot2::element_text(size = 16),
+    legend.position = "none",# c(0.85, 0.72),
+    legend.title = ggplot2::element_text(size=13),
+    legend.text = ggplot2::element_text(size = 13),
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(colour = "black"),
+    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1),
+    legend.background = ggplot2::element_blank(), # ggplot2::element_rect(color = "white"), #
+    legend.spacing.y = ggplot2::unit(0, "mm"),
+    legend.box.background = ggplot2::element_rect(colour = "black")
+  )
 
 
 ################################################################################
