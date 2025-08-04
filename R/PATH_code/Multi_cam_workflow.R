@@ -12,7 +12,7 @@ source("./R/PATH_code/Create_landscape.R")
 source("./R/PATH_code/Collect_data.R")
 source("./R/PATH_code/Collect_tele_data.R")
 
-sim_dir <- "C:/Users/guen.grosklos/Google Drive/Missoula_postdoc/PATH_model/sim_results/"
+sim_dir <- "G:/My Drive/Missoula_postdoc/PATH_model/sim_results/"
 
 # Initializations
 fig_colors <- c("#2ca25f", "#fc8d59", "#67a9cf", "#f768a1", "#bae4b3", "#fed98e")
@@ -20,7 +20,7 @@ options(ggplot2.discrete.colour = fig_colors)
 options(ggplot2.discrete.fill = fig_colors)
 
 # Run with different number of cameras
-cam_tests <- c(10, 25, 50, 75, 100)
+cam_tests <- c(25, 50, 75, 100, 125)
 # cam_tests <- c(50, 75, 100)
 # cam_tests <- c(100)
 
