@@ -13,8 +13,8 @@ source("./R/PATH_code/Collect_data.R")
 source("./R/PATH_code/Collect_tele_data.R")
 
 # Load animal GPS data
-load(file = "Sim_results_PATH/save_animal_data_1.RData")
-load(file = "Sim_results_PATH/save_lscape_defs.RData")
+load(file = "G:/My Drive/Missoula_postdoc/PATH_model/sim_results/save_animal_data_1.RData")
+load(file = "G:/My Drive/Missoula_postdoc/PATH_model/sim_results/save_lscape_defs.RData")
 
 save_animal_data <- save_animal_data_1
 rm(save_animal_data_1)
