@@ -21,11 +21,16 @@ load(paste0(
 IS_random <- D_all |> 
   dplyr::filter(Model == "IS" & SampDesign == "random_cam" & Est < 250) |> 
   dplyr::summarise(
-    Mean_Est = mean(Est),
-    Mean_var = mean(SD)
+    Mean_MAE = mean(abs(tot_animals - Est), na.rm = T),
+    Mean_Est = mean(Est, na.rm = T),
+    Mean_var = mean(SD, na.rm = T)
+  ) |> 
+  dplyr::mutate(
+    cams = 100,
+    Model = "IS Random"
   )
 
-ncams <- c(10, 25, 50, 75, 100)
+ncams <- c(25, 50, 75, 100, 125)
 
 D_all_in <- c()
 D_all_counts <- c()
@@ -51,12 +56,12 @@ for (dn in design_names) {
 D_all_in <- D_all_in %>% 
   dplyr::mutate(
     Design = dplyr::case_when(
-      cam_design %in% c("Slow_80_bias") ~ "80% Slow",
-      cam_design %in% c("Medium_80_bias") ~ "80% Medium",
-      cam_design %in% c("Fast_80_bias") ~ "80% Fast",
-      cam_design %in% c("Slow_bias") ~ "100% Slow",
-      cam_design %in% c("Medium_bias") ~ "100% Medium",
-      cam_design %in% c("Fast_bias") ~ "100% Fast",
+      cam_design %in% c("Slow_80_bias") ~ "80% High",
+      cam_design %in% c("Medium_80_bias") ~ "80% Moderate",
+      cam_design %in% c("Fast_80_bias") ~ "80% Low",
+      cam_design %in% c("Slow_bias") ~ "100% High",
+      cam_design %in% c("Medium_bias") ~ "100% Moderate",
+      cam_design %in% c("Fast_bias") ~ "100% Low",
       cam_design %in% c("Random") ~ "Random"
     )
   )
@@ -78,7 +83,7 @@ D_all_in$Model <- factor(
 )
 D_all_in$Design <- factor(
   D_all_in$Design,
-  levels = c("Random", "80% Slow", "80% Medium", "80% Fast", "100% Slow", "100% Medium", "100% Fast")
+  levels = c("Random", "80% Low", "100% Low", "80% Moderate", "100% Moderate", "80% High", "100% High")
 )
 # 
 ################################################################################
@@ -96,14 +101,14 @@ D_cam_means <- D_all_in %>%
   ) %>% 
   dplyr::mutate(
     Speed = dplyr::case_when(
-      Design %in% c("80% Slow", "100% Slow") ~ "Slow",
-      Design %in% c("80% Medium", "100% Medium") ~ "Medium",
-      Design %in% c("80% Fast", "100% Fast") ~ "Fast",
+      Design %in% c("80% High", "100% High") ~ "High",
+      Design %in% c("80% Moderate", "100% Moderate") ~ "Moderate",
+      Design %in% c("80% Low", "100% Low") ~ "Low",
       Design %in% c("Random") ~ "Random"
     ),
     Bias = dplyr::case_when(
-      Design %in% c("80% Slow", "80% Medium", "80% Fast") ~ "80%",
-      Design %in% c("100% Slow", "100% Medium", "100% Fast") ~ "100%",
+      Design %in% c("80% High", "80% Moderate", "80% Low") ~ "80%",
+      Design %in% c("100% High", "100% Moderate", "100% Low") ~ "100%",
       Design %in% c("Random") ~ "Random"
     )
   )
@@ -111,21 +116,23 @@ D_cam_means <- D_all_in %>%
 # Plot all SDs in one plot
 D_cam_means_fctr <- D_cam_means %>% 
   dplyr::filter(Model == "PATH") %>%
-  dplyr::bind_rows(
-    D_cam_means |> 
-      dplyr::filter(Model == "IS" & Design == "Random") 
-  ) |> 
-  dplyr::mutate(Model = paste(Model, Design))
+  # dplyr::bind_rows(
+  #   D_cam_means |> 
+  #     dplyr::filter(Model == "IS" & Design == "Random") 
+  # ) |> 
+  # dplyr::filter(Model != "IS Random") |> 
+  dplyr::mutate(Model = paste(Model, Design)) |> 
+  dplyr::bind_rows(IS_random)
 
 D_cam_means_fctr$Model <- factor(
   D_cam_means_fctr$Model,
   levels = c("IS Random", "PATH Random", 
-             "PATH 80% Slow", "PATH 100% Slow", 
-             "PATH 80% Medium", "PATH 100% Medium",
-             "PATH 80% Fast", "PATH 100% Fast")
+             "PATH 80% High", "PATH 100% High", 
+             "PATH 80% Moderate", "PATH 100% Moderate",
+             "PATH 80% Low", "PATH 100% Low")
 )
 
-fctr_pal <- c("#D81B60", "black", "#1B5E20", "#1B5E20", 
+fctr_pal <- c("black", "black", "#1B5E20", "#1B5E20", 
               "#00A8C6", "#00A8C6", "#E65100", "#E65100")
 
 names(fctr_pal) <- levels(D_cam_means_fctr$Model)
@@ -140,12 +147,12 @@ D_cam_means_fctr |>
     values = c(
       "IS Random" = "solid",
       "PATH Random" = "solid",
-      "PATH 80% Slow" = "dashed",
-      "PATH 100% Slow" = "dotted",
-      "PATH 80% Medium" = "dashed",
-      "PATH 100% Medium" = "dotted",
-      "PATH 80% Fast" = "dashed",
-      "PATH 100% Fast" = "dotted"
+      "PATH 80% High" = "dashed",
+      "PATH 100% High" = "dotted",
+      "PATH 80% Moderate" = "dashed",
+      "PATH 100% Moderate" = "dotted",
+      "PATH 80% Low" = "dashed",
+      "PATH 100% Low" = "dotted"
     )
   ) +
   ggplot2::labs(x = "Number of Cameras",
@@ -170,18 +177,18 @@ D_cam_means_fctr |>
     legend.box.background = ggplot2::element_rect(colour = "black")
   )
 
-ggplot2::ggsave(
-  paste0(img_dir, "/cam_vs_SD.png"),
-  plot = ggplot2::last_plot(),
-  # path = file_path,
-  # scale = 1,
-  width = 7,
-  height = 4,
-  # units = c("in", "cm", "mm", "px"),
-  dpi = 600,
-  limitsize = TRUE,
-  bg = NULL
-)
+# ggplot2::ggsave(
+#   paste0(img_dir, "/cam_vs_SD.pdf"),
+#   plot = ggplot2::last_plot(),
+#   # path = file_path,
+#   # scale = 1,
+#   width = 5,
+#   height = 3,
+#   # units = c("in", "cm", "mm", "px"),
+#   dpi = 600,
+#   limitsize = TRUE,
+#   bg = NULL
+# )
 
 # Plot all MAEs
 D_cam_means_fctr |> 
@@ -193,12 +200,12 @@ D_cam_means_fctr |>
     values = c(
       "IS Random" = "solid",
       "PATH Random" = "solid",
-      "PATH 80% Slow" = "dashed",
-      "PATH 100% Slow" = "dotted",
-      "PATH 80% Medium" = "dashed",
-      "PATH 100% Medium" = "dotted",
-      "PATH 80% Fast" = "dashed",
-      "PATH 100% Fast" = "dotted"
+      "PATH 80% High" = "dashed",
+      "PATH 100% High" = "dotted",
+      "PATH 80% Moderate" = "dashed",
+      "PATH 100% Moderate" = "dotted",
+      "PATH 80% Low" = "dashed",
+      "PATH 100% Low" = "dotted"
     )
   ) +
   ggplot2::labs(x = "Number of Cameras",
@@ -224,13 +231,78 @@ D_cam_means_fctr |>
     legend.box.background = ggplot2::element_rect(colour = "black")
   )
 
+# ggplot2::ggsave(
+#   paste0(img_dir, "/cam_vs_MAE.pdf"),
+#   plot = ggplot2::last_plot(),
+#   # path = file_path,
+#   # scale = 1,
+#   width = 5,
+#   height = 3,
+#   # units = c("in", "cm", "mm", "px"),
+#   dpi = 600,
+#   limitsize = TRUE,
+#   bg = NULL
+# )
+
+# Plot effort vs MAE for IS method at 250 cameras
+D_cam_means_fctr |> 
+  # dplyr::filter(Model != "IS Random") |> 
+  dplyr::mutate(Percent_effort = cams / 250) |>
+  ggplot2::ggplot(ggplot2::aes(x = Percent_effort, y = Mean_MAE, linetype = Model, color = Model)) + 
+  ggplot2::geom_hline(
+    # data = . %>% dplyr::filter(Model == "IS Random"),
+    yintercept=IS_random$Mean_MAE, linetype="dashed", color = "black", 
+    size = 0.7
+  ) +  
+  ggplot2::geom_line(size = 1) +
+  ggplot2::geom_point(data = . %>% dplyr::filter(Model != "IS Random"),
+                      size = 2) +
+  custom_colors +
+  ggplot2::scale_linetype_manual(
+    name = "Model",
+    values = c(
+      "IS Random" = "dashed",
+      "PATH Random" = "solid",
+      "PATH 80% High" = "dashed",
+      "PATH 100% High" = "dotted",
+      "PATH 80% Moderate" = "dashed",
+      "PATH 100% Moderate" = "dotted",
+      "PATH 80% Low" = "dashed",
+      "PATH 100% Low" = "dotted"
+    )
+  ) +
+  ggplot2::guides(linetype=ggplot2::guide_legend(title="Model and Sample Design"),
+                  color = ggplot2::guide_legend(title="Model and Sample Design")) +
+  ggplot2::labs(x = "Relative Effort",
+                y = "Mean Error") + 
+  ggplot2::scale_x_continuous(breaks = c(.1,.2, .3, .4, .5),
+                              labels = c("10%","20%", "30%", "40%", "50%")) +
+  ggplot2::annotate("text", x = Inf, y = Inf,
+                    label = "a", hjust = 2, vjust = 1.5,
+                    size = 5) +
+  ggplot2::theme(
+    axis.title=element_text(size = 16),
+    axis.text = ggplot2::element_text(size = 16),
+    legend.position = "none",# c(0.85, 0.72),
+    legend.title = ggplot2::element_text(size=13),
+    legend.text = ggplot2::element_text(size = 13),
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    panel.background = ggplot2::element_blank(),
+    axis.line = ggplot2::element_line(colour = "black"),
+    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=1)
+    # legend.background = ggplot2::element_blank(), # ggplot2::element_rect(color = "white"), #
+    # legend.spacing.y = ggplot2::unit(0, "mm"),
+    # legend.box.background = ggplot2::element_rect(colour = "black")
+  )
+
 ggplot2::ggsave(
-  paste0(img_dir, "/cam_vs_MAE.png"),
+  paste0(img_dir, "/effort_vs_MAE.pdf"),
   plot = ggplot2::last_plot(),
   # path = file_path,
   # scale = 1,
-  width = 7,
-  height = 4,
+  width = 5,
+  height = 3,
   # units = c("in", "cm", "mm", "px"),
   dpi = 600,
   limitsize = TRUE,
@@ -242,7 +314,7 @@ D_cam_means_fctr |>
   dplyr::filter(Model != "IS Random") |> 
   dplyr::mutate(Percent_effort = cams / 250) |> 
   ggplot2::ggplot(ggplot2::aes(x = Percent_effort, y = Mean_SD, color = Model, linetype = Model)) + 
-  ggplot2::geom_hline(yintercept=IS_random$Mean_var, color = "#D81B60", linetype="solid", size = 0.7) +  
+  ggplot2::geom_hline(yintercept=IS_random$Mean_var, linetype="dashed", size = 0.7) +  
   ggplot2::geom_line(size = 1) +
   ggplot2::geom_point(size = 2) +
   custom_colors +
@@ -250,20 +322,20 @@ D_cam_means_fctr |>
     values = c(
       # "IS Random" = "solid",
       "PATH Random" = "solid",
-      "PATH 80% Slow" = "dashed",
-      "PATH 100% Slow" = "dotted",
-      "PATH 80% Medium" = "dashed",
-      "PATH 100% Medium" = "dotted",
-      "PATH 80% Fast" = "dashed",
-      "PATH 100% Fast" = "dotted"
+      "PATH 80% High" = "dashed",
+      "PATH 100% High" = "dotted",
+      "PATH 80% Moderate" = "dashed",
+      "PATH 100% Moderate" = "dotted",
+      "PATH 80% Low" = "dashed",
+      "PATH 100% Low" = "dotted"
     )
   ) +
-  ggplot2::labs(x = "Percent Cameras Used",
+  ggplot2::labs(x = "Relative Effort",
                 y = "Mean Variance") + 
-  ggplot2::scale_x_continuous(breaks = c(.04,.1,.2, .3, .4),
-                              labels = c("4%","10%","20%", "30%", "40%")) +
-  ggplot2::annotate("text", x = -Inf, y = Inf,
-                    label = "a", hjust = -1, vjust = 1.5,
+  ggplot2::scale_x_continuous(breaks = c(.1,.2, .3, .4, .5),
+                              labels = c("10%","20%", "30%", "40%", "50%")) +
+  ggplot2::annotate("text", x = Inf, y = Inf,
+                    label = "b", hjust = 2, vjust = 1.5,
                     size = 5) +
   ggplot2::theme(
     axis.title=element_text(size = 16),
@@ -280,6 +352,19 @@ D_cam_means_fctr |>
     legend.spacing.y = ggplot2::unit(0, "mm"),
     legend.box.background = ggplot2::element_rect(colour = "black")
   )
+
+ggplot2::ggsave(
+  paste0(img_dir, "/effort_vs_Var.pdf"),
+  plot = ggplot2::last_plot(),
+  # path = file_path,
+  # scale = 1,
+  width = 5,
+  height = 3,
+  # units = c("in", "cm", "mm", "px"),
+  dpi = 600,
+  limitsize = TRUE,
+  bg = NULL
+)
 
 
 ################################################################################
@@ -322,7 +407,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Slow", "100% Slow") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% High", "100% High") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -335,8 +420,8 @@ D_cam_means_fctr |>
 #   ggplot2::scale_linetype_manual(
 #     values = c(
 #       "IS Random" = "dashed", 
-#       "PATH 80% Slow" = "solid", 
-#       "PATH 100% Slow" = "solid"
+#       "PATH 80% High" = "solid", 
+#       "PATH 100% High" = "solid"
 #     )
 #   ) +
 #   ggplot2::geom_point(size = 2) +
@@ -347,7 +432,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "d",
 #                     size = 5) +
-#   ggplot2::ggtitle("Slow Habitat Design") +
+#   ggplot2::ggtitle("High Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -364,7 +449,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Medium", "100% Medium") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% Moderate", "100% Moderate") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -377,8 +462,8 @@ D_cam_means_fctr |>
 #   ggplot2::scale_linetype_manual(
 #     values = c(
 #       "IS Random" = "dashed", 
-#       "PATH 80% Medium" = "solid", 
-#       "PATH 100% Medium" = "solid"
+#       "PATH 80% Moderate" = "solid", 
+#       "PATH 100% Moderate" = "solid"
 #     )
 #   ) +
 #   ggplot2::geom_point(size = 2) +
@@ -389,7 +474,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "c",
 #                     size = 5) +
-#   ggplot2::ggtitle("Medium Habitat Design") +
+#   ggplot2::ggtitle("Moderate Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -406,7 +491,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Fast", "100% Fast") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% Low", "100% Low") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -419,8 +504,8 @@ D_cam_means_fctr |>
 #   ggplot2::scale_linetype_manual(
 #     values = c(
 #       "IS Random" = "dashed", 
-#       "PATH 80% Fast" = "solid", 
-#       "PATH 100% Fast" = "solid"
+#       "PATH 80% Low" = "solid", 
+#       "PATH 100% Low" = "solid"
 #     )
 #   ) +
 #   ggplot2::geom_point(size = 2) +
@@ -431,7 +516,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "b",
 #                     size = 5) +
-#   ggplot2::ggtitle("Fast Habitat Design") +
+#   ggplot2::ggtitle("Low Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -462,9 +547,9 @@ D_cam_means_fctr |>
 # D_all_alt$Model <- factor(
 #   D_all_alt$Model,
 #   levels = c("IS Random", "PATH Random", 
-#              "PATH 80% Slow", "PATH 100% Slow", 
-#              "PATH 80% Medium", "PATH 100% Medium",
-#              "PATH 80% Fast", "PATH 100% Fast")
+#              "PATH 80% High", "PATH 100% High", 
+#              "PATH 80% Moderate", "PATH 100% Moderate",
+#              "PATH 80% Low", "PATH 100% Low")
 # )
 # 
 # D_all_alt |> 
@@ -529,7 +614,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Slow", "100% Slow") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% High", "100% High") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -545,7 +630,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "b",
 #                     size = 5) +
-#   ggplot2::ggtitle("Slow Habitat Design") +
+#   ggplot2::ggtitle("High Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -562,7 +647,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Medium", "100% Medium") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% Moderate", "100% Moderate") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -578,7 +663,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "b",
 #                     size = 5) +
-#   ggplot2::ggtitle("Medium Habitat Design") +
+#   ggplot2::ggtitle("Moderate Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -595,7 +680,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_cam_means %>% 
-#   dplyr::filter(Design %in% c("80% Fast", "100% Fast") & Model %in% "PATH") %>%
+#   dplyr::filter(Design %in% c("80% Low", "100% Low") & Model %in% "PATH") %>%
 #   dplyr::bind_rows(
 #     D_cam_means |> 
 #       dplyr::filter(Model == "IS" & Design == "Random")
@@ -611,7 +696,7 @@ D_cam_means_fctr |>
 #   ggplot2::annotate("text", x = 8, y = 80,# max(D_cam_means$Mean_SD, na.rm = T), 
 #                     label = "b",
 #                     size = 5) +
-#   ggplot2::ggtitle("Fast Habitat Design") +
+#   ggplot2::ggtitle("Low Habitat Design") +
 #   ggplot2::theme(
 #     axis.title=element_text(size = 16),
 #     axis.text = ggplot2::element_text(size = 16),
@@ -666,7 +751,7 @@ D_cam_means_fctr |>
 #   )
 # 
 # D_omit %>%
-#   # dplyr::filter(!(Design %in% c("100% Fast", "100% Medium", "100% Slow"))) %>% 
+#   # dplyr::filter(!(Design %in% c("100% Low", "100% Moderate", "100% High"))) %>% 
 #   ggplot2::ggplot(ggplot2::aes(x = Design, y = count, fill = Model)) +
 #   ggplot2::geom_col(position = "dodge", color = 'black') +
 #   ggplot2::facet_wrap(~ cams, ncol = 1) +
